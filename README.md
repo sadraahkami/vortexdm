@@ -22,6 +22,11 @@
 
 ## ✨ Key Features | قابلیت‌های کلیدی
 
+- 🎛️ **Dual-Mode Interface (Simple vs PRO):** One-click toggle between an ultra-clean, distraction-free minimalist mode and an advanced IDM-grade power studio.
+- 📁 **Custom Download Destination Paths:** Set a global default download folder or specify custom save folders per task.
+- 🔗 **Expired Link Refresher:** Update expired temporary or tokenized download URLs in-place and resume seamlessly from the exact byte where interruption occurred.
+- 📦 **Pure Go Native Archive Extractor:** Built-in `.zip` decompression with Zip-Slip path traversal security guard and auto-extract upon completion.
+- 🔊 **Zero-Byte Synthesized Audio Feedback:** Pristine futuristic chimes and blips generated procedurally via Web Audio API with zero external audio assets.
 - 🚀 **Turbo Multi-Threaded Engine:** Parallel chunk downloading utilizing Go Goroutines (up to 32 parallel connections).
 - 🧩 **Zero-Concatenation Storage:** Direct byte positioning via `os.File.WriteAt`, eliminating slow final assembly file merging.
 - 💻 **Zero-Friction Standalone Executable:** Single 7MB `.exe` containing all embedded UI assets and PE resources — run directly with zero installation.
@@ -50,7 +55,10 @@
 | :--- | :---: | :---: | :---: | :---: |
 | **Language & Performance** | Pure Go (Native) | C++ (Proprietary) | C++ (CLI only) | Python (Interpreted) |
 | **Zero Runtime Needed** | ✅ (Single binary) | ⚠️ (Windows installer) | ✅ (Binary) | ❌ (Requires Python runtime) |
+| **Dual-Mode UI (Simple & PRO)** | ✅ 1-Click Toggle | ❌ Cluttered always | ❌ None | ❌ Rare |
 | **Direct WriteAt (No Merge)**| ✅ Instant | ❌ Merges at 100% | ✅ Chunk mapping | ❌ Slow disk merge |
+| **Expired Link Refresher** | ✅ In-place refresh | ✅ Supported | ❌ Manual reconfigure | ❌ Rare |
+| **Built-in Archive Extractor**| ✅ Pure Go (.zip) | ❌ None | ❌ None | ⚠️ Requires external |
 | **System Tray Minimization** | ✅ Windows Win32 Tray | ✅ Windows Tray | ❌ None | ⚠️ Heavy PyQt / None |
 | **Bandwidth & Traffic Analytics**| ✅ 24h/14d + Domestic (نیم‌بها) | ❌ Basic log | ❌ None | ❌ None |
 | **Custom Queues & Reordering**| ✅ Dynamic + ▲/▼ Priority | ✅ Queues | ⚠️ Manual CLI | ❌ Rare |

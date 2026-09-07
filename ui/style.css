@@ -506,6 +506,7 @@ html[lang="en"] body {
 
 /* Grid Columns Widths */
 .col-check { width: 28px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.col-order { width: 28px; flex-shrink: 0; text-align: center; color: var(--text-dim); font-family: var(--font-mono); font-size: 0.72rem; }
 .col-name { flex: 2.8; min-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 0.4rem; }
 .col-size { width: 95px; flex-shrink: 0; text-align: right; padding: 0 0.4rem; }
 .col-progress { width: 170px; flex-shrink: 0; padding: 0 0.4rem; }
@@ -514,6 +515,10 @@ html[lang="en"] body {
 .col-traffic { width: 105px; flex-shrink: 0; text-align: center; padding: 0 0.3rem; }
 .col-queue { width: 75px; flex-shrink: 0; text-align: center; padding: 0 0.3rem; }
 .col-conn { width: 34px; flex-shrink: 0; text-align: center; padding: 0 0.2rem; }
+.col-reorder { width: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 2px; }
+.reorder-btn { background: transparent; border: none; color: var(--text-dim); cursor: pointer; padding: 1px 3px; font-size: 0.7rem; border-radius: 2px; line-height: 1; }
+.reorder-btn:hover { color: var(--primary); background: rgba(255, 255, 255, 0.08); }
+
 
 /* Grid Row (High Density 36px) */
 .grid-row {
@@ -1703,4 +1708,75 @@ html[dir="rtl"] .clipboard-sniff-toast {
   background: rgba(255, 255, 255, 0.18);
   color: #fff;
 }
+
+/* ==========================================================================
+   Dual Mode: Simple Mode vs PRO Mode
+   ========================================================================== */
+.mode-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  padding: 0.22rem 0.55rem;
+  border-radius: var(--radius-xs);
+  font-size: 0.72rem;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.mode-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.mode-pill {
+  font-size: 0.6rem;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  padding: 1px 5px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+  transition: all 0.22s ease;
+}
+
+body.mode-pro .mode-pill {
+  background: linear-gradient(135deg, #00f2fe, #3b82f6);
+  color: #030712;
+  box-shadow: 0 0 8px rgba(0, 242, 254, 0.4);
+}
+
+body.mode-pro .mode-toggle-btn {
+  border-color: rgba(0, 242, 254, 0.45);
+  background: rgba(0, 242, 254, 0.08);
+}
+
+body.mode-simple .mode-pill {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-dim);
+}
+
+/* Pro-Only Hiding in Simple Mode with smooth transitions */
+.pro-only {
+  transition: opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.mode-simple .pro-only {
+  display: none !important;
+}
+
+/* Motion transition during mode switch */
+body.mode-switching .app-toolbar,
+body.mode-switching .categories-tree,
+body.mode-switching .grid-header,
+body.mode-switching .grid-row {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
 

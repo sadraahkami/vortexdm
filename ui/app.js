@@ -142,7 +142,31 @@ const translations = {
     btn_close: 'بستن',
     tip_copy: 'کپی هش',
     toast_clip_title: 'لینک دانلود در کلیپ‌بورد شناسایی شد',
-    toast_clip_download: 'دانلود سریع'
+    toast_clip_download: 'دانلود سریع',
+    tip_mode_toggle: 'تغییر به حالت ساده یا پیشرفته',
+    mode_simple: 'ساده',
+    mode_pro: 'پیشرفته',
+    mode_simple_opt: 'ساده (خلوت، روان و متمرکز)',
+    mode_pro_opt: 'پیشرفته (ابزارهای تخصصی و تنظیمات کامل)',
+    tb_settings: 'تنظیمات',
+    tb_settings_tip: 'تنظیمات عمومی نرم‌افزار',
+    settings_title: 'تنظیمات',
+    settings_default_dir: 'پوشه پیش‌فرض ذخیره فایل‌ها:',
+    settings_default_mode: 'حالت پیش‌فرض رابط کاربری:',
+    settings_sound_toggle: 'پخش صدای اعلان هنگام شروع و اتمام دانلود',
+    settings_extract_toggle: 'استخراج خودکار فایل‌های فشرده پس از اتمام دانلود',
+    settings_saved: 'تنظیمات با موفقیت ذخیره شد',
+    btn_save: 'ذخیره تنظیمات',
+    lbl_dest_dir: 'پوشه ذخیره‌سازی (اختیاری):',
+    cm_refresh_url: 'تمدید نشانی دانلود (لینک منقضی‌شده)',
+    cm_extract: 'استخراج فایل فشرده',
+    refresh_modal_title: 'تمدید نشانی دانلود منقضی‌شده',
+    refresh_file_lbl: 'فایل:',
+    refresh_new_url_lbl: 'نشانی جدید (لینک تازه دریافت شده):',
+    refresh_btn_apply: 'به‌روزرسانی نشانی و ادامه دانلود',
+    refresh_success: 'نشانی با موفقیت به‌روز شد و دانلود از نقطه قبلی ادامه یافت',
+    extract_success: 'فایل فشرده با موفقیت در کنار فایل اصلی استخراج شد',
+    extract_err: 'خطا در استخراج فایل فشرده'
   },
   en: {
     tb_add: 'Add URL',
@@ -281,7 +305,31 @@ const translations = {
     btn_close: 'Close',
     tip_copy: 'Copy Hash',
     toast_clip_title: 'Download link detected in clipboard',
-    toast_clip_download: 'Download'
+    toast_clip_download: 'Download',
+    tip_mode_toggle: 'Switch between Simple & PRO mode',
+    mode_simple: 'Simple',
+    mode_pro: 'PRO',
+    mode_simple_opt: 'Simple (Clean & Focused - Recommended)',
+    mode_pro_opt: 'PRO (Full Power Tools)',
+    tb_settings: 'Settings',
+    tb_settings_tip: 'Application Settings',
+    settings_title: 'VortexDM Settings',
+    settings_default_dir: 'Default Download Directory:',
+    settings_default_mode: 'Default UI Mode:',
+    settings_sound_toggle: 'Play audio feedback on start and completion',
+    settings_extract_toggle: 'Automatically extract ZIP archives upon completion',
+    settings_saved: 'Settings saved successfully',
+    btn_save: 'Save Settings',
+    lbl_dest_dir: 'Destination Directory (Optional):',
+    cm_refresh_url: 'Refresh Expired Download URL',
+    cm_extract: 'Extract ZIP Archive',
+    refresh_modal_title: 'Refresh Expired Download URL',
+    refresh_file_lbl: 'File:',
+    refresh_new_url_lbl: 'New Download URL (Fresh token link):',
+    refresh_btn_apply: 'Update URL & Resume',
+    refresh_success: 'Download URL refreshed successfully, resuming...',
+    extract_success: 'Archive extracted successfully next to original file',
+    extract_err: 'Failed to extract archive'
   }
 };
 
@@ -294,6 +342,71 @@ let contextTaskId = null;
 let currentSpeedLimit = 0;
 let schedulerConfig = null;
 let speedHistory = new Array(25).fill(0);
+let appSettings = {
+  default_download_dir: '',
+  default_ui_mode: 'simple',
+  sound_enabled: true,
+  auto_extract_zip: true
+};
+let currentUIMode = localStorage.getItem('vortex_ui_mode') || 'simple';
+let previousTaskStatuses = new Map();
+
+// --- Synthesized High-Tech Audio Engine (Zero-byte audio assets, pure Web Audio API) ---
+let audioCtx = null;
+function getAudioContext() {
+  if (!audioCtx) {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (AudioContextClass) {
+      audioCtx = new AudioContextClass();
+    }
+  }
+  if (audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  return audioCtx;
+}
+
+function playTone(freq, type, startTime, duration, startVol, endVol) {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  try {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, startTime);
+    gain.gain.setValueAtTime(startVol, startTime);
+    gain.gain.exponentialRampToValueAtTime(Math.max(endVol, 0.0001), startTime + duration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(startTime);
+    osc.stop(startTime + duration);
+  } catch (e) {}
+}
+
+function playCompletionChime() {
+  if (!appSettings.sound_enabled) return;
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    // Pleasant futuristic 3-tone ascending chord
+    playTone(523.25, 'sine', now, 0.12, 0.20, 0.02);
+    playTone(659.25, 'sine', now + 0.07, 0.15, 0.22, 0.02);
+    playTone(1046.50, 'sine', now + 0.14, 0.35, 0.25, 0.0001);
+  } catch (e) {}
+}
+
+function playStartChime() {
+  if (!appSettings.sound_enabled) return;
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    playTone(440, 'triangle', now, 0.07, 0.14, 0.03);
+    playTone(880, 'sine', now + 0.05, 0.14, 0.18, 0.001);
+  } catch (e) {}
+}
+
 
 // --- 2. SVGs for File Categories ---
 const categoryIcons = {
@@ -333,10 +446,43 @@ function setLanguage(lang) {
     langText.textContent = (lang === 'fa') ? 'EN' : 'FA';
   }
 
+  const modeText = document.getElementById('modeText');
+  if (modeText) {
+    modeText.textContent = (currentUIMode === 'pro') ? t.mode_pro : t.mode_simple;
+  }
+
   renderTasksGrid();
   if (currentAnalyticsData && analyticsModal && !analyticsModal.classList.contains('hidden')) {
     renderAnalyticsChart();
   }
+}
+
+function setUIMode(mode, persist = true) {
+  currentUIMode = mode;
+  if (persist) {
+    localStorage.setItem('vortex_ui_mode', mode);
+  }
+
+  document.body.classList.add('mode-switching');
+  setTimeout(() => document.body.classList.remove('mode-switching'), 300);
+
+  const t = translations[currentLang];
+  const modeText = document.getElementById('modeText');
+  const btnMode = document.getElementById('btnModeToggle');
+
+  if (mode === 'pro') {
+    document.body.classList.remove('mode-simple');
+    document.body.classList.add('mode-pro');
+    if (modeText) modeText.textContent = t.mode_pro || 'پیشرفته';
+    if (btnMode) btnMode.setAttribute('aria-pressed', 'true');
+  } else {
+    document.body.classList.remove('mode-pro');
+    document.body.classList.add('mode-simple');
+    if (modeText) modeText.textContent = t.mode_simple || 'ساده';
+    if (btnMode) btnMode.setAttribute('aria-pressed', 'false');
+  }
+
+  renderTasksGrid();
 }
 
 // --- 4. Format Utilities ---
@@ -510,7 +656,7 @@ function updateRowContent(row, task, t, displayOrder) {
 
   row.innerHTML = `
     <div class="col col-check"><input type="checkbox" class="row-cb" data-id="${task.id}" ${isSelected ? 'checked' : ''}></div>
-    <div class="col col-order ltr-num">${task.order || displayOrder}</div>
+    <div class="col col-order pro-only ltr-num">${task.order || displayOrder}</div>
     <div class="col col-name" title="${escapeHtml(task.filename)}&#10;${escapeHtml(task.url)}">
       <div class="row-file-wrap">
         ${catIcon}
@@ -534,13 +680,24 @@ function updateRowContent(row, task, t, displayOrder) {
         ${trafficLabel}
       </span>
     </div>
-    <div class="col col-queue"><span class="${queueClass}">${escapeHtml(queueName)}</span></div>
-    <div class="col col-conn ltr-num">${task.connections || 16}</div>
-    <div class="col col-reorder">
+    <div class="col col-queue pro-only"><span class="${queueClass}">${escapeHtml(queueName)}</span></div>
+    <div class="col col-conn pro-only ltr-num">${task.connections || 16}</div>
+    <div class="col col-reorder pro-only">
       <button class="reorder-btn btn-order-up" data-id="${task.id}" title="انتقال به بالا">▲</button>
       <button class="reorder-btn btn-order-down" data-id="${task.id}" title="انتقال به پایین">▼</button>
     </div>
   `;
+}
+
+function checkTaskCompletions(tasks) {
+  if (!Array.isArray(tasks)) return;
+  for (const t of tasks) {
+    const prev = previousTaskStatuses.get(t.id);
+    if (prev && prev !== 'completed' && t.status === 'completed') {
+      playCompletionChime();
+    }
+    previousTaskStatuses.set(t.id, t.status);
+  }
 }
 
 // --- 7. Event Source (SSE) & REST Polling ---
@@ -551,6 +708,7 @@ function initSSE() {
     try {
       const data = JSON.parse(e.data);
       if (Array.isArray(data.tasks)) {
+        checkTaskCompletions(data.tasks);
         tasksData = data.tasks;
       }
       if (typeof data.total_speed === 'number') {
@@ -578,7 +736,10 @@ async function fetchTasksREST() {
     const res = await fetch('/api/tasks');
     if (res.ok) {
       const data = await res.json();
-      if (Array.isArray(data.tasks)) tasksData = data.tasks;
+      if (Array.isArray(data.tasks)) {
+        checkTaskCompletions(data.tasks);
+        tasksData = data.tasks;
+      }
       if (typeof data.total_speed === 'number') {
         if (globalSpeedVal) globalSpeedVal.textContent = formatSpeed(data.total_speed);
         updateSparkline(data.total_speed);
@@ -686,6 +847,7 @@ const tbLinkIrani = document.getElementById('tbLinkIrani');
 
 if (tbResume) {
   tbResume.addEventListener('click', async () => {
+    playStartChime();
     if (selectedTaskIds.size === 0) {
       await fetch('/api/tasks/start-all', { method: 'POST' });
     } else {
@@ -772,13 +934,18 @@ if (contextMenu) {
     const task = tasksData.find(t => t.id === contextTaskId);
 
     if (action === 'start') {
+      playStartChime();
       await fetch(`/api/tasks/start?id=${contextTaskId}`, { method: 'POST' });
       fetchTasksREST();
     } else if (action === 'pause') {
       await fetch(`/api/tasks/pause?id=${contextTaskId}`, { method: 'POST' });
       fetchTasksREST();
+    } else if (action === 'refresh_url' && task) {
+      openRefreshUrlModal(task);
     } else if (action === 'open') {
       await fetch(`/api/tasks/open?id=${contextTaskId}`, { method: 'POST' });
+    } else if (action === 'extract' && task) {
+      handleExtractZip(task);
     } else if (action === 'copy' && task) {
       navigator.clipboard.writeText(task.url);
     } else if (action === 'checksum' && task) {
@@ -803,6 +970,7 @@ const cancelAddBtn = document.getElementById('cancelAddBtn');
 const submitAddBtn = document.getElementById('submitAddBtn');
 const modalUrlInput = document.getElementById('modalUrlInput');
 const modalFilenameInput = document.getElementById('modalFilenameInput');
+const modalDirInput = document.getElementById('modalDirInput');
 const modalQueueSelect = document.getElementById('modalQueueSelect');
 const modalConnsSelect = document.getElementById('modalConnsSelect');
 const trafficNotice = document.getElementById('trafficDetectionNotice');
@@ -814,6 +982,10 @@ function openAddModal() {
   taskModal.classList.remove('hidden');
   modalUrlInput.value = '';
   modalFilenameInput.value = '';
+  if (modalDirInput) {
+    modalDirInput.value = '';
+    modalDirInput.placeholder = appSettings.default_download_dir || '';
+  }
   trafficNotice.classList.add('hidden');
   modalUrlInput.focus();
 
@@ -867,6 +1039,7 @@ if (submitAddBtn) {
     }
 
     const filename = modalFilenameInput.value.trim();
+    const destination_dir = modalDirInput ? modalDirInput.value.trim() : '';
     const connections = parseInt(modalConnsSelect.value, 10) || 16;
     const queue = modalQueueSelect.value || 'main';
 
@@ -874,10 +1047,11 @@ if (submitAddBtn) {
       const res = await fetch('/api/tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url, filename, connections, queue })
+        body: JSON.stringify({ url, filename, destination_dir, connections, queue })
       });
 
       if (res.ok) {
+        playStartChime();
         taskModal.classList.add('hidden');
         fetchTasksREST();
       } else {
@@ -1808,11 +1982,214 @@ document.addEventListener('copy', () => {
   setTimeout(checkClipboardForUrl, 500);
 });
 
-// --- 21. App Bootstrapping ---
+// --- 21. ZIP Archive Native Extraction ---
+async function handleExtractZip(task) {
+  if (!task) return;
+  const t = translations[currentLang];
+  try {
+    const res = await fetch(`/api/tasks/extract?id=${encodeURIComponent(task.id)}`, { method: 'POST' });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      alert(`${t.extract_success}\n📁 ${data.extracted_to}`);
+    } else {
+      alert(`${t.extract_err}: ${data.error || 'Failed'}`);
+    }
+  } catch (e) {
+    alert(t.extract_err);
+  }
+}
+
+// --- 22. Modal: Refresh Expired Download URL ---
+const refreshUrlModal = document.getElementById('refreshUrlModal');
+const closeRefreshModal = document.getElementById('closeRefreshModal');
+const cancelRefreshModalBtn = document.getElementById('cancelRefreshModalBtn');
+const submitRefreshModalBtn = document.getElementById('submitRefreshModalBtn');
+const refreshModalFileName = document.getElementById('refreshModalFileName');
+const refreshModalNewURL = document.getElementById('refreshModalNewURL');
+const refreshModalStatus = document.getElementById('refreshModalStatus');
+let refreshTaskId = null;
+
+function openRefreshUrlModal(task) {
+  if (!refreshUrlModal || !task) return;
+  refreshTaskId = task.id;
+  if (refreshModalFileName) refreshModalFileName.textContent = task.filename || task.id;
+  if (refreshModalNewURL) {
+    refreshModalNewURL.value = task.url || '';
+    refreshModalNewURL.focus();
+  }
+  if (refreshModalStatus) {
+    refreshModalStatus.className = 'form-status-msg hidden';
+    refreshModalStatus.textContent = '';
+  }
+  refreshUrlModal.classList.remove('hidden');
+}
+
+if (closeRefreshModal) closeRefreshModal.addEventListener('click', () => refreshUrlModal.classList.add('hidden'));
+if (cancelRefreshModalBtn) cancelRefreshModalBtn.addEventListener('click', () => refreshUrlModal.classList.add('hidden'));
+
+if (submitRefreshModalBtn) {
+  submitRefreshModalBtn.addEventListener('click', async () => {
+    if (!refreshTaskId) return;
+    const newURL = refreshModalNewURL ? refreshModalNewURL.value.trim() : '';
+    if (!newURL) return;
+    const t = translations[currentLang];
+
+    if (refreshModalStatus) {
+      refreshModalStatus.className = 'form-status-msg';
+      refreshModalStatus.textContent = '...';
+      refreshModalStatus.classList.remove('hidden');
+    }
+
+    try {
+      const res = await fetch('/api/tasks/refresh-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ task_id: refreshTaskId, new_url: newURL })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        if (refreshModalStatus) {
+          refreshModalStatus.className = 'form-status-msg success';
+          refreshModalStatus.textContent = t.refresh_success;
+        }
+        playStartChime();
+        setTimeout(() => {
+          refreshUrlModal.classList.add('hidden');
+          fetchTasksREST();
+        }, 1200);
+      } else {
+        if (refreshModalStatus) {
+          refreshModalStatus.className = 'form-status-msg error';
+          refreshModalStatus.textContent = data.error || 'Failed to update URL';
+        }
+      }
+    } catch (e) {
+      if (refreshModalStatus) {
+        refreshModalStatus.className = 'form-status-msg error';
+        refreshModalStatus.textContent = 'Connection error';
+      }
+    }
+  });
+}
+
+// --- 23. Modal: Application Settings ---
+const settingsModal = document.getElementById('settingsModal');
+const tbSettings = document.getElementById('tbSettings');
+const closeSettingsModal = document.getElementById('closeSettingsModal');
+const cancelSettingsModalBtn = document.getElementById('cancelSettingsModalBtn');
+const saveSettingsModalBtn = document.getElementById('saveSettingsModalBtn');
+const settingDefaultDirInput = document.getElementById('settingDefaultDirInput');
+const settingDefaultModeSelect = document.getElementById('settingDefaultModeSelect');
+const settingSoundToggle = document.getElementById('settingSoundToggle');
+const settingAutoExtractToggle = document.getElementById('settingAutoExtractToggle');
+const settingsStatusMsg = document.getElementById('settingsStatusMsg');
+
+async function loadSettings() {
+  try {
+    const res = await fetch('/api/settings');
+    if (res.ok) {
+      const data = await res.json();
+      appSettings = {
+        default_download_dir: data.default_download_dir || '',
+        default_ui_mode: data.default_ui_mode || 'simple',
+        sound_enabled: data.sound_enabled !== false,
+        auto_extract_zip: data.auto_extract_zip !== false
+      };
+
+      const savedMode = localStorage.getItem('vortex_ui_mode') || appSettings.default_ui_mode || 'simple';
+      setUIMode(savedMode, false);
+    }
+  } catch (e) {
+    console.warn('Could not load settings', e);
+  }
+}
+
+function openSettingsModal() {
+  if (!settingsModal) return;
+  if (settingDefaultDirInput) settingDefaultDirInput.value = appSettings.default_download_dir || '';
+  if (settingDefaultModeSelect) settingDefaultModeSelect.value = appSettings.default_ui_mode || 'simple';
+  if (settingSoundToggle) settingSoundToggle.checked = appSettings.sound_enabled;
+  if (settingAutoExtractToggle) settingAutoExtractToggle.checked = appSettings.auto_extract_zip;
+  if (settingsStatusMsg) {
+    settingsStatusMsg.className = 'form-status-msg hidden';
+    settingsStatusMsg.textContent = '';
+  }
+  settingsModal.classList.remove('hidden');
+}
+
+if (tbSettings) tbSettings.addEventListener('click', openSettingsModal);
+if (closeSettingsModal) closeSettingsModal.addEventListener('click', () => settingsModal.classList.add('hidden'));
+if (cancelSettingsModalBtn) cancelSettingsModalBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
+
+if (saveSettingsModalBtn) {
+  saveSettingsModalBtn.addEventListener('click', async () => {
+    const defaultDir = settingDefaultDirInput ? settingDefaultDirInput.value.trim() : '';
+    const defaultMode = settingDefaultModeSelect ? settingDefaultModeSelect.value : 'simple';
+    const soundEnabled = settingSoundToggle ? settingSoundToggle.checked : true;
+    const autoExtract = settingAutoExtractToggle ? settingAutoExtractToggle.checked : true;
+
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          default_download_dir: defaultDir,
+          default_ui_mode: defaultMode,
+          sound_enabled: soundEnabled,
+          auto_extract_zip: autoExtract
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        appSettings.default_download_dir = defaultDir;
+        appSettings.default_ui_mode = defaultMode;
+        appSettings.sound_enabled = soundEnabled;
+        appSettings.auto_extract_zip = autoExtract;
+
+        setUIMode(defaultMode, true);
+
+        const t = translations[currentLang];
+        if (settingsStatusMsg) {
+          settingsStatusMsg.className = 'form-status-msg success';
+          settingsStatusMsg.textContent = t.settings_saved;
+          settingsStatusMsg.classList.remove('hidden');
+        }
+        setTimeout(() => {
+          settingsModal.classList.add('hidden');
+        }, 1000);
+      } else {
+        if (settingsStatusMsg) {
+          settingsStatusMsg.className = 'form-status-msg error';
+          settingsStatusMsg.textContent = data.error || 'Failed to save settings';
+          settingsStatusMsg.classList.remove('hidden');
+        }
+      }
+    } catch (e) {
+      if (settingsStatusMsg) {
+        settingsStatusMsg.className = 'form-status-msg error';
+        settingsStatusMsg.textContent = 'Connection error';
+        settingsStatusMsg.classList.remove('hidden');
+      }
+    }
+  });
+}
+
+// --- 24. Dual Mode Toggle Handler ---
+const btnModeToggle = document.getElementById('btnModeToggle');
+if (btnModeToggle) {
+  btnModeToggle.addEventListener('click', () => {
+    const nextMode = (currentUIMode === 'simple') ? 'pro' : 'simple';
+    setUIMode(nextMode, true);
+  });
+}
+
+// --- 25. App Bootstrapping ---
 window.addEventListener('DOMContentLoaded', () => {
   initTimeSelectors();
   loadQueues();
+  loadSettings();
   setLanguage(currentLang);
+  setUIMode(currentUIMode, false);
   initSSE();
   setInterval(fetchTasksREST, 1500);
 
@@ -1826,3 +2203,4 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }).catch(() => {});
 });
+

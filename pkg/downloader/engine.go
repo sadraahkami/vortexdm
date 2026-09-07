@@ -20,8 +20,10 @@ import (
 	"time"
 
 	"github.com/sadraahkami/vortexdm/pkg/analytics"
+	"github.com/sadraahkami/vortexdm/pkg/settings"
 	"github.com/sadraahkami/vortexdm/pkg/traffic"
 	"github.com/sadraahkami/vortexdm/pkg/tray"
+	"github.com/sadraahkami/vortexdm/pkg/unpacker"
 	"github.com/sadraahkami/vortexdm/pkg/utils"
 )
 
@@ -205,7 +207,7 @@ func (e *Engine) ProbeURL(rawURL string) (filename string, size int64, supportsR
 	return filename, size, supportsRange, nil
 }
 
-func (e *Engine) CreateTask(rawURL string, customFilename string, numConnections int) (*Task, error) {
+func (e *Engine) CreateTask(rawURL string, customFilename string, customDir string, numConnections int) (*Task, error) {
 	filename, size, supportsRange, err := e.ProbeURL(rawURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to probe URL: %w", err)
@@ -215,12 +217,18 @@ func (e *Engine) CreateTask(rawURL string, customFilename string, numConnections
 		filename = customFilename
 	}
 
+	targetDir := e.downloadDir
+	if customDir != "" {
+		targetDir = filepath.Clean(customDir)
+		os.MkdirAll(targetDir, 0755)
+	}
+
 	if numConnections <= 0 {
 		numConnections = 8
 	}
 
 	taskID := fmt.Sprintf("%x", time.Now().UnixNano())
-	finalPath := filepath.Join(e.downloadDir, filename)
+	finalPath := filepath.Join(targetDir, filename)
 
 	cat := string(utils.DetectCategory(filename))
 	tr := traffic.DetectTraffic(rawURL)
@@ -230,7 +238,7 @@ func (e *Engine) CreateTask(rawURL string, customFilename string, numConnections
 		URL:             rawURL,
 		Filename:        filename,
 		Category:        cat,
-		DestinationDir:  e.downloadDir,
+		DestinationDir:  targetDir,
 		FinalPath:       finalPath,
 		TotalSize:       size,
 		Status:          StatusQueued,
@@ -594,6 +602,14 @@ func (e *Engine) runDownload(ctx context.Context, task *Task) {
 			a.RecordDownload(0, isDom, task.Filename)
 		}
 		tray.ShowBalloon("VortexDM", "دانلود تکمیل شد: "+task.Filename)
+
+		// Auto-extract zip archive if enabled in settings
+		if strings.HasSuffix(strings.ToLower(task.Filename), ".zip") {
+			sMgr := settings.GetInstance()
+			if sMgr != nil && sMgr.Get().AutoExtractZip {
+				go unpacker.ExtractZip(task.FinalPath, "")
+			}
+		}
 	}
 	task.mu.Unlock()
 
@@ -616,7 +632,7 @@ func (e *Engine) BatchAddTasks(urls []string, queue string, conns int) ([]*Task,
 		if rawURL == "" {
 			continue
 		}
-		task, err := e.CreateTask(rawURL, "", conns)
+		task, err := e.CreateTask(rawURL, "", "", conns)
 		if err != nil {
 			errors = append(errors, fmt.Sprintf("%s: %v", rawURL, err))
 			continue
@@ -658,4 +674,68 @@ func (e *Engine) CalculateChecksum(taskID string) (sha256Hex string, md5Hex stri
 
 	return hex.EncodeToString(hSha.Sum(nil)), hex.EncodeToString(hMd5.Sum(nil)), nil
 }
+
+// RefreshTaskURL updates the remote download URL for an existing paused or errored task
+func (e *Engine) RefreshTaskURL(taskID string, newURL string) error {
+	newURL = strings.TrimSpace(newURL)
+	if newURL == "" {
+		return fmt.Errorf("new URL cannot be empty")
+	}
+
+	e.mu.RLock()
+	task, exists := e.tasks[taskID]
+	e.mu.RUnlock()
+
+	if !exists {
+		return fmt.Errorf("task not found")
+	}
+
+	task.mu.Lock()
+	if task.Status == StatusDownloading {
+		task.mu.Unlock()
+		return fmt.Errorf("cannot refresh URL while task is actively downloading; pause it first")
+	}
+
+	_, size, supportsRange, err := e.ProbeURL(newURL)
+	if err != nil {
+		task.mu.Unlock()
+		return fmt.Errorf("failed to probe new URL: %w", err)
+	}
+
+	if task.TotalSize > 0 && size > 0 && size != task.TotalSize {
+		task.mu.Unlock()
+		return fmt.Errorf("new URL content length (%d) does not match original file size (%d)", size, task.TotalSize)
+	}
+
+	task.URL = newURL
+	task.SupportsRange = supportsRange
+	if task.Status == StatusError {
+		task.Status = StatusPaused
+		task.ErrorMessage = ""
+	}
+	task.mu.Unlock()
+
+	task.SaveState()
+	e.broadcast(task)
+	return nil
+}
+
+// SetDownloadDir updates default download directory
+func (e *Engine) SetDownloadDir(dir string) {
+	if dir != "" {
+		clean := filepath.Clean(dir)
+		os.MkdirAll(clean, 0755)
+		e.mu.Lock()
+		e.downloadDir = clean
+		e.mu.Unlock()
+	}
+}
+
+// GetDownloadDir returns current default download directory
+func (e *Engine) GetDownloadDir() string {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	return e.downloadDir
+}
+
 

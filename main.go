@@ -19,6 +19,7 @@ import (
 	"github.com/sadraahkami/vortexdm/pkg/downloader"
 	"github.com/sadraahkami/vortexdm/pkg/scheduler"
 	"github.com/sadraahkami/vortexdm/pkg/server"
+	"github.com/sadraahkami/vortexdm/pkg/settings"
 	"github.com/sadraahkami/vortexdm/pkg/tray"
 )
 
@@ -31,15 +32,20 @@ func main() {
 	headlessFlag := flag.Bool("headless", false, "Run without launching desktop UI window")
 	flag.Parse()
 
-	// Ensure download directory is in the current working directory by default (saving space on C:)
+	// Initialize application settings manager
+	cwd, _ := os.Getwd()
+	if cwd == "" {
+		cwd = "."
+	}
+	sMgr := settings.Init(cwd)
+
+	// Ensure download directory is configured (CLI flag overrides settings)
 	downloadDir := *dirFlag
+	if downloadDir == "" && sMgr != nil {
+		downloadDir = sMgr.Get().DefaultDownloadDir
+	}
 	if downloadDir == "" {
-		cwd, err := os.Getwd()
-		if err != nil {
-			downloadDir = filepath.Join(".", "downloads")
-		} else {
-			downloadDir = filepath.Join(cwd, "downloads")
-		}
+		downloadDir = filepath.Join(cwd, "downloads")
 	}
 	os.MkdirAll(downloadDir, 0755)
 

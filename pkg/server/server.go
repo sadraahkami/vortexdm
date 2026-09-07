@@ -14,8 +14,10 @@ import (
 	"github.com/sadraahkami/vortexdm/pkg/analytics"
 	"github.com/sadraahkami/vortexdm/pkg/downloader"
 	"github.com/sadraahkami/vortexdm/pkg/scheduler"
+	"github.com/sadraahkami/vortexdm/pkg/settings"
 	"github.com/sadraahkami/vortexdm/pkg/traffic"
 	"github.com/sadraahkami/vortexdm/pkg/tray"
+	"github.com/sadraahkami/vortexdm/pkg/unpacker"
 )
 
 type Server struct {
@@ -27,9 +29,11 @@ type Server struct {
 }
 
 type AddTaskRequest struct {
-	URL         string `json:"url"`
-	Filename    string `json:"filename"`
-	Connections int    `json:"connections"`
+	URL            string `json:"url"`
+	Filename       string `json:"filename"`
+	DestinationDir string `json:"destination_dir"`
+	Connections    int    `json:"connections"`
+	Queue          string `json:"queue"`
 }
 
 type StatePayload struct {
@@ -122,6 +126,9 @@ func (s *Server) SetupRoutes() http.Handler {
 	mux.HandleFunc("/api/tasks/reorder", s.handleReorderTask)
 	mux.HandleFunc("/api/tasks/batch", s.handleBatchTasks)
 	mux.HandleFunc("/api/tasks/checksum", s.handleChecksum)
+	mux.HandleFunc("/api/tasks/refresh-url", s.handleRefreshURL)
+	mux.HandleFunc("/api/tasks/extract", s.handleExtractZip)
+	mux.HandleFunc("/api/settings", s.handleSettings)
 
 	// Static Web UI Files
 	if s.staticFS != nil {
@@ -175,12 +182,17 @@ func (s *Server) handleTasks(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		task, err := s.engine.CreateTask(req.URL, req.Filename, req.Connections)
+		task, err := s.engine.CreateTask(req.URL, req.Filename, req.DestinationDir, req.Connections)
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 			return
+		}
+
+		if req.Queue != "" && req.Queue != "main" {
+			task.Queue = req.Queue
+			task.SaveState()
 		}
 
 		// Auto-start the new download
@@ -590,5 +602,99 @@ func (s *Server) handleChecksum(w http.ResponseWriter, r *http.Request) {
 		"md5":     md5Hash,
 	})
 }
+
+func (s *Server) handleSettings(w http.ResponseWriter, r *http.Request) {
+	mgr := settings.GetInstance()
+	if mgr == nil {
+		http.Error(w, `{"error":"Settings not initialized"}`, http.StatusInternalServerError)
+		return
+	}
+
+	if r.Method == http.MethodGet {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(mgr.Get())
+		return
+	}
+
+	if r.Method == http.MethodPost {
+		var newSettings settings.Settings
+		if err := json.NewDecoder(r.Body).Decode(&newSettings); err != nil {
+			http.Error(w, `{"error":"Invalid payload"}`, http.StatusBadRequest)
+			return
+		}
+		if err := mgr.Update(newSettings); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if newSettings.DefaultDownloadDir != "" {
+			s.engine.SetDownloadDir(newSettings.DefaultDownloadDir)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(mgr.Get())
+		return
+	}
+
+	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+}
+
+func (s *Server) handleRefreshURL(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		TaskID string `json:"task_id"`
+		NewURL string `json:"new_url"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.TaskID == "" || req.NewURL == "" {
+		http.Error(w, `{"error":"task_id and new_url required"}`, http.StatusBadRequest)
+		return
+	}
+
+	if err := s.engine.RefreshTaskURL(req.TaskID, req.NewURL); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "url_refreshed"})
+}
+
+func (s *Server) handleExtractZip(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	taskID := r.URL.Query().Get("id")
+	if taskID == "" {
+		http.Error(w, `{"error":"Task ID required"}`, http.StatusBadRequest)
+		return
+	}
+
+	task := s.engine.GetTask(taskID)
+	if task == nil {
+		http.Error(w, `{"error":"Task not found"}`, http.StatusNotFound)
+		return
+	}
+
+	extractedDir, err := unpacker.ExtractZip(task.FinalPath, "")
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"status": "extracted",
+		"path":   extractedDir,
+	})
+}
+
 
 

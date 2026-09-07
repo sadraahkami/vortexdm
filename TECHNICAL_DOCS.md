@@ -104,13 +104,59 @@ Returns current task snapshot and total download speed.
   ```
 
 ### `POST /api/tasks`
-Adds a new download task.
+Adds a new download task with optional custom destination directory.
 - **Payload:**
   ```json
   {
     "url": "https://speed.hetzner.de/100MB.bin",
     "filename": "custom_name.bin",
-    "connections": 16
+    "destination_dir": "D:\\Downloads\\ISOs",
+    "connections": 16,
+    "queue": "main"
+  }
+  ```
+
+### `POST /api/tasks/refresh-url`
+Replaces an expired or invalid download URL for an interrupted task with a fresh link and continues downloading existing chunks seamlessly without data loss.
+- **Payload:**
+  ```json
+  {
+    "task_id": "18f293b4a20",
+    "new_url": "https://server.example.com/fresh-token/file.zip"
+  }
+  ```
+
+### `POST /api/tasks/extract?id=<id>`
+Triggers native Go extraction of a downloaded `.zip` archive into a folder alongside the archive with Zip-Slip path traversal protection.
+- **Response:**
+  ```json
+  {
+    "success": true,
+    "extracted_to": "D:\\Downloads\\file"
+  }
+  ```
+
+### `GET /api/settings`
+Returns global application preferences (default download directory, default UI mode, sound feedback toggle, auto ZIP extraction toggle).
+- **Response:**
+  ```json
+  {
+    "default_download_dir": "D:\\Downloads",
+    "default_ui_mode": "simple",
+    "sound_enabled": true,
+    "auto_extract_zip": true
+  }
+  ```
+
+### `POST /api/settings`
+Updates and persists global application preferences to `vortex_settings.json`.
+- **Payload:**
+  ```json
+  {
+    "default_download_dir": "D:\\Downloads",
+    "default_ui_mode": "pro",
+    "sound_enabled": true,
+    "auto_extract_zip": false
   }
   ```
 
@@ -251,10 +297,35 @@ Analyzes URL host/IP against Iranian domestic CIDRs and ASNs. Returns `{ is_dome
 - Optional automatic download capture intercepting standard browser downloads and redirecting them to VortexDM's multi-connection engine.
 - Instant popup status dashboard with one-click URL paste and download trigger.
 
+### 5.9 Expired Link Refresher (`pkg/downloader/engine.go` - `RefreshTaskURL`)
+- Solves token expiry on premium and timed download hosts without redownloading completed chunks.
+- Probes new URL, verifies file size matching with existing task byte length.
+- Updates task URL in memory and `.vortex` state file, enabling seamless resumption from the exact byte where interruption occurred.
+
+### 5.10 Pure Go Native Archive Extractor (`pkg/unpacker/unpacker.go`)
+- Self-contained, zero-CGO `.zip` extractor using Go standard library `archive/zip`.
+- **Zip-Slip Traversal Protection:** Implements rigorous destination path verification ensuring no archive entry can escape or overwrite files outside the targeted extraction directory.
+- Optional automatic extraction triggered upon task completion when configured in preferences.
+
+### 5.11 Application Configuration Manager (`pkg/settings/settings.go`)
+- Thread-safe persistent settings engine saved to `vortex_settings.json`.
+- Configures default download directory, default interface mode (`simple` / `pro`), sound notification toggle, and auto-archive extraction.
+
+### 5.12 Zero-Byte High-Tech Synthesized Audio Engine (Web Audio API)
+- Zero external MP3/WAV file downloads (0-byte footprint).
+- Generates procedural pleasant futuristic ascending chimes on completion and subtle acoustic blips on download start via browser `AudioContext` sine and triangle oscillator synthesis with exponential decay envelopes.
+
 ---
 
 ## 6. High-Density UI Architecture
 
+- **Dual-Mode Dynamic Interface (Simple vs PRO Mode):**
+  - **Simple Mode:** Ultra-clean, distraction-free minimalist interface designed for everyday users. Automatically expands the file name column, hiding technical queuing, connection count, priority reordering, batch importer, and scheduler controls.
+  - **PRO Mode:** Full IDM-grade power studio displaying advanced metrics, priority controls, parallel thread count, schedule automation, traffic analytics, and LinkIrani domestic inspector.
+  - **Animated Mode Switching:** Smooth 1-click transition (`#btnModeToggle`) with subtle layout animations.
+- **Custom Download Destination Selector:**
+  - Global default download folder configuration via Settings modal.
+  - Per-task custom folder input directly in Add Download dialog (`#modalDirInput`).
 - **IDM-Grade Information Density:** Compact, sticky-header table grid (36px row height), allowing 20+ downloads visible simultaneously.
 - **Tree Navigation & Collapsible Sidebar:** Left sidebar organized into Categories, Statuses, and Queues with one-click collapse/expand (`.sidebar-collapsed`) for maximum data visibility.
 - **Batch Download Modal:** Clean multi-line URL importer supporting target queue selection, thread count configuration, and immediate auto-start.
@@ -272,7 +343,7 @@ Analyzes URL host/IP against Iranian domestic CIDRs and ASNs. Returns `{ is_dome
 
 ## 7. Automated Testing Strategy
 
-Suite of 12 unit and integration tests covering:
+Suite of 15 unit and integration tests covering:
 1. `TestBatchAddTasksAndAPI`: Validates bulk URL creation, queue assignment, and `POST /api/tasks/batch` REST endpoint.
 2. `TestChecksumVerification`: Validates streaming SHA-256 and MD5 hash generation and `GET /api/tasks/checksum` endpoint.
 3. `TestTrafficAnalytics`: Verifies thread-safe traffic recording, domestic/international separation, savings calculation, and cycle reset.
@@ -282,10 +353,14 @@ Suite of 12 unit and integration tests covering:
 7. `TestServerEndpointsAndAssets`: Validates root HTML, dark color-scheme meta, favicon, manifest, and window minimize endpoints.
 8. `TestDetectTraffic`: Iranian domain detection (`soft98.ir` -> domestic نیم‌بها) vs international (`github.com` -> تمام‌بها).
 9. `TestFormatBytes`, `TestFormatSpeed`, `TestFormatDuration`, `TestDetectCategory`.
+10. `TestSettingsManagement`: Validates default download directory persistence, audio toggles, and mode defaults.
+11. `TestRefreshExpiredTaskURL`: Validates header probe, size validation, and in-place URL refreshment.
+12. `TestZipExtractionAndZipSlipProtection`: Validates pure Go zip unarchiving and path traversal security guards.
 
 Run tests:
 ```bash
 cmd /c test.bat
 ```
+
 
 

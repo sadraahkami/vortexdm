@@ -75,7 +75,7 @@ func TestMultiThreadedDownload(t *testing.T) {
 	engine := downloader.NewEngine(tempDir, 4)
 	defer engine.Close()
 
-	task, err := engine.CreateTask(server.URL, "testfile.dat", 4)
+	task, err := engine.CreateTask(server.URL, "testfile.dat", "", 4)
 	if err != nil {
 		t.Fatalf("CreateTask failed: %v", err)
 	}

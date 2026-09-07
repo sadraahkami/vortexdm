@@ -46,7 +46,7 @@
           <span data-i18n="tb_add">دانلود جدید</span>
         </button>
 
-        <button id="tbBatch" class="tb-btn" title="افزودن دسته‌ای لینک‌ها" data-i18n-title="tb_batch_tip">
+        <button id="tbBatch" class="tb-btn pro-only" title="افزودن دسته‌ای لینک‌ها" data-i18n-title="tb_batch_tip">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
           <span data-i18n="tb_batch">دانلود دسته‌ای</span>
         </button>
@@ -76,30 +76,35 @@
           <span data-i18n="tb_clear">پاک‌سازی</span>
         </button>
 
-        <div class="toolbar-divider"></div>
+        <div class="toolbar-divider pro-only"></div>
 
-        <button id="tbScheduler" class="tb-btn tb-btn-accent" title="زمان‌بندی و صف دانلود شبانه" data-i18n-title="tb_sched_tip">
+        <button id="tbScheduler" class="tb-btn tb-btn-accent pro-only" title="زمان‌بندی و صف دانلود شبانه" data-i18n-title="tb_sched_tip">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
           <span data-i18n="tb_scheduler">زمان‌بندی</span>
         </button>
 
-        <button id="tbSpeedLimit" class="tb-btn" title="محدودکننده و تقسیم هوشمند پهنای باند" data-i18n-title="tb_limit_tip">
+        <button id="tbSpeedLimit" class="tb-btn pro-only" title="محدودکننده و تقسیم هوشمند پهنای باند" data-i18n-title="tb_limit_tip">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
           <span id="tbLimitLabel" data-i18n="tb_speed_limit">سقف سرعت</span>
         </button>
 
-        <button id="tbLinkIrani" class="tb-btn tb-btn-iran iran-only" title="بررسی ترافیک نیم‌بها (LinkIrani.ir)" data-i18n-title="tb_iran_tip">
+        <button id="tbLinkIrani" class="tb-btn tb-btn-iran iran-only pro-only" title="بررسی ترافیک نیم‌بها (LinkIrani.ir)" data-i18n-title="tb_iran_tip">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
           <span data-i18n="tb_linkirani">استعلام نیم‌بها</span>
         </button>
 
-        <button id="tbAnalytics" class="tb-btn tb-btn-analytics" title="آمار و گزارش مصرف اینترنت" data-i18n-title="tb_analytics_tip">
+        <button id="tbAnalytics" class="tb-btn tb-btn-analytics pro-only" title="آمار و گزارش مصرف اینترنت" data-i18n-title="tb_analytics_tip">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
           <span data-i18n="tb_analytics">گزارش مصرف</span>
         </button>
+
+        <button id="tbSettings" class="tb-btn" title="تنظیمات نرم‌افزار" data-i18n-title="tb_settings_tip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          <span data-i18n="tb_settings">تنظیمات</span>
+        </button>
       </div>
 
-      <!-- Right Area: Speedometer & Language -->
+      <!-- Right Area: Speedometer, Mode Switcher & Language -->
       <div class="toolbar-status-right">
         <div class="global-speed-display" title="سرعت دانلود کلی">
           <span class="speed-unit-lbl" data-i18n="speed_lbl">سرعت:</span>
@@ -107,7 +112,15 @@
           <canvas id="speedSparkline" width="80" height="24"></canvas>
         </div>
 
+        <button id="btnModeToggle" class="mode-toggle-btn" title="تغییر به حالت پیشرفته / ساده" data-i18n-title="tip_mode_toggle">
+          <span class="mode-text" id="modeText" data-i18n="mode_simple">ساده</span>
+          <span class="mode-pill pro">PRO</span>
+        </button>
+
         <button id="langToggleBtn" class="lang-switch-btn" title="تغییر زبان">
+          <span id="langText">EN</span>
+        </button>
+      </div>
           <span id="langText">EN</span>
         </button>
       </div>
@@ -208,16 +221,16 @@
         <!-- High-Density Data Table Header -->
         <div class="grid-header">
           <div class="col col-check"><input type="checkbox" id="selectAllCheckbox"></div>
-          <div class="col col-order" title="ترتیب اولویت دانلود">#</div>
+          <div class="col col-order pro-only" title="ترتیب اولویت دانلود">#</div>
           <div class="col col-name" data-i18n="col_filename">نام فایل</div>
           <div class="col col-size" data-i18n="col_size">حجم</div>
           <div class="col col-progress" data-i18n="col_progress">وضعیت / درصد پیشرفت</div>
           <div class="col col-speed" data-i18n="col_speed">سرعت انتقال</div>
           <div class="col col-eta" data-i18n="col_eta">زمان باقی‌مانده</div>
           <div class="col col-traffic iran-only" data-i18n="col_traffic">تعرفه ترافیک</div>
-          <div class="col col-queue" data-i18n="col_queue">صف</div>
-          <div class="col col-conn" title="تعداد قطعات موازی">Q</div>
-          <div class="col col-reorder" title="جابجایی در صف">ترتیب</div>
+          <div class="col col-queue pro-only" data-i18n="col_queue">صف</div>
+          <div class="col col-conn pro-only" title="تعداد قطعات موازی">Q</div>
+          <div class="col col-reorder pro-only" title="جابجایی در صف">ترتیب</div>
         </div>
 
         <!-- Table Rows List -->
@@ -266,6 +279,10 @@
         <div class="form-row">
           <label data-i18n="lbl_filename">نام فایل ذخیره‌شده (اختیاری):</label>
           <input type="text" id="modalFilenameInput" placeholder="نام خودکار از سرور دریافت می‌شود" class="form-input">
+        </div>
+        <div class="form-row">
+          <label data-i18n="lbl_dest_dir">پوشه ذخیره‌سازی (اختیاری):</label>
+          <input type="text" id="modalDirInput" placeholder="مسیر پیش‌فرض دانلودها..." class="form-input ltr-input">
         </div>
         <div class="form-cols">
           <div class="form-row">
@@ -673,12 +690,79 @@
     </div>
   </div>
 
+  <!-- Modal: Refresh Expired URL -->
+  <div id="refreshUrlModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 data-i18n="refresh_modal_title">تمدید نشانی دانلود منقضی‌شده</h3>
+        <button class="modal-close-btn" id="closeRefreshModal">✖</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <label data-i18n="refresh_file_lbl">فایل:</label>
+          <div id="refreshModalFileName" class="cs-filename ltr-text">...</div>
+        </div>
+        <div class="form-row">
+          <label data-i18n="refresh_new_url_lbl">نشانی جدید (لینک تازه با توکن جدید):</label>
+          <input type="url" id="refreshModalNewURL" placeholder="https://..." class="form-input ltr-input">
+        </div>
+        <div id="refreshModalStatus" class="form-status-msg hidden"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancelRefreshModalBtn" data-i18n="btn_cancel">انصراف</button>
+        <button class="btn btn-primary" id="submitRefreshModalBtn" data-i18n="refresh_btn_apply">به‌روزرسانی و ادامه دانلود</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Settings -->
+  <div id="settingsModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 data-i18n="settings_title">تنظیمات VortexDM</h3>
+        <button class="modal-close-btn" id="closeSettingsModal">✖</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <label data-i18n="settings_default_dir">پوشه پیش‌فرض ذخیره فایل‌ها:</label>
+          <input type="text" id="settingDefaultDirInput" class="form-input ltr-input" placeholder="مسیر پوشه دانلود...">
+        </div>
+        <div class="form-row">
+          <label data-i18n="settings_default_mode">حالت پیش‌فرض رابط کاربری:</label>
+          <select id="settingDefaultModeSelect" class="form-select">
+            <option value="simple" data-i18n="mode_simple_opt">ساده (مینیمال و خلوت - پیشنهادی)</option>
+            <option value="pro" data-i18n="mode_pro_opt">پیشرفته (کامل با تمام ابزارهای تخصصی)</option>
+          </select>
+        </div>
+        <div class="form-row checkbox-row">
+          <label class="checkbox-label">
+            <input type="checkbox" id="settingSoundToggle" checked>
+            <span data-i18n="settings_sound_toggle">پخش فیدبک صوتی های‌تک هنگام شروع و اتمام دانلود</span>
+          </label>
+        </div>
+        <div class="form-row checkbox-row">
+          <label class="checkbox-label">
+            <input type="checkbox" id="settingAutoExtractToggle">
+            <span data-i18n="settings_extract_toggle">استخراج خودکار فایل‌های فشرده (ZIP) پس از دانلود</span>
+          </label>
+        </div>
+        <div id="settingsStatusMsg" class="form-status-msg hidden"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancelSettingsModalBtn" data-i18n="btn_cancel">انصراف</button>
+        <button class="btn btn-primary" id="saveSettingsModalBtn" data-i18n="btn_save">ذخیره تنظیمات</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Right-Click Context Menu -->
   <div id="contextMenu" class="custom-context-menu hidden">
     <div class="cm-item" data-cm="start"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> <span data-i18n="cm_resume">ادامه دانلود</span></div>
     <div class="cm-item" data-cm="pause"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg> <span data-i18n="cm_pause">توقف موقت</span></div>
+    <div class="cm-item" data-cm="refresh_url"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"></path><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg> <span data-i18n="cm_refresh_url">تمدید نشانی دانلود (لینک منقضی‌شده)</span></div>
     <div class="cm-divider"></div>
     <div class="cm-item" data-cm="open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> <span data-i18n="cm_open_folder">باز کردن در پوشه</span></div>
+    <div class="cm-item" data-cm="extract"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg> <span data-i18n="cm_extract">استخراج فایل فشرده (ZIP)</span></div>
     <div class="cm-item" data-cm="checksum"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> <span data-i18n="cm_checksum">بررسی هش و اصالت (SHA-256 / MD5)</span></div>
     <div class="cm-item" data-cm="copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> <span data-i18n="cm_copy">کپی نشانی دانلود</span></div>
     <div class="cm-item iran-only" data-cm="linkirani"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/></svg> <span data-i18n="cm_check_iran">استعلام در LinkIrani.ir</span></div>

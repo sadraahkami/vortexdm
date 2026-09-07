@@ -38,7 +38,7 @@ func TestChecksumVerification(t *testing.T) {
 	engine := downloader.NewEngine(tempDir, 2)
 	defer engine.Close()
 
-	task, err := engine.CreateTask(mockServer.URL+"/test_checksum.iso", "test_checksum.iso", 1)
+	task, err := engine.CreateTask(mockServer.URL+"/test_checksum.iso", "test_checksum.iso", "", 1)
 	if err != nil {
 		t.Fatalf("Failed to create task: %v", err)
 	}
