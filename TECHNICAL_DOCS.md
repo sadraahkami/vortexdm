@@ -135,27 +135,61 @@ Cancels and removes the task and its local files.
 ### `POST /api/tasks/open?id=<id>`
 Selects and reveals the file in the operating system's native file explorer (`explorer /select,` on Windows, `open -R` on macOS, `xdg-open` on Linux).
 
-### `GET /api/events`
-Server-Sent Events (SSE) stream pushing `event: tasks` messages.
+### `GET /api/scheduler`
+Returns current scheduler configuration for Main Queue and Night Queue.
+
+### `POST /api/scheduler`
+Saves and hot-reloads scheduler settings (start/stop times, active days, post-actions like PC shutdown).
+
+### `GET /api/speed-limit`
+Returns active aggregate bandwidth ceiling (`{"limit": 2097152}`).
+
+### `POST /api/speed-limit`
+Sets global download speed cap using token-bucket rate limiter.
+
+### `GET /api/traffic/check?url=<url>`
+Analyzes URL host/IP against Iranian domestic CIDRs and ASNs. Returns `{ is_domestic: bool, label: "نیم‌بها", linkirani_url: "..." }`.
 
 ---
 
-## 5. UI Architecture & Typography Isolation
+## 5. Advanced Engine Subsystems
 
-- **Vector Iconography:** Zero emoji dependency. All glyphs are lightweight, inline SVG vectors conforming to Lucide design standards (2px stroke, round caps/joins).
-- **RTL/LTR Direction Isolation:** Technical values (speedometer, file sizes, ETA, progress percentages, and chunk blocks) are explicitly wrapped with `direction: ltr; unicode-bidi: isolate;` to prevent punctuation/character flipping when rendering in Persian (RTL) mode.
-- **Color Space:** Deep Obsidian Dark palette (`#080c14` / `#0b111e` / `#121a2c`) with glowing cyan (`#00f2fe`) and emerald (`#10b981`) accent channels.
+### 5.1 Domestic Traffic & LinkIrani Integration (`pkg/traffic/iran.go`)
+- Fast heuristic evaluation of `.ir` TLDs.
+- Non-blocking DNS lookup of host IPs.
+- Subnet evaluation against 24+ primary Iranian ISP/datacenter CIDRs (Asiatech, Shatel, MCI, Irancell, Afranet, TCI, Tebyan, ParsOnline).
+- Dynamic LinkIrani.ir verification URL generation.
+
+### 5.2 Scheduler & Automated Post-Actions (`pkg/scheduler/scheduler.go`)
+- Dedicated Queue configurations (`main` and `night`).
+- Background ticker monitoring current system clock every 5 seconds.
+- Triggers automatic start at scheduled minute and graceful pause at stop minute.
+- Windows OS native integration:
+  - Automated PC shutdown via `shutdown /s /t 60`.
+  - Automated system sleep via `rundll32.exe powrprof.dll,SetSuspendState`.
+
+### 5.3 Smart Bandwidth Allocator (`pkg/downloader/limiter.go`)
+- Token-bucket algorithm enforcing bandwidth limit across all concurrent Goroutines.
+- Prevents connection starvation, allowing smooth concurrent web browsing and gaming while downloading.
 
 ---
 
-## 6. Automated Testing Strategy
+## 6. High-Density UI Architecture
 
-Integration tests in `tests/downloader_test.go` utilize Go's `net/http/httptest`:
-1. Creates an in-memory HTTP server handling `HEAD` and partial content `GET` (`Range: bytes=X-Y`).
-2. Generates cryptographic pseudorandom binary data.
-3. Executes 4 concurrent Goroutine downloads with `Engine.StartTask`.
-4. Performs binary byte-for-byte comparison (`bytes.Equal`) to verify zero data corruption.
-5. Verifies file cleanup on `DeleteTask`.
+- **IDM-Grade Information Density:** Replaced oversized cards with a compact, sticky-header table grid (36px row height), allowing 20+ downloads visible simultaneously.
+- **Tree Navigation:** Left sidebar organized into Categories (Compressed, Documents, Music, Programs, Video), Statuses (Unfinished, Finished), and Queues (Main, Night).
+- **Interactive Context Menu:** Native-like floating menu on right-click for instant file opening, copying URL, checking on LinkIrani.ir, and task management.
+- **Typography & Isolation:** Strict `direction: ltr; unicode-bidi: isolate;` on all speed metrics, numbers, and file sizes to ensure clean bilingual rendering.
+
+---
+
+## 7. Automated Testing Strategy
+
+Suite of 7 unit and integration tests covering:
+1. `TestMultiThreadedDownload`: Multi-goroutine concurrent HTTP Range download with byte-by-byte SHA/integrity verification.
+2. `TestSpeedLimiter`: Token-bucket throttle enforcement and unthrottled throughput.
+3. `TestDetectTraffic`: Iranian domain detection (`soft98.ir` -> domestic نیم‌بها) vs international (`github.com` -> تمام‌بها).
+4. `TestFormatBytes`, `TestFormatSpeed`, `TestFormatDuration`, `TestDetectCategory`.
 
 Run tests:
 ```bash

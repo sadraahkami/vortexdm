@@ -13,6 +13,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/sadraahkami/vortexdm/pkg/traffic"
 	"github.com/sadraahkami/vortexdm/pkg/utils"
 )
 
@@ -28,6 +29,7 @@ type Engine struct {
 	subscribers    []chan *Task
 	subscribersMu  sync.Mutex
 	stopTickerChan chan struct{}
+	limiter        *SpeedLimiter
 }
 
 func NewEngine(downloadDir string, maxConcurrent int) *Engine {
@@ -51,6 +53,7 @@ func NewEngine(downloadDir string, maxConcurrent int) *Engine {
 		client:         &http.Client{Transport: customTransport, Timeout: 0},
 		subscribers:    make([]chan *Task, 0),
 		stopTickerChan: make(chan struct{}),
+		limiter:        NewSpeedLimiter(0),
 	}
 
 	eng.startSpeedTicker()
@@ -203,6 +206,7 @@ func (e *Engine) CreateTask(rawURL string, customFilename string, numConnections
 	finalPath := filepath.Join(e.downloadDir, filename)
 
 	cat := string(utils.DetectCategory(filename))
+	tr := traffic.DetectTraffic(rawURL)
 
 	task := &Task{
 		ID:              taskID,
@@ -215,6 +219,11 @@ func (e *Engine) CreateTask(rawURL string, customFilename string, numConnections
 		Status:          StatusQueued,
 		SupportsRange:   supportsRange,
 		NumConnections:  numConnections,
+		Queue:           "main",
+		TrafficBadge:    tr.TrafficBadge,
+		TrafficLabel:    tr.Label,
+		LinkIraniURL:    tr.LinkIraniURL,
+		IPAddress:       tr.IPAddress,
 		CreatedAt:       time.Now(),
 		ProgressPercent: 0,
 		ETA:             "--:--",
@@ -403,7 +412,64 @@ func (e *Engine) ClearCompleted() {
 	e.mu.Unlock()
 }
 
+func (e *Engine) SetSpeedLimit(limitBytesPerSec int64) {
+	if e.limiter != nil {
+		e.limiter.SetLimit(limitBytesPerSec)
+	}
+}
 
+func (e *Engine) GetSpeedLimit() int64 {
+	if e.limiter != nil {
+		return e.limiter.GetLimit()
+	}
+	return 0
+}
+
+func (e *Engine) StartQueue(queueName string) {
+	e.mu.RLock()
+	tasksToStart := make([]string, 0)
+	for id, t := range e.tasks {
+		if (queueName == "" || t.Queue == queueName) && (t.Status == StatusPaused || t.Status == StatusQueued || t.Status == StatusError) {
+			tasksToStart = append(tasksToStart, id)
+		}
+	}
+	e.mu.RUnlock()
+
+	for _, id := range tasksToStart {
+		e.StartTask(id)
+	}
+}
+
+func (e *Engine) PauseQueue(queueName string) {
+	e.mu.RLock()
+	tasksToPause := make([]string, 0)
+	for id, t := range e.tasks {
+		if (queueName == "" || t.Queue == queueName) && t.Status == StatusDownloading {
+			tasksToPause = append(tasksToPause, id)
+		}
+	}
+	e.mu.RUnlock()
+
+	for _, id := range tasksToPause {
+		e.PauseTask(id)
+	}
+}
+
+func (e *Engine) IsQueueDone(queueName string) bool {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+
+	count := 0
+	for _, t := range e.tasks {
+		if queueName == "" || t.Queue == queueName {
+			count++
+			if t.Status != StatusCompleted {
+				return false
+			}
+		}
+	}
+	return count > 0
+}
 
 func (e *Engine) runDownload(ctx context.Context, task *Task) {
 	file, err := os.OpenFile(task.FinalPath, os.O_CREATE|os.O_WRONLY, 0644)
@@ -426,6 +492,9 @@ func (e *Engine) runDownload(ctx context.Context, task *Task) {
 
 	onBytesRead := func(n int) {
 		atomic.AddInt64(&e.bytesWindow, int64(n))
+		if e.limiter != nil {
+			e.limiter.Throttle(n)
+		}
 	}
 
 	for _, chunk := range task.Chunks {

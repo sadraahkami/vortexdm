@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/sadraahkami/vortexdm/pkg/downloader"
+	"github.com/sadraahkami/vortexdm/pkg/scheduler"
 	"github.com/sadraahkami/vortexdm/pkg/server"
 )
 
@@ -47,13 +48,16 @@ func main() {
 	engine := downloader.NewEngine(downloadDir, 8)
 	defer engine.Close()
 
+	sched := scheduler.NewScheduler(downloadDir, engine.StartQueue, engine.PauseQueue, engine.IsQueueDone)
+	defer sched.Close()
+
 	// Extract embedded UI filesystem
 	subUI, err := fs.Sub(uiEmbedFS, "ui")
 	if err != nil {
 		log.Fatalf("[VortexDM] Failed to load embedded UI: %v", err)
 	}
 
-	srv := server.NewServer(engine, http.FS(subUI))
+	srv := server.NewServer(engine, sched, http.FS(subUI))
 
 	// Bind listener
 	listenAddr := fmt.Sprintf("127.0.0.1:%d", *portFlag)

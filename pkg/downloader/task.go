@@ -41,6 +41,11 @@ type Task struct {
 	SupportsRange     bool          `json:"resumable"`
 	NumConnections    int           `json:"connections"`
 	Chunks            []*Chunk      `json:"chunks"`
+	Queue             string        `json:"queue"`
+	TrafficBadge      string        `json:"traffic_badge"`
+	TrafficLabel      string        `json:"traffic_label"`
+	LinkIraniURL      string        `json:"linkirani_url"`
+	IPAddress         string        `json:"ip_address"`
 	CreatedAt         time.Time     `json:"created_at"`
 	CompletedAt       *time.Time    `json:"completed_at,omitempty"`
 

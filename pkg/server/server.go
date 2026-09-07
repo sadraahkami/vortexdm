@@ -12,10 +12,13 @@ import (
 	"time"
 
 	"github.com/sadraahkami/vortexdm/pkg/downloader"
+	"github.com/sadraahkami/vortexdm/pkg/scheduler"
+	"github.com/sadraahkami/vortexdm/pkg/traffic"
 )
 
 type Server struct {
 	engine   *downloader.Engine
+	sched    *scheduler.Scheduler
 	staticFS http.FileSystem
 	clients  map[chan []byte]bool
 	clientMu sync.Mutex
@@ -30,11 +33,13 @@ type AddTaskRequest struct {
 type StatePayload struct {
 	Tasks      []*downloader.Task `json:"tasks"`
 	TotalSpeed float64            `json:"total_speed"`
+	SpeedLimit int64              `json:"speed_limit"`
 }
 
-func NewServer(eng *downloader.Engine, staticFS http.FileSystem) *Server {
+func NewServer(eng *downloader.Engine, sched *scheduler.Scheduler, staticFS http.FileSystem) *Server {
 	s := &Server{
 		engine:   eng,
+		sched:    sched,
 		staticFS: staticFS,
 		clients:  make(map[chan []byte]bool),
 	}
@@ -68,6 +73,7 @@ func (s *Server) broadcastCurrentState() {
 	payload := StatePayload{
 		Tasks:      s.engine.GetTasks(),
 		TotalSpeed: s.engine.GetTotalSpeed(),
+		SpeedLimit: s.engine.GetSpeedLimit(),
 	}
 
 	data, err := json.Marshal(payload)
@@ -102,6 +108,11 @@ func (s *Server) SetupRoutes() http.Handler {
 	mux.HandleFunc("/api/tasks/open", s.handleOpenFile)
 	mux.HandleFunc("/api/events", s.handleSSE)
 
+	// Advanced Controls & Iran Domestic Traffic
+	mux.HandleFunc("/api/scheduler", s.handleScheduler)
+	mux.HandleFunc("/api/speed-limit", s.handleSpeedLimit)
+	mux.HandleFunc("/api/traffic/check", s.handleTrafficCheck)
+
 	// Static Web UI Files
 	if s.staticFS != nil {
 		fileServer := http.FileServer(s.staticFS)
@@ -135,6 +146,7 @@ func (s *Server) handleTasks(w http.ResponseWriter, r *http.Request) {
 		payload := StatePayload{
 			Tasks:      s.engine.GetTasks(),
 			TotalSpeed: s.engine.GetTotalSpeed(),
+			SpeedLimit: s.engine.GetSpeedLimit(),
 		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(payload)
@@ -337,4 +349,64 @@ func (s *Server) handleSSE(w http.ResponseWriter, r *http.Request) {
 			flusher.Flush()
 		}
 	}
+}
+
+func (s *Server) handleScheduler(w http.ResponseWriter, r *http.Request) {
+	if s.sched == nil {
+		http.Error(w, `{"error":"Scheduler not initialized"}`, http.StatusBadRequest)
+		return
+	}
+	if r.Method == http.MethodGet {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(s.sched.GetConfig())
+		return
+	}
+	if r.Method == http.MethodPost {
+		var cfg scheduler.SchedulerConfig
+		if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
+			http.Error(w, `{"error":"Invalid payload"}`, http.StatusBadRequest)
+			return
+		}
+		if err := s.sched.SaveConfig(cfg); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"status": "saved"})
+		return
+	}
+	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+}
+
+func (s *Server) handleSpeedLimit(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]int64{"limit": s.engine.GetSpeedLimit()})
+		return
+	}
+	if r.Method == http.MethodPost {
+		var req struct {
+			Limit int64 `json:"limit"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, `{"error":"Invalid payload"}`, http.StatusBadRequest)
+			return
+		}
+		s.engine.SetSpeedLimit(req.Limit)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"status": "updated", "limit": req.Limit})
+		return
+	}
+	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+}
+
+func (s *Server) handleTrafficCheck(w http.ResponseWriter, r *http.Request) {
+	targetURL := r.URL.Query().Get("url")
+	if targetURL == "" {
+		http.Error(w, `{"error":"URL parameter required"}`, http.StatusBadRequest)
+		return
+	}
+	info := traffic.DetectTraffic(targetURL)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(info)
 }
