@@ -1424,3 +1424,12 @@ html[lang="en"] .sched-tab {
   color: var(--text-dim);
   padding: 1.2rem;
 }
+
+/* International (English) Mode Cleanups - Hide Domestic/Iran-Specific Elements */
+html[lang="en"] .iran-only {
+  display: none !important;
+}
+
+html[lang="en"] .analytics-metrics-grid {
+  grid-template-columns: repeat(2, 1fr);
+}

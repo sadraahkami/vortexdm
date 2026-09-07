@@ -83,7 +83,7 @@
           <span id="tbLimitLabel" data-i18n="tb_speed_limit">سقف سرعت</span>
         </button>
 
-        <button id="tbLinkIrani" class="tb-btn tb-btn-iran" title="بررسی ترافیک نیم‌بها (LinkIrani.ir)" data-i18n-title="tb_iran_tip">
+        <button id="tbLinkIrani" class="tb-btn tb-btn-iran iran-only" title="بررسی ترافیک نیم‌بها (LinkIrani.ir)" data-i18n-title="tb_iran_tip">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
           <span data-i18n="tb_linkirani">استعلام نیم‌بها</span>
         </button>
@@ -94,7 +94,7 @@
         </button>
       </div>
 
-      <!-- Right Area: Speedometer & Language & Minimize -->
+      <!-- Right Area: Speedometer & Language -->
       <div class="toolbar-status-right">
         <div class="global-speed-display" title="سرعت دانلود کلی">
           <span class="speed-unit-lbl" data-i18n="speed_lbl">سرعت:</span>
@@ -104,10 +104,6 @@
 
         <button id="langToggleBtn" class="lang-switch-btn" title="تغییر زبان">
           <span id="langText">EN</span>
-        </button>
-
-        <button id="btnMinimizeWindow" class="window-ctl-btn" title="کوچک‌سازی پنجره (Minimize)" data-i18n-title="tb_minimize_tip">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
         </button>
       </div>
     </header>
@@ -213,7 +209,7 @@
           <div class="col col-progress" data-i18n="col_progress">وضعیت / درصد پیشرفت</div>
           <div class="col col-speed" data-i18n="col_speed">سرعت انتقال</div>
           <div class="col col-eta" data-i18n="col_eta">زمان باقی‌مانده</div>
-          <div class="col col-traffic" data-i18n="col_traffic">تعرفه ترافیک</div>
+          <div class="col col-traffic iran-only" data-i18n="col_traffic">تعرفه ترافیک</div>
           <div class="col col-queue" data-i18n="col_queue">صف</div>
           <div class="col col-conn" title="تعداد قطعات موازی">Q</div>
           <div class="col col-reorder" title="جابجایی در صف">ترتیب</div>
@@ -244,7 +240,7 @@
         <span data-i18n="sb_speed_limit">سقف سرعت:</span>
         <span id="sbLimitStatus" class="ltr-num">نامحدود</span>
       </div>
-      <div class="sb-item push-end">
+      <div class="sb-item push-end iran-only">
         <span data-i18n="sb_iran_support">سامانه استعلام ترافیک متصل به LinkIrani.ir</span>
       </div>
     </footer>
@@ -285,7 +281,7 @@
             </select>
           </div>
         </div>
-        <div id="trafficDetectionNotice" class="traffic-notice hidden">
+        <div id="trafficDetectionNotice" class="traffic-notice hidden iran-only">
           <span class="traffic-tag" id="trafficNoticeTag"></span>
           <span class="traffic-desc" id="trafficNoticeDesc"></span>
           <a href="#" id="trafficNoticeLink" target="_blank" class="traffic-ext-link">استعلام در LinkIrani.ir ↗</a>
@@ -447,6 +443,8 @@
         </div>
       </div>
     </div>
+  </div>
+
   <!-- Modal: Data Usage & Traffic Analytics -->
   <div id="analyticsModal" class="modal-overlay hidden">
     <div class="modal-card modal-xl">
@@ -473,7 +471,7 @@
             </div>
           </div>
 
-          <div class="metric-card card-domestic">
+          <div class="metric-card card-domestic iran-only">
             <div class="metric-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
             </div>
@@ -493,7 +491,7 @@
             </div>
           </div>
 
-          <div class="metric-card card-savings">
+          <div class="metric-card card-savings iran-only">
             <div class="metric-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
             </div>
@@ -527,7 +525,7 @@
                 <tr>
                   <th data-i18n="analytics_th_filename">نام فایل</th>
                   <th data-i18n="analytics_th_size">حجم فایل</th>
-                  <th data-i18n="analytics_th_tariff">نوع تعرفه</th>
+                  <th class="iran-only" data-i18n="analytics_th_tariff">نوع تعرفه</th>
                   <th data-i18n="analytics_th_time">زمان ثبت</th>
                 </tr>
               </thead>
@@ -576,7 +574,7 @@
     <div class="cm-divider"></div>
     <div class="cm-item" data-cm="open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> <span data-i18n="cm_open_folder">باز کردن در پوشه</span></div>
     <div class="cm-item" data-cm="copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> <span data-i18n="cm_copy">کپی نشانی دانلود</span></div>
-    <div class="cm-item" data-cm="linkirani"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/></svg> <span data-i18n="cm_check_iran">استعلام در LinkIrani.ir</span></div>
+    <div class="cm-item iran-only" data-cm="linkirani"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/></svg> <span data-i18n="cm_check_iran">استعلام در LinkIrani.ir</span></div>
     <div class="cm-divider"></div>
     <div class="cm-item cm-danger" data-cm="delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> <span data-i18n="cm_delete">حذف از صف و دیسک</span></div>
   </div>

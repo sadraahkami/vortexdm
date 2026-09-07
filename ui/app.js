@@ -296,6 +296,9 @@ function setLanguage(lang) {
   }
 
   renderTasksGrid();
+  if (currentAnalyticsData && analyticsModal && !analyticsModal.classList.contains('hidden')) {
+    renderAnalyticsChart();
+  }
 }
 
 // --- 4. Format Utilities ---
@@ -487,7 +490,7 @@ function updateRowContent(row, task, t, displayOrder) {
     </div>
     <div class="col col-speed ltr-num">${speedStr}</div>
     <div class="col col-eta ltr-num">${etaStr}</div>
-    <div class="col col-traffic">
+    <div class="col col-traffic iran-only">
       <span class="traffic-badge ${trafficClass}" title="استعلام در LinkIrani.ir">
         <span class="traffic-dot"></span>
         ${trafficLabel}
@@ -1007,21 +1010,7 @@ if (saveSchedBtn) {
   });
 }
 
-// Window Minimize to System Tray Button
-const btnMinimizeWindow = document.getElementById('btnMinimizeWindow');
-if (btnMinimizeWindow) {
-  btnMinimizeWindow.addEventListener('click', async () => {
-    try {
-      await fetch('/api/window/minimize-tray', { method: 'POST' });
-    } catch (e) {
-      try {
-        await fetch('/api/window/minimize', { method: 'POST' });
-      } catch (err) {}
-    }
-  });
-}
-
-// Sidebar Toggle / Minimize Button
+// Sidebar Toggle / Collapse Button
 const btnToggleSidebar = document.getElementById('btnToggleSidebar');
 const workspaceLayout = document.querySelector('.workspace-layout');
 if (btnToggleSidebar && workspaceLayout) {
@@ -1437,15 +1426,20 @@ function renderAnalyticsChart() {
       ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
       ctx.fillRect(x, baseY - 2, barWidth, 2);
     } else {
-      // International portion (Amber)
-      if (intlH > 0) {
-        ctx.fillStyle = '#f59e0b';
-        ctx.fillRect(x, baseY - totalH, barWidth, intlH);
-      }
-      // Domestic portion (Emerald Green)
-      if (domH > 0) {
-        ctx.fillStyle = '#10b981';
-        ctx.fillRect(x, baseY - domH, barWidth, domH);
+      if (currentLang === 'en') {
+        // Clean neon cyan bar for international users
+        ctx.fillStyle = '#00f2fe';
+        ctx.fillRect(x, baseY - totalH, barWidth, totalH);
+      } else {
+        // Iranian Domestic (Emerald) vs International (Amber) split
+        if (intlH > 0) {
+          ctx.fillStyle = '#f59e0b';
+          ctx.fillRect(x, baseY - totalH, barWidth, intlH);
+        }
+        if (domH > 0) {
+          ctx.fillStyle = '#10b981';
+          ctx.fillRect(x, baseY - domH, barWidth, domH);
+        }
       }
     }
 
@@ -1483,7 +1477,7 @@ function renderAnalyticsLogs() {
       <tr>
         <td title="${escapeHtml(l.filename)}">${escapeHtml(l.filename)}</td>
         <td class="ltr-num">${formatBytes(l.bytes || 0)}</td>
-        <td><span class="${badgeClass}">${badgeText}</span></td>
+        <td class="iran-only"><span class="${badgeClass}">${badgeText}</span></td>
         <td class="ltr-num">${timeStr}</td>
       </tr>
     `;

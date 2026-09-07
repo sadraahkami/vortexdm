@@ -232,6 +232,7 @@ Analyzes URL host/IP against Iranian domestic CIDRs and ASNs. Returns `{ is_dome
 - **Pure Bilingual Localization:** Strictly separated Persian and English typography without awkward parenthetical inline translations.
 - **Mouse Wheel Time Picker:** Continuous increment/decrement of hours and minutes by rolling the mouse wheel over the time picker selectors.
 - **Interactive Bandwidth Analytics Dashboard:** Full-screen modal with 4 metric cards (Total, Domestic, International, Savings), dual-mode HTML5 Canvas chart (hourly/daily), and recent file history.
+- **International Mode Cleanups:** Automatic conditional hiding of Iran-specific modules (LinkIrani button, tariff column, domestic traffic notices) via `.iran-only` and `html[lang="en"]` selector when operating in English locale.
 - **Universal Dark Translucent Scrollbars:** Engineered custom `::-webkit-scrollbar` and `scrollbar-width: thin` CSS specifications ensuring Windows OS never falls back to glaring white scrollbar tracks upon resizing.
 - **Interactive Context Menu:** Native-like floating menu on right-click for instant file opening, copying URL, checking on LinkIrani.ir, and task management.
 
