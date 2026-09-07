@@ -19,6 +19,7 @@ import (
 	"github.com/sadraahkami/vortexdm/pkg/downloader"
 	"github.com/sadraahkami/vortexdm/pkg/scheduler"
 	"github.com/sadraahkami/vortexdm/pkg/server"
+	"github.com/sadraahkami/vortexdm/pkg/tray"
 )
 
 //go:embed all:ui
@@ -50,6 +51,12 @@ func main() {
 
 	sched := scheduler.NewScheduler(downloadDir, engine.StartQueue, engine.PauseQueue, engine.IsQueueDone)
 	defer sched.Close()
+
+	// Initialize Windows System Tray Icon
+	trayMgr := tray.NewTray(engine.PauseAll, engine.StartAll, func() {
+		engine.Close()
+	})
+	defer trayMgr.Close()
 
 	// Extract embedded UI filesystem
 	subUI, err := fs.Sub(uiEmbedFS, "ui")

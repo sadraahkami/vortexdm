@@ -22,11 +22,13 @@
     <header class="app-toolbar">
       <div class="brand-group">
         <div class="brand-logo" title="VortexDM">
-          <svg viewBox="0 0 28 28" fill="none">
-            <circle cx="14" cy="14" r="12" stroke="rgba(0, 242, 254, 0.25)" stroke-width="2"/>
-            <path d="M14 4C8.47715 4 4 8.47715 4 14C4 16.8 5.15 19.33 7 21.15" stroke="#00f2fe" stroke-width="2.2" stroke-linecap="round"/>
-            <path d="M14 7C10.134 7 7 10.134 7 14C7 15.93 7.78 17.68 9.05 18.95" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
-            <circle cx="14" cy="14" r="3.5" fill="#00f2fe"/>
+          <svg viewBox="0 0 32 32" fill="none">
+            <circle cx="16" cy="16" r="14.5" fill="#0b1329" stroke="#00f2fe" stroke-width="1.8"/>
+            <rect x="13.8" y="7.5" width="4.4" height="7.5" rx="1" fill="#ffffff"/>
+            <polygon points="9,14 23,14 16,22" fill="#ffffff"/>
+            <rect x="14.6" y="8.5" width="2.8" height="5.5" fill="#00f2fe"/>
+            <polygon points="11,14.5 21,14.5 16,20" fill="#00f2fe"/>
+            <path d="M10 23.5 Q16 26.5 22 23.5" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
           </svg>
         </div>
         <div class="brand-info">
@@ -84,6 +86,11 @@
         <button id="tbLinkIrani" class="tb-btn tb-btn-iran" title="بررسی ترافیک نیم‌بها (LinkIrani.ir)" data-i18n-title="tb_iran_tip">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
           <span data-i18n="tb_linkirani">استعلام نیم‌بها</span>
+        </button>
+
+        <button id="tbAnalytics" class="tb-btn tb-btn-analytics" title="آمار و گزارش مصرف اینترنت" data-i18n-title="tb_analytics_tip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+          <span data-i18n="tb_analytics">گزارش مصرف</span>
         </button>
       </div>
 
@@ -165,18 +172,21 @@
           <div class="tree-separator"></div>
 
           <!-- Queues Section -->
-          <div class="tree-header">
+          <div class="tree-header queue-header-row">
             <span data-i18n="tree_queues">صف‌های دانلود</span>
+            <button id="btnAddQueue" class="btn-add-queue" title="ایجاد صف دانلود جدید" data-i18n-title="btn_add_queue_tip">+</button>
           </div>
 
-          <div class="tree-node sub-node" data-filter="queue-main">
-            <svg class="tree-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
-            <span class="tree-label" data-i18n="queue_main">صف اصلی</span>
-          </div>
+          <div id="queuesContainer">
+            <div class="tree-node sub-node" data-filter="queue-main">
+              <svg class="tree-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+              <span class="tree-label" data-i18n="queue_main">صف اصلی</span>
+            </div>
 
-          <div class="tree-node sub-node" data-filter="queue-night">
-            <svg class="tree-icon icon-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-            <span class="tree-label" data-i18n="queue_night">صف شبانه</span>
+            <div class="tree-node sub-node" data-filter="queue-night">
+              <svg class="tree-icon icon-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+              <span class="tree-label" data-i18n="queue_night">صف شبانه</span>
+            </div>
           </div>
         </div>
       </aside>
@@ -197,6 +207,7 @@
         <!-- High-Density Data Table Header -->
         <div class="grid-header">
           <div class="col col-check"><input type="checkbox" id="selectAllCheckbox"></div>
+          <div class="col col-order" title="ترتیب اولویت دانلود">#</div>
           <div class="col col-name" data-i18n="col_filename">نام فایل</div>
           <div class="col col-size" data-i18n="col_size">حجم</div>
           <div class="col col-progress" data-i18n="col_progress">وضعیت / درصد پیشرفت</div>
@@ -205,6 +216,7 @@
           <div class="col col-traffic" data-i18n="col_traffic">تعرفه ترافیک</div>
           <div class="col col-queue" data-i18n="col_queue">صف</div>
           <div class="col col-conn" title="تعداد قطعات موازی">Q</div>
+          <div class="col col-reorder" title="جابجایی در صف">ترتیب</div>
         </div>
 
         <!-- Table Rows List -->
@@ -433,6 +445,126 @@
           </div>
           <a id="iranExternalVerifyBtn" href="#" target="_blank" class="btn-verify-ext">مشاهده پرونده ثبت در سامانه LinkIrani.ir ↗</a>
         </div>
+      </div>
+    </div>
+  <!-- Modal: Data Usage & Traffic Analytics -->
+  <div id="analyticsModal" class="modal-overlay hidden">
+    <div class="modal-card modal-xl">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <h3 data-i18n="analytics_title">آمار و گزارش مصرف اینترنت</h3>
+          <span class="cycle-indicator" id="analyticsCyclePeriod">دوره جاری</span>
+        </div>
+        <div class="modal-header-actions">
+          <button id="btnResetCycle" class="btn btn-sm btn-outline-danger" title="صفر کردن آمار و شروع دوره جدید" data-i18n="analytics_reset_btn">شروع دوره جدید</button>
+          <button class="modal-close-btn" id="closeAnalyticsModal">✖</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <!-- 4 Stat Metric Cards -->
+        <div class="analytics-metrics-grid">
+          <div class="metric-card card-total">
+            <div class="metric-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+            </div>
+            <div class="metric-info">
+              <span class="metric-lbl" data-i18n="analytics_total_traffic">کل ترافیک مصرفی</span>
+              <span class="metric-val ltr-num" id="statTotalTraffic">0 B</span>
+            </div>
+          </div>
+
+          <div class="metric-card card-domestic">
+            <div class="metric-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            </div>
+            <div class="metric-info">
+              <span class="metric-lbl" data-i18n="analytics_domestic_traffic">مصرف نیم‌بها (داخلی)</span>
+              <span class="metric-val ltr-num" id="statDomesticTraffic">0 B</span>
+            </div>
+          </div>
+
+          <div class="metric-card card-intl">
+            <div class="metric-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            </div>
+            <div class="metric-info">
+              <span class="metric-lbl" data-i18n="analytics_intl_traffic">مصرف تمام‌بها (بین‌الملل)</span>
+              <span class="metric-val ltr-num" id="statIntlTraffic">0 B</span>
+            </div>
+          </div>
+
+          <div class="metric-card card-savings">
+            <div class="metric-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <div class="metric-info">
+              <span class="metric-lbl" data-i18n="analytics_saved_traffic">صرفه‌جویی با نیم‌بها</span>
+              <span class="metric-val ltr-num" id="statSavedTraffic">0 B</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chart Section -->
+        <div class="analytics-chart-box">
+          <div class="chart-header">
+            <span class="chart-title" data-i18n="analytics_chart_title">نمودار توزیع مصرف داده</span>
+            <div class="chart-tab-group">
+              <button class="chart-tab active" id="chartTabHourly" data-view="hourly" data-i18n="analytics_hourly_view">ساعت به ساعت (۲۴ ساعت گذشته)</button>
+              <button class="chart-tab" id="chartTabDaily" data-view="daily" data-i18n="analytics_daily_view">روزانه (۱۴ روز اخیر)</button>
+            </div>
+          </div>
+          <div class="chart-canvas-wrapper">
+            <canvas id="analyticsChartCanvas" width="700" height="190"></canvas>
+          </div>
+        </div>
+
+        <!-- Recent Logs Section -->
+        <div class="analytics-logs-box">
+          <h4 class="logs-title" data-i18n="analytics_logs_title">آخرین فایل‌های ثبت‌شده در لاگ مصرف</h4>
+          <div class="analytics-table-wrap">
+            <table class="analytics-table">
+              <thead>
+                <tr>
+                  <th data-i18n="analytics_th_filename">نام فایل</th>
+                  <th data-i18n="analytics_th_size">حجم فایل</th>
+                  <th data-i18n="analytics_th_tariff">نوع تعرفه</th>
+                  <th data-i18n="analytics_th_time">زمان ثبت</th>
+                </tr>
+              </thead>
+              <tbody id="analyticsLogsBody">
+                <tr><td colspan="4" class="empty-cell" data-i18n="analytics_no_logs">هنوز فایلی ثبت نشده است</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Create Custom Queue -->
+  <div id="queueModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 data-i18n="queue_modal_title">ایجاد صف دانلود جدید</h3>
+        <button class="modal-close-btn" id="closeQueueModal">✖</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <label data-i18n="queue_lbl_name">نام یا شناسه صف:</label>
+          <input type="text" id="customQueueNameInput" placeholder="مثلاً: فیلم‌ها، دوره‌ها، نرم‌افزار..." class="form-input">
+        </div>
+        <div class="form-row">
+          <label data-i18n="queue_lbl_concur">حداکثر دانلودهای همزمان در این صف:</label>
+          <select id="customQueueConcurSelect" class="form-select">
+            <option value="1" selected>1 فایل (توالی منظم - پیشنهادی)</option>
+            <option value="2">2 فایل همزمان</option>
+            <option value="3">3 فایل همزمان</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancelQueueModalBtn" data-i18n="btn_cancel">انصراف</button>
+        <button class="btn btn-primary" id="submitCreateQueueBtn" data-i18n="queue_btn_create">ایجاد صف</button>
       </div>
     </div>
   </div>

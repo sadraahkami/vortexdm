@@ -99,7 +99,31 @@ const translations = {
     confirm_delete: 'آیا از حذف موارد انتخاب‌شده اطمینان دارید؟',
     unlimited: 'نامحدود',
     active_state: 'فعال',
-    inactive_state: 'غیرفعال'
+    inactive_state: 'غیرفعال',
+    tb_analytics: 'گزارش مصرف',
+    tb_analytics_tip: 'آمار و گزارش تفکیکی مصرف اینترنت',
+    analytics_title: 'آمار و گزارش مصرف اینترنت',
+    analytics_reset_btn: 'شروع دوره جدید',
+    analytics_total_traffic: 'کل ترافیک مصرفی',
+    analytics_domestic_traffic: 'مصرف نیم‌بها (داخلی)',
+    analytics_intl_traffic: 'مصرف تمام‌بها (بین‌الملل)',
+    analytics_saved_traffic: 'صرفه‌جویی با نیم‌بها',
+    analytics_chart_title: 'نمودار توزیع مصرف داده',
+    analytics_hourly_view: 'ساعت به ساعت (۲۴ ساعت گذشته)',
+    analytics_daily_view: 'روزانه (۱۴ روز اخیر)',
+    analytics_logs_title: 'آخرین فایل‌های ثبت‌شده در لاگ مصرف',
+    analytics_th_filename: 'نام فایل',
+    analytics_th_size: 'حجم فایل',
+    analytics_th_tariff: 'نوع تعرفه',
+    analytics_th_time: 'زمان ثبت',
+    analytics_no_logs: 'هنوز دانلودی در این دوره ثبت نشده است',
+    queue_modal_title: 'ایجاد صف دانلود جدید',
+    btn_add_queue_tip: 'ایجاد صف دانلود اختصاصی جدید',
+    queue_lbl_name: 'نام صف:',
+    queue_lbl_concur: 'حداکثر دانلودهای همزمان در این صف:',
+    queue_btn_create: 'ایجاد صف',
+    col_order: 'ترتیب',
+    col_reorder: 'ترتیب'
   },
   en: {
     tb_add: 'Add URL',
@@ -195,7 +219,31 @@ const translations = {
     confirm_delete: 'Are you sure you want to delete the selected download(s)?',
     unlimited: 'Unlimited',
     active_state: 'Active',
-    inactive_state: 'Disabled'
+    inactive_state: 'Disabled',
+    tb_analytics: 'Data Usage',
+    tb_analytics_tip: 'Internet traffic analytics and bandwidth log',
+    analytics_title: 'Internet Traffic & Data Usage Analytics',
+    analytics_reset_btn: 'Reset Billing Cycle',
+    analytics_total_traffic: 'Total Data Consumed',
+    analytics_domestic_traffic: 'Domestic Traffic (Half-Price)',
+    analytics_intl_traffic: 'International Traffic (Full-Price)',
+    analytics_saved_traffic: 'Bandwidth Savings',
+    analytics_chart_title: 'Bandwidth Consumption Distribution',
+    analytics_hourly_view: 'Hourly (Past 24 Hours)',
+    analytics_daily_view: 'Daily (Past 14 Days)',
+    analytics_logs_title: 'Recent Download Traffic History',
+    analytics_th_filename: 'File Name',
+    analytics_th_size: 'Size',
+    analytics_th_tariff: 'Traffic Rate',
+    analytics_th_time: 'Recorded At',
+    analytics_no_logs: 'No downloads recorded in this cycle yet',
+    queue_modal_title: 'Create New Download Queue',
+    btn_add_queue_tip: 'Create custom download queue',
+    queue_lbl_name: 'Queue Name:',
+    queue_lbl_concur: 'Max Concurrent Downloads:',
+    queue_btn_create: 'Create Queue',
+    col_order: 'Order',
+    col_reorder: 'Order'
   }
 };
 
@@ -312,6 +360,14 @@ const countAllEl = document.getElementById('countAll');
 const countActiveEl = document.getElementById('countActive');
 const countDoneEl = document.getElementById('countDone');
 
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+let customQueues = {};
+let customQueuesMap = {};
+
 function renderTasksGrid() {
   const t = translations[currentLang];
 
@@ -324,10 +380,9 @@ function renderTasksGrid() {
     } else if (activeFilter === 'compressed' || activeFilter === 'documents' || activeFilter === 'music' || activeFilter === 'programs' || activeFilter === 'video') {
       const mappedCat = (activeFilter === 'compressed') ? 'archive' : (activeFilter === 'documents') ? 'document' : (activeFilter === 'programs') ? 'software' : (activeFilter === 'music') ? 'audio' : 'video';
       if (task.category !== mappedCat) return false;
-    } else if (activeFilter === 'queue-main') {
-      if (task.queue !== 'main') return false;
-    } else if (activeFilter === 'queue-night') {
-      if (task.queue !== 'night') return false;
+    } else if (activeFilter.startsWith('queue-')) {
+      const targetQueue = activeFilter.slice(6);
+      if (task.queue !== targetQueue) return false;
     }
 
     if (searchQuery.trim() !== '') {
@@ -339,6 +394,9 @@ function renderTasksGrid() {
 
     return true;
   });
+
+  // Sort by order ascending
+  filtered.sort((a, b) => (a.order || 0) - (b.order || 0));
 
   // Counts update
   if (countAllEl) countAllEl.textContent = tasksData.length;
@@ -365,7 +423,7 @@ function renderTasksGrid() {
     if (!currentIds.has(r.dataset.id)) r.remove();
   });
 
-  filtered.forEach(task => {
+  filtered.forEach((task, idx) => {
     let row = tasksGridBody.querySelector(`.grid-row[data-id="${task.id}"]`);
     if (!row) {
       row = document.createElement('div');
@@ -373,11 +431,11 @@ function renderTasksGrid() {
       row.dataset.id = task.id;
       tasksGridBody.appendChild(row);
     }
-    updateRowContent(row, task, t);
+    updateRowContent(row, task, t, idx + 1);
   });
 }
 
-function updateRowContent(row, task, t) {
+function updateRowContent(row, task, t, displayOrder) {
   const isSelected = selectedTaskIds.has(task.id);
   if (isSelected) row.classList.add('selected');
   else row.classList.remove('selected');
@@ -403,7 +461,7 @@ function updateRowContent(row, task, t) {
   const trafficLabel = isDomestic ? t.traffic_domestic : t.traffic_intl;
 
   // Queue Tag
-  const queueName = task.queue === 'night' ? t.queue_night : t.queue_main;
+  let queueName = task.queue === 'night' ? t.queue_night : (task.queue === 'main' ? t.queue_main : (customQueuesMap[task.queue] || task.queue));
   const queueClass = task.queue === 'night' ? 'queue-tag night' : 'queue-tag';
 
   // Category Icon
@@ -411,10 +469,11 @@ function updateRowContent(row, task, t) {
 
   row.innerHTML = `
     <div class="col col-check"><input type="checkbox" class="row-cb" data-id="${task.id}" ${isSelected ? 'checked' : ''}></div>
-    <div class="col col-name" title="${task.filename}&#10;${task.url}">
+    <div class="col col-order ltr-num">${task.order || displayOrder}</div>
+    <div class="col col-name" title="${escapeHtml(task.filename)}&#10;${escapeHtml(task.url)}">
       <div class="row-file-wrap">
         ${catIcon}
-        <span class="row-file-name">${task.filename}</span>
+        <span class="row-file-name">${escapeHtml(task.filename)}</span>
       </div>
     </div>
     <div class="col col-size ltr-num">${sizeStr}</div>
@@ -434,8 +493,12 @@ function updateRowContent(row, task, t) {
         ${trafficLabel}
       </span>
     </div>
-    <div class="col col-queue"><span class="${queueClass}">${queueName}</span></div>
+    <div class="col col-queue"><span class="${queueClass}">${escapeHtml(queueName)}</span></div>
     <div class="col col-conn ltr-num">${task.connections || 16}</div>
+    <div class="col col-reorder">
+      <button class="reorder-btn btn-order-up" data-id="${task.id}" title="انتقال به بالا">▲</button>
+      <button class="reorder-btn btn-order-down" data-id="${task.id}" title="انتقال به پایین">▼</button>
+    </div>
   `;
 }
 
@@ -503,7 +566,40 @@ function updateSpeedLimitStatus(limit) {
 }
 
 // --- 8. Table Selection & Checkbox Handlers ---
-tasksGridBody.addEventListener('click', (e) => {
+tasksGridBody.addEventListener('click', async (e) => {
+  const btnUp = e.target.closest('.btn-order-up');
+  const btnDown = e.target.closest('.btn-order-down');
+  if (btnUp) {
+    e.stopPropagation();
+    const id = btnUp.dataset.id;
+    const task = tasksData.find(x => x.id === id);
+    if (task) {
+      const newOrder = Math.max(1, (task.order || 1) - 1);
+      await fetch('/api/tasks/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ task_id: id, new_order: newOrder })
+      });
+      fetchTasksREST();
+    }
+    return;
+  }
+  if (btnDown) {
+    e.stopPropagation();
+    const id = btnDown.dataset.id;
+    const task = tasksData.find(x => x.id === id);
+    if (task) {
+      const newOrder = (task.order || 1) + 1;
+      await fetch('/api/tasks/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ task_id: id, new_order: newOrder })
+      });
+      fetchTasksREST();
+    }
+    return;
+  }
+
   const cb = e.target.closest('.row-cb');
   const row = e.target.closest('.grid-row');
   if (!row) return;
@@ -777,10 +873,35 @@ function initTimeSelectors() {
     }
   };
 
-  populate(document.getElementById('schedStartHour'), 24);
-  populate(document.getElementById('schedStopHour'), 24);
-  populate(document.getElementById('schedStartMin'), 60);
-  populate(document.getElementById('schedStopMin'), 60);
+  const attachWheelScroll = (selectEl, max) => {
+    if (!selectEl || selectEl.dataset.wheelBound) return;
+    selectEl.dataset.wheelBound = "true";
+    selectEl.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      let current = parseInt(selectEl.value, 10) || 0;
+      if (e.deltaY < 0) {
+        current = (current + 1) % max;
+      } else {
+        current = (current - 1 + max) % max;
+      }
+      selectEl.value = current.toString().padStart(2, '0');
+    }, { passive: false });
+  };
+
+  const startH = document.getElementById('schedStartHour');
+  const stopH = document.getElementById('schedStopHour');
+  const startM = document.getElementById('schedStartMin');
+  const stopM = document.getElementById('schedStopMin');
+
+  populate(startH, 24);
+  populate(stopH, 24);
+  populate(startM, 60);
+  populate(stopM, 60);
+
+  attachWheelScroll(startH, 24);
+  attachWheelScroll(stopH, 24);
+  attachWheelScroll(startM, 60);
+  attachWheelScroll(stopM, 60);
 }
 
 function setTimePickerValue(prefix, timeStr) {
@@ -886,13 +1007,17 @@ if (saveSchedBtn) {
   });
 }
 
-// Window Minimize Button
+// Window Minimize to System Tray Button
 const btnMinimizeWindow = document.getElementById('btnMinimizeWindow');
 if (btnMinimizeWindow) {
   btnMinimizeWindow.addEventListener('click', async () => {
     try {
-      await fetch('/api/window/minimize', { method: 'POST' });
-    } catch (e) {}
+      await fetch('/api/window/minimize-tray', { method: 'POST' });
+    } catch (e) {
+      try {
+        await fetch('/api/window/minimize', { method: 'POST' });
+      } catch (err) {}
+    }
   });
 }
 
@@ -1033,9 +1158,348 @@ if (langToggleBtn) {
   });
 }
 
-// --- 16. App Bootstrapping ---
+// --- 16. Custom Download Queues Management ---
+const queueModal = document.getElementById('queueModal');
+const btnAddQueue = document.getElementById('btnAddQueue');
+const closeQueueModal = document.getElementById('closeQueueModal');
+const cancelQueueModalBtn = document.getElementById('cancelQueueModalBtn');
+const submitCreateQueueBtn = document.getElementById('submitCreateQueueBtn');
+const customQueueNameInput = document.getElementById('customQueueNameInput');
+const customQueueConcurSelect = document.getElementById('customQueueConcurSelect');
+
+if (btnAddQueue) {
+  btnAddQueue.addEventListener('click', () => {
+    if (queueModal) {
+      queueModal.classList.remove('hidden');
+      if (customQueueNameInput) {
+        customQueueNameInput.value = '';
+        customQueueNameInput.focus();
+      }
+    }
+  });
+}
+
+if (closeQueueModal) {
+  closeQueueModal.addEventListener('click', () => queueModal.classList.add('hidden'));
+}
+if (cancelQueueModalBtn) {
+  cancelQueueModalBtn.addEventListener('click', () => queueModal.classList.add('hidden'));
+}
+
+if (submitCreateQueueBtn) {
+  submitCreateQueueBtn.addEventListener('click', async () => {
+    const rawName = customQueueNameInput.value.trim();
+    if (!rawName) return;
+    const qid = 'q_' + Date.now();
+    const concur = parseInt(customQueueConcurSelect.value, 10) || 1;
+
+    try {
+      await fetch('/api/queues', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: qid,
+          config: {
+            name: rawName,
+            max_concurrent: concur,
+            enabled: true
+          }
+        })
+      });
+      queueModal.classList.add('hidden');
+      await loadQueues();
+    } catch (e) {
+      alert('Error creating queue');
+    }
+  });
+}
+
+async function loadQueues() {
+  try {
+    const res = await fetch('/api/queues');
+    if (res.ok) {
+      const data = await res.json();
+      customQueues = data.custom_queues || {};
+      customQueuesMap = {};
+      for (const [qid, qcfg] of Object.entries(customQueues)) {
+        customQueuesMap[qid] = qcfg.name || qid;
+      }
+      renderQueuesUI();
+    }
+  } catch (e) {}
+}
+
+function renderQueuesUI() {
+  const container = document.getElementById('queuesContainer');
+  if (!container) return;
+
+  // Remove existing dynamic custom nodes
+  const existingCustom = container.querySelectorAll('.tree-node[data-custom="true"]');
+  existingCustom.forEach(n => n.remove());
+
+  // Also update modalQueueSelect
+  const modalQueueSelect = document.getElementById('modalQueueSelect');
+  if (modalQueueSelect) {
+    const currentSelectedVal = modalQueueSelect.value || 'main';
+    modalQueueSelect.innerHTML = `
+      <option value="main">صف اصلی</option>
+      <option value="night">صف دانلود شبانه</option>
+    `;
+
+    for (const [qid, qcfg] of Object.entries(customQueues)) {
+      const opt = document.createElement('option');
+      opt.value = qid;
+      opt.textContent = qcfg.name || qid;
+      modalQueueSelect.appendChild(opt);
+    }
+    modalQueueSelect.value = currentSelectedVal;
+  }
+
+  for (const [qid, qcfg] of Object.entries(customQueues)) {
+    const node = document.createElement('div');
+    node.className = 'tree-node sub-node';
+    if (activeFilter === `queue-${qid}`) node.classList.add('active');
+    node.dataset.filter = `queue-${qid}`;
+    node.dataset.custom = 'true';
+    node.innerHTML = `
+      <svg class="tree-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+      <span class="tree-label">${escapeHtml(qcfg.name || qid)}</span>
+      <button class="queue-delete-btn" data-qid="${qid}" title="حذف صف">✖</button>
+    `;
+
+    node.addEventListener('click', (e) => {
+      if (e.target.closest('.queue-delete-btn')) return;
+      document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('active'));
+      node.classList.add('active');
+      activeFilter = `queue-${qid}`;
+      renderTasksGrid();
+    });
+
+    const delBtn = node.querySelector('.queue-delete-btn');
+    delBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (confirm(`آیا از حذف صف «${qcfg.name || qid}» اطمینان دارید؟`)) {
+        await fetch(`/api/queues?id=${encodeURIComponent(qid)}`, { method: 'DELETE' });
+        if (activeFilter === `queue-${qid}`) {
+          activeFilter = 'all';
+          const allNode = document.querySelector('.tree-node[data-filter="all"]');
+          if (allNode) allNode.classList.add('active');
+        }
+        await loadQueues();
+        renderTasksGrid();
+      }
+    });
+
+    container.appendChild(node);
+  }
+}
+
+// --- 17. Internet Traffic & Bandwidth Usage Analytics ---
+const analyticsModal = document.getElementById('analyticsModal');
+const tbAnalytics = document.getElementById('tbAnalytics');
+const closeAnalyticsModal = document.getElementById('closeAnalyticsModal');
+const btnResetCycle = document.getElementById('btnResetCycle');
+const chartTabHourly = document.getElementById('chartTabHourly');
+const chartTabDaily = document.getElementById('chartTabDaily');
+const analyticsChartCanvas = document.getElementById('analyticsChartCanvas');
+let analyticsView = 'hourly';
+let currentAnalyticsData = null;
+
+if (tbAnalytics) {
+  tbAnalytics.addEventListener('click', () => {
+    if (analyticsModal) {
+      analyticsModal.classList.remove('hidden');
+      fetchAnalytics();
+    }
+  });
+}
+
+if (closeAnalyticsModal) {
+  closeAnalyticsModal.addEventListener('click', () => {
+    if (analyticsModal) analyticsModal.classList.add('hidden');
+  });
+}
+
+if (btnResetCycle) {
+  btnResetCycle.addEventListener('click', async () => {
+    if (confirm('آیا از صفر کردن آمار مصرف و شروع دوره جدید اطمینان دارید؟')) {
+      await fetch('/api/analytics/reset', { method: 'POST' });
+      fetchAnalytics();
+    }
+  });
+}
+
+if (chartTabHourly) {
+  chartTabHourly.addEventListener('click', () => {
+    chartTabHourly.classList.add('active');
+    if (chartTabDaily) chartTabDaily.classList.remove('active');
+    analyticsView = 'hourly';
+    renderAnalyticsChart();
+  });
+}
+
+if (chartTabDaily) {
+  chartTabDaily.addEventListener('click', () => {
+    chartTabDaily.classList.add('active');
+    if (chartTabHourly) chartTabHourly.classList.remove('active');
+    analyticsView = 'daily';
+    renderAnalyticsChart();
+  });
+}
+
+async function fetchAnalytics() {
+  try {
+    const res = await fetch('/api/analytics');
+    if (res.ok) {
+      currentAnalyticsData = await res.json();
+      populateAnalyticsUI();
+    }
+  } catch (e) {}
+}
+
+function populateAnalyticsUI() {
+  if (!currentAnalyticsData) return;
+  const d = currentAnalyticsData;
+
+  const statTotal = document.getElementById('statTotalTraffic');
+  const statDom = document.getElementById('statDomesticTraffic');
+  const statIntl = document.getElementById('statIntlTraffic');
+  const statSaved = document.getElementById('statSavedTraffic');
+  const cyclePeriod = document.getElementById('analyticsCyclePeriod');
+
+  if (statTotal) statTotal.textContent = formatBytes(d.total_bytes || 0);
+  if (statDom) statDom.textContent = formatBytes(d.domestic_bytes || 0);
+  if (statIntl) statIntl.textContent = formatBytes(d.international_bytes || 0);
+  if (statSaved) statSaved.textContent = formatBytes(d.saved_bytes || 0);
+
+  if (cyclePeriod && d.cycle_start) {
+    const dateStr = new Date(d.cycle_start).toLocaleDateString(currentLang === 'fa' ? 'fa-IR' : 'en-US');
+    cyclePeriod.textContent = `دوره: از ${dateStr}`;
+  }
+
+  renderAnalyticsChart();
+  renderAnalyticsLogs();
+}
+
+function renderAnalyticsChart() {
+  if (!analyticsChartCanvas || !currentAnalyticsData) return;
+  const ctx = analyticsChartCanvas.getContext('2d');
+  if (!ctx) return;
+
+  const dpr = window.devicePixelRatio || 1;
+  const rect = analyticsChartCanvas.getBoundingClientRect();
+  if (rect.width === 0 || rect.height === 0) return;
+
+  analyticsChartCanvas.width = rect.width * dpr;
+  analyticsChartCanvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+
+  const w = rect.width;
+  const h = rect.height;
+  ctx.clearRect(0, 0, w, h);
+
+  const isHourly = analyticsView === 'hourly';
+  const buckets = isHourly ? (currentAnalyticsData.hourly || []) : (currentAnalyticsData.daily || []);
+  if (buckets.length === 0) return;
+
+  const maxVal = Math.max(...buckets.map(b => b.total || 0), 10 * 1024 * 1024);
+  const bottomPad = 26;
+  const topPad = 22;
+  const chartH = h - bottomPad - topPad;
+  const spacing = w / buckets.length;
+  const barWidth = Math.max(6, Math.min(22, spacing * 0.58));
+
+  // Horizontal Grid Lines
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, topPad);
+  ctx.lineTo(w, topPad);
+  ctx.moveTo(0, topPad + chartH / 2);
+  ctx.lineTo(w, topPad + chartH / 2);
+  ctx.moveTo(0, h - bottomPad);
+  ctx.lineTo(w, h - bottomPad);
+  ctx.stroke();
+
+  buckets.forEach((b, i) => {
+    const total = b.total || 0;
+    const dom = b.domestic || 0;
+    const intl = b.international || 0;
+
+    const x = i * spacing + (spacing - barWidth) / 2;
+    const totalH = (total / maxVal) * chartH;
+    const domH = total > 0 ? (dom / total) * totalH : 0;
+    const intlH = totalH - domH;
+    const baseY = h - bottomPad;
+
+    // Background placeholder if 0
+    if (total === 0) {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+      ctx.fillRect(x, baseY - 2, barWidth, 2);
+    } else {
+      // International portion (Amber)
+      if (intlH > 0) {
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(x, baseY - totalH, barWidth, intlH);
+      }
+      // Domestic portion (Emerald Green)
+      if (domH > 0) {
+        ctx.fillStyle = '#10b981';
+        ctx.fillRect(x, baseY - domH, barWidth, domH);
+      }
+    }
+
+    // X-axis label
+    const showLabel = isHourly ? (i % 3 === 0 || i === buckets.length - 1) : (i % 2 === 0 || i === buckets.length - 1);
+    if (showLabel) {
+      ctx.fillStyle = '#64748b';
+      ctx.font = '9px Vazirmatn, JetBrains Mono, sans-serif';
+      ctx.textAlign = 'center';
+      const labelText = isHourly ? (b.hour || '') : (b.date || '');
+      ctx.fillText(labelText, x + barWidth / 2, h - 8);
+    }
+  });
+}
+
+function renderAnalyticsLogs() {
+  const tbody = document.getElementById('analyticsLogsBody');
+  if (!tbody || !currentAnalyticsData) return;
+  const logs = currentAnalyticsData.recent_logs || [];
+
+  if (logs.length === 0) {
+    const t = translations[currentLang];
+    tbody.innerHTML = `<tr><td colspan="4" class="empty-cell">${t.analytics_no_logs}</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = logs.slice(0, 50).map(l => {
+    const isDom = l.is_domestic;
+    const badgeClass = isDom ? 'traffic-badge domestic' : 'traffic-badge international';
+    const badgeText = isDom ? '🟢 نیم‌بها' : '🌐 تمام‌بها';
+    const timeStr = new Date(l.timestamp).toLocaleString(currentLang === 'fa' ? 'fa-IR' : 'en-US', {
+      month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
+    return `
+      <tr>
+        <td title="${escapeHtml(l.filename)}">${escapeHtml(l.filename)}</td>
+        <td class="ltr-num">${formatBytes(l.bytes || 0)}</td>
+        <td><span class="${badgeClass}">${badgeText}</span></td>
+        <td class="ltr-num">${timeStr}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+window.addEventListener('resize', () => {
+  if (analyticsModal && !analyticsModal.classList.contains('hidden')) {
+    renderAnalyticsChart();
+  }
+});
+
+// --- 18. App Bootstrapping ---
 window.addEventListener('DOMContentLoaded', () => {
   initTimeSelectors();
+  loadQueues();
   setLanguage(currentLang);
   initSSE();
   setInterval(fetchTasksREST, 1500);

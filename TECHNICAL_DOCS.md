@@ -138,11 +138,32 @@ Selects and reveals the file in the operating system's native file explorer (`ex
 ### `POST /api/window/minimize`
 Minimizes the VortexDM desktop window via native Windows `user32.dll` syscall (`ShowWindow(hwnd, SW_MINIMIZE)`).
 
+### `POST /api/window/minimize-tray`
+Completely hides the application window from the taskbar and screen, docking it into the Windows notification system tray area (`^` overflow). Restorable with a single/double click or tray context menu.
+
 ### `GET /api/scheduler`
-Returns current scheduler configuration for Main Queue and Night Queue.
+Returns current scheduler configuration for Main Queue, Night Queue, and custom queues.
 
 ### `POST /api/scheduler`
 Saves and hot-reloads scheduler settings (start/stop times, active days, post-actions like PC shutdown).
+
+### `GET /api/queues`
+Retrieves all download queue configurations including built-in and dynamic custom queues.
+
+### `POST /api/queues`
+Creates or updates a custom download queue with custom name, concurrency limit, and schedules.
+
+### `DELETE /api/queues?id=<id>`
+Deletes a custom queue.
+
+### `POST /api/tasks/reorder`
+Updates execution priority/order for a specific download task inside its queue.
+
+### `GET /api/analytics`
+Returns comprehensive traffic analytics: billing cycle start date, total bytes consumed, domestic (نیم‌بها) bytes, international bytes, calculated bandwidth savings, 24-hour hourly distribution, 14-day daily distribution, and recent download traffic history.
+
+### `POST /api/analytics/reset`
+Resets the billing cycle statistics to zero.
 
 ### `GET /api/speed-limit`
 Returns active aggregate bandwidth ceiling (`{"limit": 2097152}`).
@@ -164,7 +185,7 @@ Analyzes URL host/IP against Iranian domestic CIDRs and ASNs. Returns `{ is_dome
 - Dynamic LinkIrani.ir verification URL generation.
 
 ### 5.2 Scheduler & Automated Post-Actions (`pkg/scheduler/scheduler.go`)
-- Dedicated Queue configurations (`main` and `night`).
+- Dedicated Queue configurations (`main`, `night`, and custom queues).
 - Background ticker monitoring current system clock every 5 seconds.
 - Triggers automatic start at scheduled minute and graceful pause at stop minute.
 - Windows OS native integration:
@@ -180,28 +201,52 @@ Analyzes URL host/IP against Iranian domestic CIDRs and ASNs. Returns `{ is_dome
 - **Standalone Web App Manifest (`ui/manifest.json`):** Serves multi-size application icons (16, 24, 32, 48, 64, 128, 192, 256, 512 px) ensuring Microsoft Edge and Chromium standalone app modes render crisp taskbar and window header icons without default web globe fallbacks.
 - **Native Window Minimization (`pkg/server/window_windows.go`):** Direct Windows `user32.dll` enumeration and `ShowWindow` minimize calls wired to top ribbon controls.
 
+### 5.5 Windows System Tray Integration (`pkg/tray/tray_windows.go`)
+- Pure Go implementation using Windows Win32 APIs (`shell32.dll` and `user32.dll`) without CGO dependencies.
+- Registered hidden window class (`WNDCLASSEXW`) receiving `WM_USER+1` tray notification messages.
+- `Shell_NotifyIconW` creates the tray icon in the system clock notification overflow area (`^`).
+- Left-click / double-click restores the window (`ShowWindow(SW_SHOW)`, `ShowWindow(SW_RESTORE)`, `SetForegroundWindow`).
+- Right-click displays native Win32 popup menu (`CreatePopupMenu`, `TrackPopupMenuEx`) with Open, Pause All, Resume All, and Exit.
+- `HideToTray()` calls `ShowWindow(hwnd, SW_HIDE)` to completely remove the app from the taskbar while keeping it active in the background.
+
+### 5.6 Bandwidth & Traffic Analytics Engine (`pkg/analytics/analytics.go`)
+- Thread-safe persistence (`traffic_analytics.json`) maintaining cumulative network traffic statistics across restarts.
+- Categorizes downloaded bytes into Domestic (نیم‌بها) and International (تمام‌بها) in real-time as bytes arrive.
+- Calculates bandwidth savings gained from half-price routing.
+- Maintains 24-hour sliding hourly buckets and 14-day daily buckets for graphical visualization.
+- Maintains an audit log of recent downloads with file names, sizes, and tariff classification.
+
+### 5.7 Custom Queues & Priority Reordering (`pkg/downloader/engine.go`)
+- Dynamic creation, updating, and deletion of custom download queues.
+- `ReorderTask(taskID, newOrder)` allows users to adjust download priorities using Up (`▲`) and Down (`▼`) buttons.
+- Queue workers execute downloads strictly in sorted order of priority.
+
 ---
 
 ## 6. High-Density UI Architecture
 
 - **IDM-Grade Information Density:** Compact, sticky-header table grid (36px row height), allowing 20+ downloads visible simultaneously.
 - **Tree Navigation & Collapsible Sidebar:** Left sidebar organized into Categories, Statuses, and Queues with one-click collapse/expand (`.sidebar-collapsed`) for maximum data visibility.
+- **Custom Queues Management:** One-click `+` button in sidebar to create named queues with custom concurrency limits, and instant filtering by queue.
+- **Task Priority Reordering:** Dedicated `#` order column and Up/Down (`▲`/`▼`) buttons in each row to prioritize downloads.
 - **Pure Bilingual Localization:** Strictly separated Persian and English typography without awkward parenthetical inline translations.
-- **Custom Dark 24-Hour Time Selectors:** Replaced jarring native OS `<input type="time">` popup dialogs with sleek, integrated dark Hour/Minute dropdown selectors (`.dark-time-picker`).
+- **Mouse Wheel Time Picker:** Continuous increment/decrement of hours and minutes by rolling the mouse wheel over the time picker selectors.
+- **Interactive Bandwidth Analytics Dashboard:** Full-screen modal with 4 metric cards (Total, Domestic, International, Savings), dual-mode HTML5 Canvas chart (hourly/daily), and recent file history.
 - **Universal Dark Translucent Scrollbars:** Engineered custom `::-webkit-scrollbar` and `scrollbar-width: thin` CSS specifications ensuring Windows OS never falls back to glaring white scrollbar tracks upon resizing.
 - **Interactive Context Menu:** Native-like floating menu on right-click for instant file opening, copying URL, checking on LinkIrani.ir, and task management.
-- **Typography & Isolation:** Strict `direction: ltr; unicode-bidi: isolate;` on all speed metrics, numbers, and file sizes to ensure clean bilingual rendering.
 
 ---
 
 ## 7. Automated Testing Strategy
 
-Suite of 8 unit and integration tests covering:
-1. `TestMultiThreadedDownload`: Multi-goroutine concurrent HTTP Range download with byte-by-byte SHA/integrity verification.
-2. `TestSpeedLimiter`: Token-bucket throttle enforcement and unthrottled throughput.
-3. `TestServerEndpointsAndAssets`: Validates root HTML, dark color-scheme meta, favicon, manifest, and window minimize endpoints.
-4. `TestDetectTraffic`: Iranian domain detection (`soft98.ir` -> domestic نیم‌بها) vs international (`github.com` -> تمام‌بها).
-5. `TestFormatBytes`, `TestFormatSpeed`, `TestFormatDuration`, `TestDetectCategory`.
+Suite of 10 unit and integration tests covering:
+1. `TestTrafficAnalytics`: Verifies thread-safe traffic recording, domestic/international separation, savings calculation, and cycle reset.
+2. `TestCustomQueuesAndReordering`: Verifies custom queue creation, task assignment, order priority changes, and deletion.
+3. `TestMultiThreadedDownload`: Multi-goroutine concurrent HTTP Range download with byte-by-byte integrity verification.
+4. `TestSpeedLimiter`: Token-bucket throttle enforcement and unthrottled throughput.
+5. `TestServerEndpointsAndAssets`: Validates root HTML, dark color-scheme meta, favicon, manifest, and window minimize endpoints.
+6. `TestDetectTraffic`: Iranian domain detection (`soft98.ir` -> domestic نیم‌بها) vs international (`github.com` -> تمام‌بها).
+7. `TestFormatBytes`, `TestFormatSpeed`, `TestFormatDuration`, `TestDetectCategory`.
 
 Run tests:
 ```bash

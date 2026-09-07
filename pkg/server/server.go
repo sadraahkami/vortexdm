@@ -11,9 +11,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/sadraahkami/vortexdm/pkg/analytics"
 	"github.com/sadraahkami/vortexdm/pkg/downloader"
 	"github.com/sadraahkami/vortexdm/pkg/scheduler"
 	"github.com/sadraahkami/vortexdm/pkg/traffic"
+	"github.com/sadraahkami/vortexdm/pkg/tray"
 )
 
 type Server struct {
@@ -113,6 +115,11 @@ func (s *Server) SetupRoutes() http.Handler {
 	mux.HandleFunc("/api/speed-limit", s.handleSpeedLimit)
 	mux.HandleFunc("/api/traffic/check", s.handleTrafficCheck)
 	mux.HandleFunc("/api/window/minimize", s.handleWindowMinimize)
+	mux.HandleFunc("/api/window/minimize-tray", s.handleWindowMinimizeTray)
+	mux.HandleFunc("/api/analytics", s.handleAnalytics)
+	mux.HandleFunc("/api/analytics/reset", s.handleAnalyticsReset)
+	mux.HandleFunc("/api/queues", s.handleQueues)
+	mux.HandleFunc("/api/tasks/reorder", s.handleReorderTask)
 
 	// Static Web UI Files
 	if s.staticFS != nil {
@@ -417,6 +424,99 @@ func (s *Server) handleWindowMinimize(w http.ResponseWriter, r *http.Request) {
 		minimized := MinimizeAppWindow()
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{"success": minimized})
+		return
+	}
+	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+}
+
+func (s *Server) handleWindowMinimizeTray(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		hidden := tray.HideToTray()
+		if !hidden {
+			hidden = MinimizeAppWindow()
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"success": hidden})
+		return
+	}
+	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+}
+
+func (s *Server) handleAnalytics(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		w.Header().Set("Content-Type", "application/json")
+		if a := analytics.GetAnalytics(); a != nil {
+			json.NewEncoder(w).Encode(a.GetSummary())
+		} else {
+			json.NewEncoder(w).Encode(analytics.AnalyticsSummary{})
+		}
+		return
+	}
+	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+}
+
+func (s *Server) handleAnalyticsReset(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		if a := analytics.GetAnalytics(); a != nil {
+			a.ResetCycle()
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"status": "reset"})
+		return
+	}
+	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+}
+
+func (s *Server) handleQueues(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(s.sched.GetConfig())
+		return
+	}
+	if r.Method == http.MethodPost {
+		var req struct {
+			ID     string                `json:"id"`
+			Config scheduler.QueueConfig `json:"config"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.ID == "" {
+			http.Error(w, `{"error":"Invalid payload"}`, http.StatusBadRequest)
+			return
+		}
+		if req.Config.Name == "" {
+			req.Config.Name = req.ID
+		}
+		s.sched.AddOrUpdateCustomQueue(req.ID, &req.Config)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"status": "ok", "id": req.ID})
+		return
+	}
+	if r.Method == http.MethodDelete {
+		id := r.URL.Query().Get("id")
+		if id == "" || id == "main" || id == "night" {
+			http.Error(w, `{"error":"Cannot delete built-in or empty queue"}`, http.StatusBadRequest)
+			return
+		}
+		s.sched.DeleteCustomQueue(id)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"status": "deleted", "id": id})
+		return
+	}
+	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+}
+
+func (s *Server) handleReorderTask(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		var req struct {
+			TaskID   string `json:"task_id"`
+			NewOrder int    `json:"new_order"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.TaskID == "" {
+			http.Error(w, `{"error":"Invalid payload"}`, http.StatusBadRequest)
+			return
+		}
+		s.engine.ReorderTask(req.TaskID, req.NewOrder)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"status": "reordered"})
 		return
 	}
 	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

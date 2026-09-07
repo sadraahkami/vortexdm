@@ -9,10 +9,12 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"sort"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/sadraahkami/vortexdm/pkg/analytics"
 	"github.com/sadraahkami/vortexdm/pkg/traffic"
 	"github.com/sadraahkami/vortexdm/pkg/utils"
 )
@@ -57,6 +59,7 @@ func NewEngine(downloadDir string, maxConcurrent int) *Engine {
 	}
 
 	eng.startSpeedTicker()
+	analytics.InitAnalytics(downloadDir)
 	return eng
 }
 
@@ -270,6 +273,7 @@ func (e *Engine) CreateTask(rawURL string, customFilename string, numConnections
 	}
 
 	e.mu.Lock()
+	task.Order = len(e.tasks) + 1
 	e.tasks[taskID] = task
 	e.mu.Unlock()
 
@@ -427,17 +431,36 @@ func (e *Engine) GetSpeedLimit() int64 {
 
 func (e *Engine) StartQueue(queueName string) {
 	e.mu.RLock()
-	tasksToStart := make([]string, 0)
-	for id, t := range e.tasks {
+	tasksToStart := make([]*Task, 0)
+	for _, t := range e.tasks {
 		if (queueName == "" || t.Queue == queueName) && (t.Status == StatusPaused || t.Status == StatusQueued || t.Status == StatusError) {
-			tasksToStart = append(tasksToStart, id)
+			tasksToStart = append(tasksToStart, t)
 		}
 	}
 	e.mu.RUnlock()
 
-	for _, id := range tasksToStart {
-		e.StartTask(id)
+	// Sort tasks by priority Order ascending
+	sort.Slice(tasksToStart, func(i, j int) bool {
+		return tasksToStart[i].Order < tasksToStart[j].Order
+	})
+
+	for _, t := range tasksToStart {
+		e.StartTask(t.ID)
 	}
+}
+
+func (e *Engine) ReorderTask(taskID string, newOrder int) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	task, exists := e.tasks[taskID]
+	if !exists {
+		return
+	}
+	task.mu.Lock()
+	task.Order = newOrder
+	task.mu.Unlock()
+	task.SaveState()
+	e.broadcast(task)
 }
 
 func (e *Engine) PauseQueue(queueName string) {
@@ -490,10 +513,14 @@ func (e *Engine) runDownload(ctx context.Context, task *Task) {
 	var wg sync.WaitGroup
 	errChan := make(chan error, len(task.Chunks))
 
+	isDom := task.TrafficBadge == "domestic"
 	onBytesRead := func(n int) {
 		atomic.AddInt64(&e.bytesWindow, int64(n))
 		if e.limiter != nil {
 			e.limiter.Throttle(n)
+		}
+		if a := analytics.GetAnalytics(); a != nil {
+			a.RecordDownload(int64(n), isDom, "")
 		}
 	}
 
@@ -549,6 +576,9 @@ func (e *Engine) runDownload(ctx context.Context, task *Task) {
 		task.SpeedBytesPerSec = 0
 		task.FormattedSpeed = "0 B/s"
 		os.Remove(task.StateFilePath()) // Clean state file on completion
+		if a := analytics.GetAnalytics(); a != nil {
+			a.RecordDownload(0, isDom, task.Filename)
+		}
 	}
 	task.mu.Unlock()
 

@@ -24,7 +24,12 @@
 
 - 🚀 **Turbo Multi-Threaded Engine:** Parallel chunk downloading utilizing Go Goroutines (up to 32 parallel connections).
 - 🧩 **Zero-Concatenation Storage:** Direct byte positioning via `os.File.WriteAt`, eliminating slow final assembly file merging.
-- 💻 **Zero-Friction Standalone Executable:** Single 7MB `.exe` containing all embedded UI assets — run directly with zero installation.
+- 💻 **Zero-Friction Standalone Executable:** Single 7MB `.exe` containing all embedded UI assets and PE resources — run directly with zero installation.
+- 📌 **Windows System Tray Minimization:** One-click minimize to Windows notification tray overflow area (`^`), keeping taskbar clean with background downloads.
+- 📊 **Bandwidth & Traffic Usage Analytics:** Live tracking of billing cycle data consumption with domestic (نیم‌بها) vs international breakdown, calculated savings, and interactive 24h/14d HTML5 Canvas distribution charts.
+- 📋 **Dynamic Custom Queues & Priority Ordering:** Create tailored download queues (Movies, Software, Courses) and reorder download sequence with Up/Down (`▲`/`▼`) buttons.
+- ⏰ **IDM-Grade Night Scheduler & Wheel Time Picker:** Auto-download queues during off-peak hours with smooth mouse wheel scrolling over hours/minutes, plus automatic PC shutdown / sleep upon completion.
+- 🇮🇷 **LinkIrani.ir Domestic Traffic Inspector:** Automatic detection of Iranian half-price (نیم‌بها) servers and instant verification against LinkIrani.ir.
 - 🖥️ **Native Desktop App Mode:** Instant frameless desktop app window via Microsoft Edge App Mode or system browser.
 - ⚡ **Real-Time Chunk Visualizer & Canvas Graph:** Live visual segment bars and animated 60 FPS speedometer.
 - 🔄 **Resumable Downloads & State Persistence:** Automatic recovery of paused or interrupted tasks via `.vortex` state files.
@@ -41,6 +46,11 @@
 | **Language & Performance** | Pure Go (Native) | C++ (Proprietary) | C++ (CLI only) | Python (Interpreted) |
 | **Zero Runtime Needed** | ✅ (Single binary) | ⚠️ (Windows installer) | ✅ (Binary) | ❌ (Requires Python runtime) |
 | **Direct WriteAt (No Merge)**| ✅ Instant | ❌ Merges at 100% | ✅ Chunk mapping | ❌ Slow disk merge |
+| **System Tray Minimization** | ✅ Windows Win32 Tray | ✅ Windows Tray | ❌ None | ⚠️ Heavy PyQt / None |
+| **Bandwidth & Traffic Analytics**| ✅ 24h/14d + Domestic (نیم‌بها) | ❌ Basic log | ❌ None | ❌ None |
+| **Custom Queues & Reordering**| ✅ Dynamic + ▲/▼ Priority | ✅ Queues | ⚠️ Manual CLI | ❌ Rare |
+| **Mouse-Wheel Time Picker** | ✅ Smooth Scroll | ❌ Spinners | ❌ None | ❌ None |
+| **Iranian Domestic Traffic (نیم‌بها)**| ✅ Native LinkIrani check | ❌ None | ❌ None | ❌ None |
 | **Cyber UI & Chunk Visualizer**| ✅ Live Neon SSE | ❌ Outdated 90s UI | ❌ No native UI | ⚠️ Basic Tkinter/PyQt |
 | **Cross-Platform & Docker** | ✅ Windows/Linux/Mac/Docker | ❌ Windows only | ✅ All platforms | ✅ All platforms |
 | **License & Freedom** | 💚 100% Free & Open Source | 🔴 Paid / Trialware | 💚 Open Source | 💚 Open Source |

@@ -25,8 +25,9 @@ type QueueConfig struct {
 }
 
 type SchedulerConfig struct {
-	MainQueue  QueueConfig `json:"main_queue"`
-	NightQueue QueueConfig `json:"night_queue"`
+	MainQueue    QueueConfig             `json:"main_queue"`
+	NightQueue   QueueConfig             `json:"night_queue"`
+	CustomQueues map[string]*QueueConfig `json:"custom_queues,omitempty"`
 }
 
 type Scheduler struct {
@@ -65,6 +66,7 @@ func NewScheduler(configDir string, onStart, onPause func(string), isQueueDone f
 				ShutdownOnDone: false,
 				MaxConcurrent:  1,
 			},
+			CustomQueues: make(map[string]*QueueConfig),
 		},
 	}
 
@@ -85,6 +87,9 @@ func (s *Scheduler) GetConfig() SchedulerConfig {
 
 func (s *Scheduler) SaveConfig(cfg SchedulerConfig) error {
 	s.mu.Lock()
+	if cfg.CustomQueues == nil {
+		cfg.CustomQueues = make(map[string]*QueueConfig)
+	}
 	s.config = cfg
 	s.mu.Unlock()
 
@@ -95,6 +100,27 @@ func (s *Scheduler) SaveConfig(cfg SchedulerConfig) error {
 	return os.WriteFile(s.configPath, data, 0644)
 }
 
+func (s *Scheduler) AddOrUpdateCustomQueue(id string, q *QueueConfig) error {
+	s.mu.Lock()
+	if s.config.CustomQueues == nil {
+		s.config.CustomQueues = make(map[string]*QueueConfig)
+	}
+	s.config.CustomQueues[id] = q
+	cfgCopy := s.config
+	s.mu.Unlock()
+	return s.SaveConfig(cfgCopy)
+}
+
+func (s *Scheduler) DeleteCustomQueue(id string) error {
+	s.mu.Lock()
+	if s.config.CustomQueues != nil {
+		delete(s.config.CustomQueues, id)
+	}
+	cfgCopy := s.config
+	s.mu.Unlock()
+	return s.SaveConfig(cfgCopy)
+}
+
 func (s *Scheduler) load() {
 	data, err := os.ReadFile(s.configPath)
 	if err != nil {
@@ -102,6 +128,9 @@ func (s *Scheduler) load() {
 	}
 	var cfg SchedulerConfig
 	if err := json.Unmarshal(data, &cfg); err == nil {
+		if cfg.CustomQueues == nil {
+			cfg.CustomQueues = make(map[string]*QueueConfig)
+		}
 		s.config = cfg
 	}
 }
@@ -126,7 +155,13 @@ func (s *Scheduler) runLoop() {
 			currentDay := int(now.Weekday())
 
 			s.mu.RLock()
-			queues := []QueueConfig{s.config.MainQueue, s.config.NightQueue}
+			queues := make([]QueueConfig, 0, 2+len(s.config.CustomQueues))
+			queues = append(queues, s.config.MainQueue, s.config.NightQueue)
+			for _, cq := range s.config.CustomQueues {
+				if cq != nil {
+					queues = append(queues, *cq)
+				}
+			}
 			s.mu.RUnlock()
 
 			for _, q := range queues {
