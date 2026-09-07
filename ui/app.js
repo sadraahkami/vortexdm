@@ -1,6 +1,6 @@
 /**
- * VortexDM - Frontend Controller & Real-Time SSE Engine
- * High-Performance Go Multi-Threaded Download Manager UI
+ * VortexDM - High-Performance Go Multi-Threaded Download Manager
+ * UI Controller with Custom SVG Vectors & Real-Time SSE Streamer
  */
 
 // --- 1. Internationalization (i18n) Dictionary ---
@@ -18,34 +18,43 @@ const translations = {
     cat_archive: 'فایل‌های فشرده',
     cat_document: 'اسناد',
     search_placeholder: 'جستجو در بین فایل‌ها...',
+    action_resume_all: 'ادامه همه',
+    action_pause_all: 'توقف همه',
+    action_clear_completed: 'پاک‌سازی تکمیل‌ها',
+    tooltip_resume_all: 'ادامه همه دانلودها',
+    tooltip_pause_all: 'توقف موقت همه دانلودها',
+    tooltip_clear_completed: 'حذف دانلودهای تکمیل‌شده از لیست',
     total_speed: 'سرعت لحظه‌ای کل',
-    col_name: 'نام فایل / نشانی',
-    col_progress: 'پیشرفت و قطعات (Chunks)',
+    col_name: 'نام فایل و نشانی',
+    col_progress: 'پیشرفت و قطعات همروند (Chunks)',
     col_size: 'حجم',
-    col_speed: 'سرعت / زمان',
+    col_speed: 'سرعت و زمان باقی‌مانده',
     col_actions: 'عملیات',
     empty_title: 'هیچ دانلودی در صف نیست',
-    empty_desc: 'روی دکمه "دانلود جدید" کلیک کنید تا موتور همروند Go با حداکثر سرعت شروع به دانلود کند.',
+    empty_desc: 'روی دکمه "دانلود جدید" کلیک کنید یا نشانی لینک مستقیم را وارد نمایید تا موتور توربوی Go با حداکثر توان همروندی شروع به دانلود کند.',
     modal_title: 'افزودن دانلود چندتکه‌ای جدید',
-    label_url: 'آدرس مستقیم فایل (URL):',
+    label_url: 'آدرس مستقیم فایل (Direct URL):',
     label_filename: 'نام دلخواه فایل (اختیاری):',
     label_connections: 'تعداد کانکشن‌های موازی (Goroutines):',
     btn_cancel: 'انصراف',
     btn_start_download: 'شروع دانلود با توربو',
     status_queued: 'در صف',
-    status_probing: 'در حال بررسی سرور...',
+    status_probing: 'بررسی سرور...',
     status_downloading: 'در حال دانلود',
     status_paused: 'متوقف شده',
     status_completed: 'تکمیل شد',
-    status_failed: 'خطا در دانلود',
-    action_pause: 'توقف',
-    action_resume: 'ادامه',
-    action_open: 'باز کردن فایل',
+    status_error: 'خطا در دانلود',
+    action_pause: 'توقف موقت',
+    action_resume: 'ادامه دانلود',
+    action_open: 'باز کردن فایل / پوشه',
     action_delete: 'حذف دانلود',
     confirm_delete: 'آیا از حذف این دانلود اطمینان دارید؟',
     toast_added: 'دانلود جدید با موفقیت اضافه شد',
     toast_deleted: 'دانلود حذف گردید',
-    toast_error: 'خطا در ارتباط با سرور'
+    toast_resumed_all: 'همه دانلودها فعال شدند',
+    toast_paused_all: 'همه دانلودها متوقف شدند',
+    toast_cleared: 'دانلودهای تکمیل‌شده پاک‌سازی شدند',
+    toast_error: 'خطا در برقراری ارتباط با سرور'
   },
   en: {
     btn_new_download: 'New Download',
@@ -60,14 +69,20 @@ const translations = {
     cat_archive: 'Archives',
     cat_document: 'Documents',
     search_placeholder: 'Search files...',
+    action_resume_all: 'Resume All',
+    action_pause_all: 'Pause All',
+    action_clear_completed: 'Clear Completed',
+    tooltip_resume_all: 'Resume all downloads',
+    tooltip_pause_all: 'Pause all downloads',
+    tooltip_clear_completed: 'Remove completed downloads from list',
     total_speed: 'Total Download Speed',
-    col_name: 'File Name / URL',
+    col_name: 'File Name & URL',
     col_progress: 'Progress & Chunks',
     col_size: 'Size',
-    col_speed: 'Speed / ETA',
+    col_speed: 'Speed & ETA',
     col_actions: 'Actions',
     empty_title: 'No downloads in queue',
-    empty_desc: 'Click "New Download" to start downloading with Go multi-threaded turbo speed.',
+    empty_desc: 'Click "New Download" or enter a direct file URL to start downloading with Go multi-threaded turbo speed.',
     modal_title: 'Add Multi-Threaded Download',
     label_url: 'Direct File URL:',
     label_filename: 'Custom File Name (Optional):',
@@ -79,14 +94,17 @@ const translations = {
     status_downloading: 'Downloading',
     status_paused: 'Paused',
     status_completed: 'Completed',
-    status_failed: 'Failed',
+    status_error: 'Error',
     action_pause: 'Pause',
     action_resume: 'Resume',
-    action_open: 'Open File',
+    action_open: 'Open File / Folder',
     action_delete: 'Delete',
-    confirm_delete: 'Are you sure you want to delete this task?',
+    confirm_delete: 'Are you sure you want to delete this download?',
     toast_added: 'New download added successfully',
-    toast_deleted: 'Task deleted',
+    toast_deleted: 'Download removed',
+    toast_resumed_all: 'All downloads resumed',
+    toast_paused_all: 'All downloads paused',
+    toast_cleared: 'Completed downloads cleared',
     toast_error: 'Server communication error'
   }
 };
@@ -97,7 +115,21 @@ let searchQuery = '';
 let tasksData = [];
 let speedHistory = new Array(30).fill(0);
 
-// --- 2. i18n Helper Functions ---
+// --- 2. Custom SVG Vectors Map ---
+const svgIcons = {
+  video: `<svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>`,
+  audio: `<svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>`,
+  software: `<svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>`,
+  archive: `<svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>`,
+  document: `<svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>`,
+  other: `<svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>`,
+  play: `<svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`,
+  pause: `<svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>`,
+  folder: `<svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`,
+  trash: `<svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`
+};
+
+// --- 3. Language & i18n Helpers ---
 function setLanguage(lang) {
   currentLang = lang;
   localStorage.setItem('vortex_lang', lang);
@@ -115,15 +147,20 @@ function setLanguage(lang) {
     if (t[key]) el.placeholder = t[key];
   });
 
-  const langBtn = document.getElementById('langToggleBtn');
-  if (langBtn) {
-    langBtn.textContent = (lang === 'fa') ? 'English' : 'فارسی';
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const key = el.getAttribute('data-i18n-title');
+    if (t[key]) el.title = t[key];
+  });
+
+  const langLabel = document.getElementById('langLabel');
+  if (langLabel) {
+    langLabel.textContent = (lang === 'fa') ? 'English' : 'فارسی';
   }
 
   renderTasks();
 }
 
-// --- 3. Format Helpers ---
+// --- 4. Format Helpers ---
 function formatBytes(bytes) {
   if (bytes <= 0) return '0 B';
   const units = ['B', 'KB', 'MB', 'GB', 'TB'];
@@ -141,23 +178,16 @@ function formatDuration(sec) {
   const m = Math.floor((sec % 3600) / 60);
   const s = sec % 60;
   if (h > 0) {
-    return `${h}h ${m}m ${s}s`;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   }
-  return `${m}m ${s}s`;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-function getCategoryIcon(cat) {
-  switch (cat) {
-    case 'video': return '🎬';
-    case 'audio': return '🎵';
-    case 'archive': return '📦';
-    case 'software': return '💿';
-    case 'document': return '📄';
-    default: return '📄';
-  }
+function getCategorySVG(cat) {
+  return svgIcons[cat] || svgIcons.other;
 }
 
-// --- 4. Canvas Speed Graph ---
+// --- 5. Smooth 60FPS Canvas Speed Chart ---
 const canvas = document.getElementById('speedCanvas');
 const ctx = canvas ? canvas.getContext('2d') : null;
 
@@ -170,10 +200,17 @@ function updateSpeedGraph(newSpeed) {
   const h = canvas.height;
   ctx.clearRect(0, 0, w, h);
 
-  const maxSpeed = Math.max(...speedHistory, 1024 * 1024); // at least 1MB/s scale
+  const maxSpeed = Math.max(...speedHistory, 1024 * 1024);
 
-  ctx.beginPath();
+  // Gradient fill under line
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, 'rgba(0, 242, 254, 0.25)');
+  grad.addColorStop(1, 'rgba(0, 242, 254, 0.0)');
+
   const step = w / (speedHistory.length - 1);
+
+  // Draw fill
+  ctx.beginPath();
   for (let i = 0; i < speedHistory.length; i++) {
     const val = speedHistory[i];
     const y = h - (val / maxSpeed) * (h - 6) - 3;
@@ -181,19 +218,27 @@ function updateSpeedGraph(newSpeed) {
     if (i === 0) ctx.moveTo(x, y);
     else ctx.lineTo(x, y);
   }
+  ctx.lineTo(w, h);
+  ctx.lineTo(0, h);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
 
-  // Neon Cyan Line
+  // Draw stroke
+  ctx.beginPath();
+  for (let i = 0; i < speedHistory.length; i++) {
+    const val = speedHistory[i];
+    const y = h - (val / maxSpeed) * (h - 6) - 3;
+    const x = i * step;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
   ctx.strokeStyle = '#00f2fe';
-  ctx.lineWidth = 2;
-  ctx.shadowColor = '#00f2fe';
-  ctx.shadowBlur = 6;
+  ctx.lineWidth = 1.8;
   ctx.stroke();
-
-  // Reset shadow
-  ctx.shadowBlur = 0;
 }
 
-// --- 5. DOM & Task List Rendering ---
+// --- 6. Task List DOM Rendering ---
 const tasksListContainer = document.getElementById('tasksList');
 const emptyTasksElement = document.getElementById('emptyTasks');
 const globalSpeedVal = document.getElementById('globalSpeedVal');
@@ -205,7 +250,6 @@ const countDoneEl = document.getElementById('countDone');
 function renderTasks() {
   const t = translations[currentLang];
   let filtered = tasksData.filter(task => {
-    // Filter status / category
     if (activeFilter === 'downloading') {
       if (task.status !== 'downloading' && task.status !== 'probing') return false;
     } else if (activeFilter === 'completed') {
@@ -214,7 +258,6 @@ function renderTasks() {
       if (task.category !== activeFilter) return false;
     }
 
-    // Search query
     if (searchQuery.trim() !== '') {
       const q = searchQuery.toLowerCase();
       const matchName = (task.filename || '').toLowerCase().includes(q);
@@ -225,14 +268,12 @@ function renderTasks() {
     return true;
   });
 
-  // Update counts
   if (countAllEl) countAllEl.textContent = tasksData.length;
   if (countActiveEl) countActiveEl.textContent = tasksData.filter(x => x.status === 'downloading').length;
   if (countDoneEl) countDoneEl.textContent = tasksData.filter(x => x.status === 'completed').length;
 
   if (filtered.length === 0) {
     if (emptyTasksElement) emptyTasksElement.classList.remove('hidden');
-    // Clear list items without removing the emptyTasks element
     const items = tasksListContainer.querySelectorAll('.task-item');
     items.forEach(el => el.remove());
     return;
@@ -240,7 +281,6 @@ function renderTasks() {
 
   if (emptyTasksElement) emptyTasksElement.classList.add('hidden');
 
-  // Retain or rebuild task elements
   const existingIds = new Set(filtered.map(x => x.id));
   const currentEls = tasksListContainer.querySelectorAll('.task-item');
   currentEls.forEach(el => {
@@ -264,7 +304,7 @@ function updateTaskCard(card, task, t) {
   const isDone = task.status === 'completed';
   const isPaused = task.status === 'paused';
   const isDownloading = task.status === 'downloading' || task.status === 'probing';
-  const isFailed = task.status === 'failed';
+  const isFailed = task.status === 'error';
 
   let statusText = t['status_' + task.status] || task.status;
   let statusBadgeClass = 'status-active';
@@ -280,45 +320,47 @@ function updateTaskCard(card, task, t) {
     statusBadgeClass = 'status-failed';
   }
 
-  // Chunk blocks visualizer
+  // Neon Chunk Strip
   let chunkStripHtml = '';
   if (task.chunks && task.chunks.length > 0) {
-    chunkStripHtml = '<div class="chunk-strip">';
+    chunkStripHtml = '<div class="chunk-strip" dir="ltr">';
     task.chunks.forEach(chunk => {
       let chunkClass = 'chunk-segment';
-      if (chunk.downloaded >= chunk.size && chunk.size > 0) {
+      if (chunk.completed || (chunk.downloaded >= chunk.size && chunk.size > 0)) {
         chunkClass += ' chunk-done';
       } else if (isDownloading && chunk.downloaded > 0) {
         chunkClass += ' chunk-active';
       }
-      chunkStripHtml += `<div class="${chunkClass}" title="Chunk ${chunk.index}: ${formatBytes(chunk.downloaded)} / ${formatBytes(chunk.size)}"></div>`;
+      chunkStripHtml += `<div class="${chunkClass}" title="Chunk ${chunk.index + 1}: ${formatBytes(chunk.downloaded)} / ${formatBytes(chunk.size)}"></div>`;
     });
     chunkStripHtml += '</div>';
   }
 
-  // Action Buttons
+  // Vector Action Buttons
   let pauseResumeBtn = '';
   if (isDownloading) {
-    pauseResumeBtn = `<button class="btn-action btn-pause" data-action="pause" data-id="${task.id}" title="${t.action_pause}">⏸</button>`;
+    pauseResumeBtn = `<button class="btn-action btn-pause" data-action="pause" data-id="${task.id}" title="${t.action_pause}">${svgIcons.pause}</button>`;
   } else if (isPaused || isFailed) {
-    pauseResumeBtn = `<button class="btn-action btn-resume" data-action="resume" data-id="${task.id}" title="${t.action_resume}">▶</button>`;
+    pauseResumeBtn = `<button class="btn-action btn-resume" data-action="resume" data-id="${task.id}" title="${t.action_resume}">${svgIcons.play}</button>`;
   }
 
   let openBtn = '';
   if (isDone) {
-    openBtn = `<button class="btn-action btn-open" data-action="open" data-id="${task.id}" title="${t.action_open}">📂</button>`;
+    openBtn = `<button class="btn-action btn-open" data-action="open" data-id="${task.id}" title="${t.action_open}">${svgIcons.folder}</button>`;
   }
 
-  const deleteBtn = `<button class="btn-action btn-delete" data-action="delete" data-id="${task.id}" title="${t.action_delete}">🗑</button>`;
+  const deleteBtn = `<button class="btn-action btn-delete" data-action="delete" data-id="${task.id}" title="${t.action_delete}">${svgIcons.trash}</button>`;
 
-  const totalSizeStr = task.total_size > 0 ? formatBytes(task.total_size) : (task.resumable ? '--' : 'Stream');
-  const downloadedStr = formatBytes(task.downloaded);
-  const speedStr = isDownloading ? formatSpeed(task.speed) : '--';
-  const etaStr = (isDownloading && task.eta > 0) ? formatDuration(task.eta) : (isDone ? t.status_completed : '--');
+  const totalSize = task.total_size || 0;
+  const downloadedSize = task.downloaded || 0;
+  const totalSizeStr = totalSize > 0 ? formatBytes(totalSize) : '--';
+  const downloadedStr = formatBytes(downloadedSize);
+  const speedStr = isDownloading ? formatSpeed(task.speed || 0) : '--';
+  const etaStr = (isDownloading && task.eta) ? task.eta : (isDone ? t.status_completed : '--');
 
   card.innerHTML = `
     <div class="task-info-col">
-      <div class="task-cat-icon">${getCategoryIcon(task.category)}</div>
+      <div class="task-cat-badge">${getCategorySVG(task.category)}</div>
       <div class="task-details">
         <span class="task-filename" title="${task.filename}">${task.filename}</span>
         <span class="task-url" title="${task.url}">${task.url}</span>
@@ -328,9 +370,9 @@ function updateTaskCard(card, task, t) {
     <div class="task-progress-col">
       <div class="progress-header">
         <span class="progress-status-badge ${statusBadgeClass}">${statusText}</span>
-        <span class="progress-percent">${percent}%</span>
+        <span class="progress-percent-ltr">${percent}%</span>
       </div>
-      <div class="progress-bar-bg">
+      <div class="progress-bar-bg" dir="ltr">
         <div class="progress-bar-fill ${barFillClass}" style="width: ${percent}%;"></div>
       </div>
       ${chunkStripHtml}
@@ -354,7 +396,7 @@ function updateTaskCard(card, task, t) {
   `;
 }
 
-// --- 6. SSE & REST API Communication ---
+// --- 7. SSE & REST API Communication ---
 function initSSE() {
   const evtSource = new EventSource('/api/events');
 
@@ -377,11 +419,10 @@ function initSSE() {
   evtSource.onerror = (err) => {
     console.warn('SSE connection lost, fallback to REST polling...', err);
     evtSource.close();
-    setTimeout(initSSE, 4000);
+    setTimeout(initSSE, 3500);
   };
 }
 
-// Polling fallback
 async function fetchTasksREST() {
   try {
     const res = await fetch('/api/tasks');
@@ -396,12 +437,39 @@ async function fetchTasksREST() {
       }
       renderTasks();
     }
-  } catch (e) {
-    // server might be starting
-  }
+  } catch (e) {}
 }
 
-// --- 7. Task Actions (Pause, Resume, Delete, Open) ---
+// --- 8. Toolbar Quick Actions (Resume All, Pause All, Clear Completed) ---
+const btnResumeAll = document.getElementById('btnResumeAll');
+const btnPauseAll = document.getElementById('btnPauseAll');
+const btnClearCompleted = document.getElementById('btnClearCompleted');
+
+if (btnResumeAll) {
+  btnResumeAll.addEventListener('click', async () => {
+    await fetch('/api/tasks/start-all', { method: 'POST' });
+    showToast(translations[currentLang].toast_resumed_all);
+    fetchTasksREST();
+  });
+}
+
+if (btnPauseAll) {
+  btnPauseAll.addEventListener('click', async () => {
+    await fetch('/api/tasks/pause-all', { method: 'POST' });
+    showToast(translations[currentLang].toast_paused_all);
+    fetchTasksREST();
+  });
+}
+
+if (btnClearCompleted) {
+  btnClearCompleted.addEventListener('click', async () => {
+    await fetch('/api/tasks/clear-completed', { method: 'POST' });
+    showToast(translations[currentLang].toast_cleared);
+    fetchTasksREST();
+  });
+}
+
+// --- 9. Task Item Event Delegation ---
 tasksListContainer.addEventListener('click', async (e) => {
   const btn = e.target.closest('button[data-action]');
   if (!btn) return;
@@ -427,9 +495,10 @@ tasksListContainer.addEventListener('click', async (e) => {
   }
 });
 
-// --- 8. Modal & Task Submission ---
+// --- 10. Modal Dialog Logic ---
 const taskModal = document.getElementById('taskModal');
 const btnNewDownload = document.getElementById('btnNewDownload');
+const btnEmptyNew = document.getElementById('btnEmptyNew');
 const closeModalBtn = document.getElementById('closeModalBtn');
 const cancelModalBtn = document.getElementById('cancelModalBtn');
 const submitTaskBtn = document.getElementById('submitTaskBtn');
@@ -443,7 +512,6 @@ function openModal() {
   modalFilenameInput.value = '';
   modalUrlInput.focus();
 
-  // Try reading clipboard URL if possible
   if (navigator.clipboard && navigator.clipboard.readText) {
     navigator.clipboard.readText().then(text => {
       if (text && (text.startsWith('http://') || text.startsWith('https://'))) {
@@ -457,9 +525,10 @@ function closeModal() {
   taskModal.classList.add('hidden');
 }
 
-btnNewDownload.addEventListener('click', openModal);
-closeModalBtn.addEventListener('click', closeModal);
-cancelModalBtn.addEventListener('click', closeModal);
+if (btnNewDownload) btnNewDownload.addEventListener('click', openModal);
+if (btnEmptyNew) btnEmptyNew.addEventListener('click', openModal);
+if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
+if (cancelModalBtn) cancelModalBtn.addEventListener('click', closeModal);
 
 submitTaskBtn.addEventListener('click', async () => {
   const url = modalUrlInput.value.trim();
@@ -469,7 +538,7 @@ submitTaskBtn.addEventListener('click', async () => {
   }
 
   const filename = modalFilenameInput.value.trim();
-  const connections = parseInt(modalConnectionsSelect.value, 10) || 8;
+  const connections = parseInt(modalConnectionsSelect.value, 10) || 16;
   const t = translations[currentLang];
 
   try {
@@ -492,7 +561,7 @@ submitTaskBtn.addEventListener('click', async () => {
   }
 });
 
-// --- 9. Filter & Search Handlers ---
+// --- 11. Search & Filter Handlers ---
 document.querySelectorAll('.nav-item').forEach(item => {
   item.addEventListener('click', (e) => {
     e.preventDefault();
@@ -518,7 +587,7 @@ if (langToggleBtn) {
   });
 }
 
-// --- 10. Toast Notification Helper ---
+// --- 12. Toast Feedback Helper ---
 function showToast(msg) {
   let toastContainer = document.querySelector('.toast-container');
   if (!toastContainer) {
@@ -534,10 +603,10 @@ function showToast(msg) {
 
   setTimeout(() => {
     toast.remove();
-  }, 3500);
+  }, 3000);
 }
 
-// --- 11. Initial Startup ---
+// --- 13. Initialization ---
 window.addEventListener('DOMContentLoaded', () => {
   setLanguage(currentLang);
   initSSE();

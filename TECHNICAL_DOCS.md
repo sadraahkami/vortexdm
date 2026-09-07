@@ -117,8 +117,17 @@ Adds a new download task.
 ### `POST /api/tasks/start?id=<id>`
 Resumes or starts a queued or paused task.
 
+### `POST /api/tasks/start-all`
+Resumes all queued, paused, or failed downloads concurrently.
+
 ### `POST /api/tasks/pause?id=<id>`
 Pauses an active task and saves state.
+
+### `POST /api/tasks/pause-all`
+Pauses all currently downloading tasks and flushes their `.vortex` state files.
+
+### `POST /api/tasks/clear-completed`
+Clears all completed tasks from memory and cleans up obsolete state files.
 
 ### `POST /api/tasks/delete?id=<id>`
 Cancels and removes the task and its local files.
@@ -131,7 +140,15 @@ Server-Sent Events (SSE) stream pushing `event: tasks` messages.
 
 ---
 
-## 5. Automated Testing Strategy
+## 5. UI Architecture & Typography Isolation
+
+- **Vector Iconography:** Zero emoji dependency. All glyphs are lightweight, inline SVG vectors conforming to Lucide design standards (2px stroke, round caps/joins).
+- **RTL/LTR Direction Isolation:** Technical values (speedometer, file sizes, ETA, progress percentages, and chunk blocks) are explicitly wrapped with `direction: ltr; unicode-bidi: isolate;` to prevent punctuation/character flipping when rendering in Persian (RTL) mode.
+- **Color Space:** Deep Obsidian Dark palette (`#080c14` / `#0b111e` / `#121a2c`) with glowing cyan (`#00f2fe`) and emerald (`#10b981`) accent channels.
+
+---
+
+## 6. Automated Testing Strategy
 
 Integration tests in `tests/downloader_test.go` utilize Go's `net/http/httptest`:
 1. Creates an in-memory HTTP server handling `HEAD` and partial content `GET` (`Range: bytes=X-Y`).

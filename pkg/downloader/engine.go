@@ -357,6 +357,53 @@ func (e *Engine) GetTotalSpeed() float64 {
 	return e.currentSpeed
 }
 
+func (e *Engine) StartAll() {
+	e.mu.RLock()
+	tasksToStart := make([]string, 0)
+	for id, t := range e.tasks {
+		if t.Status == StatusPaused || t.Status == StatusQueued || t.Status == StatusError {
+			tasksToStart = append(tasksToStart, id)
+		}
+	}
+	e.mu.RUnlock()
+
+	for _, id := range tasksToStart {
+		e.StartTask(id)
+	}
+}
+
+func (e *Engine) PauseAll() {
+	e.mu.RLock()
+	tasksToPause := make([]string, 0)
+	for id, t := range e.tasks {
+		if t.Status == StatusDownloading {
+			tasksToPause = append(tasksToPause, id)
+		}
+	}
+	e.mu.RUnlock()
+
+	for _, id := range tasksToPause {
+		e.PauseTask(id)
+	}
+}
+
+func (e *Engine) ClearCompleted() {
+	e.mu.Lock()
+	completedIDs := make([]string, 0)
+	for id, t := range e.tasks {
+		if t.Status == StatusCompleted {
+			completedIDs = append(completedIDs, id)
+		}
+	}
+	for _, id := range completedIDs {
+		t := e.tasks[id]
+		delete(e.tasks, id)
+		os.Remove(t.StateFilePath())
+	}
+	e.mu.Unlock()
+}
+
+
 
 func (e *Engine) runDownload(ctx context.Context, task *Task) {
 	file, err := os.OpenFile(task.FinalPath, os.O_CREATE|os.O_WRONLY, 0644)

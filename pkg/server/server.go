@@ -94,8 +94,11 @@ func (s *Server) SetupRoutes() http.Handler {
 	// REST Endpoints
 	mux.HandleFunc("/api/tasks", s.handleTasks)
 	mux.HandleFunc("/api/tasks/start", s.handleStartTask)
+	mux.HandleFunc("/api/tasks/start-all", s.handleStartAll)
 	mux.HandleFunc("/api/tasks/pause", s.handlePauseTask)
+	mux.HandleFunc("/api/tasks/pause-all", s.handlePauseAll)
 	mux.HandleFunc("/api/tasks/delete", s.handleDeleteTask)
+	mux.HandleFunc("/api/tasks/clear-completed", s.handleClearCompleted)
 	mux.HandleFunc("/api/tasks/open", s.handleOpenFile)
 	mux.HandleFunc("/api/events", s.handleSSE)
 
@@ -210,6 +213,36 @@ func (s *Server) handlePauseTask(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte(`{"status":"paused"}`))
+}
+
+func (s *Server) handleStartAll(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	s.engine.StartAll()
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(`{"status":"started_all"}`))
+}
+
+func (s *Server) handlePauseAll(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	s.engine.PauseAll()
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(`{"status":"paused_all"}`))
+}
+
+func (s *Server) handleClearCompleted(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	s.engine.ClearCompleted()
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(`{"status":"cleared"}`))
 }
 
 func (s *Server) handleDeleteTask(w http.ResponseWriter, r *http.Request) {
