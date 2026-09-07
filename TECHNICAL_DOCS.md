@@ -135,6 +135,9 @@ Cancels and removes the task and its local files.
 ### `POST /api/tasks/open?id=<id>`
 Selects and reveals the file in the operating system's native file explorer (`explorer /select,` on Windows, `open -R` on macOS, `xdg-open` on Linux).
 
+### `POST /api/window/minimize`
+Minimizes the VortexDM desktop window via native Windows `user32.dll` syscall (`ShowWindow(hwnd, SW_MINIMIZE)`).
+
 ### `GET /api/scheduler`
 Returns current scheduler configuration for Main Queue and Night Queue.
 
@@ -172,12 +175,20 @@ Analyzes URL host/IP against Iranian domestic CIDRs and ASNs. Returns `{ is_dome
 - Token-bucket algorithm enforcing bandwidth limit across all concurrent Goroutines.
 - Prevents connection starvation, allowing smooth concurrent web browsing and gaming while downloading.
 
+### 5.4 Windows Native App Integration & Resources
+- **Embedded PE Resources (`go-winres`):** Generates `rsrc_windows_amd64.syso` containing custom 256x256 high-resolution icons, application version metadata (Product Name: VortexDM v1.0.0), and Windows DPI-aware application manifest.
+- **Standalone Web App Manifest (`ui/manifest.json`):** Serves multi-size application icons (16, 24, 32, 48, 64, 128, 192, 256, 512 px) ensuring Microsoft Edge and Chromium standalone app modes render crisp taskbar and window header icons without default web globe fallbacks.
+- **Native Window Minimization (`pkg/server/window_windows.go`):** Direct Windows `user32.dll` enumeration and `ShowWindow` minimize calls wired to top ribbon controls.
+
 ---
 
 ## 6. High-Density UI Architecture
 
-- **IDM-Grade Information Density:** Replaced oversized cards with a compact, sticky-header table grid (36px row height), allowing 20+ downloads visible simultaneously.
-- **Tree Navigation:** Left sidebar organized into Categories (Compressed, Documents, Music, Programs, Video), Statuses (Unfinished, Finished), and Queues (Main, Night).
+- **IDM-Grade Information Density:** Compact, sticky-header table grid (36px row height), allowing 20+ downloads visible simultaneously.
+- **Tree Navigation & Collapsible Sidebar:** Left sidebar organized into Categories, Statuses, and Queues with one-click collapse/expand (`.sidebar-collapsed`) for maximum data visibility.
+- **Pure Bilingual Localization:** Strictly separated Persian and English typography without awkward parenthetical inline translations.
+- **Custom Dark 24-Hour Time Selectors:** Replaced jarring native OS `<input type="time">` popup dialogs with sleek, integrated dark Hour/Minute dropdown selectors (`.dark-time-picker`).
+- **Universal Dark Translucent Scrollbars:** Engineered custom `::-webkit-scrollbar` and `scrollbar-width: thin` CSS specifications ensuring Windows OS never falls back to glaring white scrollbar tracks upon resizing.
 - **Interactive Context Menu:** Native-like floating menu on right-click for instant file opening, copying URL, checking on LinkIrani.ir, and task management.
 - **Typography & Isolation:** Strict `direction: ltr; unicode-bidi: isolate;` on all speed metrics, numbers, and file sizes to ensure clean bilingual rendering.
 
@@ -185,13 +196,15 @@ Analyzes URL host/IP against Iranian domestic CIDRs and ASNs. Returns `{ is_dome
 
 ## 7. Automated Testing Strategy
 
-Suite of 7 unit and integration tests covering:
+Suite of 8 unit and integration tests covering:
 1. `TestMultiThreadedDownload`: Multi-goroutine concurrent HTTP Range download with byte-by-byte SHA/integrity verification.
 2. `TestSpeedLimiter`: Token-bucket throttle enforcement and unthrottled throughput.
-3. `TestDetectTraffic`: Iranian domain detection (`soft98.ir` -> domestic نیم‌بها) vs international (`github.com` -> تمام‌بها).
-4. `TestFormatBytes`, `TestFormatSpeed`, `TestFormatDuration`, `TestDetectCategory`.
+3. `TestServerEndpointsAndAssets`: Validates root HTML, dark color-scheme meta, favicon, manifest, and window minimize endpoints.
+4. `TestDetectTraffic`: Iranian domain detection (`soft98.ir` -> domestic نیم‌بها) vs international (`github.com` -> تمام‌بها).
+5. `TestFormatBytes`, `TestFormatSpeed`, `TestFormatDuration`, `TestDetectCategory`.
 
 Run tests:
 ```bash
 cmd /c test.bat
 ```
+

@@ -1,0 +1,26 @@
+{
+  "name": "VortexDM",
+  "short_name": "VortexDM",
+  "description": "VortexDM - Professional High-Speed Download Manager",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070a11",
+  "theme_color": "#00f2fe",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "256x256",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

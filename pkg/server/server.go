@@ -112,6 +112,7 @@ func (s *Server) SetupRoutes() http.Handler {
 	mux.HandleFunc("/api/scheduler", s.handleScheduler)
 	mux.HandleFunc("/api/speed-limit", s.handleSpeedLimit)
 	mux.HandleFunc("/api/traffic/check", s.handleTrafficCheck)
+	mux.HandleFunc("/api/window/minimize", s.handleWindowMinimize)
 
 	// Static Web UI Files
 	if s.staticFS != nil {
@@ -410,3 +411,14 @@ func (s *Server) handleTrafficCheck(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(info)
 }
+
+func (s *Server) handleWindowMinimize(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		minimized := MinimizeAppWindow()
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"success": minimized})
+		return
+	}
+	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+}
+

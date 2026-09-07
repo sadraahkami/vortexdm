@@ -24,22 +24,24 @@ const translations = {
     tb_sched_tip: 'تنظیمات زمان‌بندی و صف دانلود شبانه',
     tb_limit_tip: 'محدودکننده و تقسیم هوشمند پهنای باند',
     tb_iran_tip: 'بررسی ترافیک داخلی / نیم‌بها در سامانه LinkIrani.ir',
+    tb_minimize_tip: 'کوچک‌سازی پنجره',
+    tip_toggle_sidebar: 'کوچک‌سازی/بازگشایی پنل',
     speed_lbl: 'سرعت کل:',
     tree_categories: 'دسته‌بندی‌ها',
-    tree_queues: 'صف‌های دانلود (Queues)',
+    tree_queues: 'صف‌های دانلود',
     cat_all: 'همه دانلودها',
-    cat_compressed: 'فشرده (Compressed)',
-    cat_documents: 'اسناد (Documents)',
-    cat_music: 'موزیک و صدا (Music)',
-    cat_programs: 'برنامه‌ها (Programs)',
-    cat_video: 'ویدیوها (Video)',
-    cat_unfinished: 'ناتمام (Unfinished)',
-    cat_finished: 'تکمیل‌شده (Finished)',
+    cat_compressed: 'فشرده',
+    cat_documents: 'اسناد',
+    cat_music: 'موسیقی و صدا',
+    cat_programs: 'نرم‌افزارها',
+    cat_video: 'ویدیوها',
+    cat_unfinished: 'ناتمام',
+    cat_finished: 'تکمیل‌شده',
     queue_main: 'صف اصلی',
-    queue_night: 'صف شبانه (Night)',
+    queue_night: 'صف شبانه',
     search_filter: 'فیلتر و جستجو در میان فایل‌ها...',
     selected_count: 'مورد انتخاب شده: ',
-    col_filename: 'نام فایل (File Name)',
+    col_filename: 'نام فایل',
     col_size: 'حجم',
     col_progress: 'وضعیت / درصد پیشرفت',
     col_speed: 'سرعت انتقال',
@@ -58,14 +60,14 @@ const translations = {
     lbl_conns: 'تعداد قطعات همزمان (Q):',
     btn_cancel: 'انصراف',
     btn_start: 'شروع دانلود',
-    sched_title: 'تنظیمات زمان‌بندی و صف دانلود (Scheduler)',
+    sched_title: 'تنظیمات زمان‌بندی و صف دانلود',
     sched_enable: 'فعال‌سازی دانلود خودکار بر اساس زمان‌بندی برای این صف',
     sched_start_at: 'شروع دانلود در ساعت:',
     sched_stop_at: 'توقف دانلود در ساعت:',
     sched_days_title: 'روزهای اجرای برنامه در هفته:',
     sched_post_title: 'عملیات پس از اتمام تمام فایل‌های این صف:',
-    sched_shutdown_pc: 'خاموش کردن رایانه پس از پایان دانلود (Turn off computer)',
-    sched_sleep_pc: 'به حالت Sleep بردن سیستم (Suspend state)',
+    sched_shutdown_pc: 'خاموش کردن رایانه پس از پایان دانلود',
+    sched_sleep_pc: 'به حالت آماده‌باش بردن سیستم (خواب)',
     sched_exit_app: 'بستن نرم‌افزار VortexDM',
     sched_max_concur: 'حداکثر فایل‌های همزمان در صف:',
     btn_save_apply: 'ذخیره و اعمال زمان‌بندی',
@@ -95,7 +97,7 @@ const translations = {
     traffic_domestic: '🟢 نیم‌بها',
     traffic_intl: '🌐 تمام‌بها',
     confirm_delete: 'آیا از حذف موارد انتخاب‌شده اطمینان دارید؟',
-    unlimited: 'نامحدود (Max)',
+    unlimited: 'نامحدود',
     active_state: 'فعال',
     inactive_state: 'غیرفعال'
   },
@@ -118,6 +120,8 @@ const translations = {
     tb_sched_tip: 'Scheduler and night download settings',
     tb_limit_tip: 'Bandwidth allocator and speed limiter',
     tb_iran_tip: 'Check Iranian domestic half-price traffic status',
+    tb_minimize_tip: 'Minimize Window',
+    tip_toggle_sidebar: 'Toggle Sidebar',
     speed_lbl: 'Speed:',
     tree_categories: 'Categories',
     tree_queues: 'Queues',
@@ -754,17 +758,51 @@ const cancelSchedBtn = document.getElementById('cancelSchedBtn');
 const saveSchedBtn = document.getElementById('saveSchedBtn');
 const schedEnable = document.getElementById('schedEnable');
 const schedStartCheck = document.getElementById('schedStartCheck');
-const schedStartTime = document.getElementById('schedStartTime');
 const schedStopCheck = document.getElementById('schedStopCheck');
-const schedStopTime = document.getElementById('schedStopTime');
 const schedShutdownPC = document.getElementById('schedShutdownPC');
 const schedSleepPC = document.getElementById('schedSleepPC');
 const schedExitApp = document.getElementById('schedExitApp');
 const schedMaxConcur = document.getElementById('schedMaxConcur');
 let activeSchedTab = 'night';
 
+function initTimeSelectors() {
+  const populate = (selectEl, max) => {
+    if (!selectEl || selectEl.children.length > 0) return;
+    for (let i = 0; i < max; i++) {
+      const opt = document.createElement('option');
+      const val = i.toString().padStart(2, '0');
+      opt.value = val;
+      opt.textContent = val;
+      selectEl.appendChild(opt);
+    }
+  };
+
+  populate(document.getElementById('schedStartHour'), 24);
+  populate(document.getElementById('schedStopHour'), 24);
+  populate(document.getElementById('schedStartMin'), 60);
+  populate(document.getElementById('schedStopMin'), 60);
+}
+
+function setTimePickerValue(prefix, timeStr) {
+  initTimeSelectors();
+  const parts = (timeStr || '00:00').split(':');
+  const hEl = document.getElementById(`${prefix}Hour`);
+  const mEl = document.getElementById(`${prefix}Min`);
+  if (hEl && parts[0] !== undefined) hEl.value = parts[0].padStart(2, '0');
+  if (mEl && parts[1] !== undefined) mEl.value = parts[1].padStart(2, '0');
+}
+
+function getTimePickerValue(prefix) {
+  const hEl = document.getElementById(`${prefix}Hour`);
+  const mEl = document.getElementById(`${prefix}Min`);
+  const h = hEl ? hEl.value : '00';
+  const m = mEl ? mEl.value : '00';
+  return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`;
+}
+
 async function openSchedulerModal() {
   schedulerModal.classList.remove('hidden');
+  initTimeSelectors();
   try {
     const res = await fetch('/api/scheduler');
     if (res.ok) {
@@ -776,12 +814,13 @@ async function openSchedulerModal() {
 
 function populateSchedulerUI() {
   if (!schedulerConfig) return;
+  initTimeSelectors();
   const qCfg = (activeSchedTab === 'night') ? schedulerConfig.night_queue : schedulerConfig.main_queue;
   if (!qCfg) return;
 
   schedEnable.checked = qCfg.enabled;
-  schedStartTime.value = qCfg.start_time || '02:00';
-  schedStopTime.value = qCfg.stop_time || '07:30';
+  setTimePickerValue('schedStart', qCfg.start_time || '02:00');
+  setTimePickerValue('schedStop', qCfg.stop_time || '07:30');
   schedStartCheck.checked = !!qCfg.start_time;
   schedStopCheck.checked = !!qCfg.stop_time;
   schedShutdownPC.checked = !!qCfg.shutdown_on_done;
@@ -820,8 +859,8 @@ if (saveSchedBtn) {
 
     const targetQueue = (activeSchedTab === 'night') ? schedulerConfig.night_queue : schedulerConfig.main_queue;
     targetQueue.enabled = schedEnable.checked;
-    targetQueue.start_time = schedStartTime.value;
-    targetQueue.stop_time = schedStopTime.value;
+    targetQueue.start_time = schedStartCheck.checked ? getTimePickerValue('schedStart') : '';
+    targetQueue.stop_time = schedStopCheck.checked ? getTimePickerValue('schedStop') : '';
     targetQueue.days = selectedDays;
     targetQueue.shutdown_on_done = schedShutdownPC.checked;
     targetQueue.sleep_on_done = schedSleepPC.checked;
@@ -844,6 +883,25 @@ if (saveSchedBtn) {
     } catch (e) {
       alert('Failed to save scheduler');
     }
+  });
+}
+
+// Window Minimize Button
+const btnMinimizeWindow = document.getElementById('btnMinimizeWindow');
+if (btnMinimizeWindow) {
+  btnMinimizeWindow.addEventListener('click', async () => {
+    try {
+      await fetch('/api/window/minimize', { method: 'POST' });
+    } catch (e) {}
+  });
+}
+
+// Sidebar Toggle / Minimize Button
+const btnToggleSidebar = document.getElementById('btnToggleSidebar');
+const workspaceLayout = document.querySelector('.workspace-layout');
+if (btnToggleSidebar && workspaceLayout) {
+  btnToggleSidebar.addEventListener('click', () => {
+    workspaceLayout.classList.toggle('sidebar-collapsed');
   });
 }
 
@@ -977,6 +1035,7 @@ if (langToggleBtn) {
 
 // --- 16. App Bootstrapping ---
 window.addEventListener('DOMContentLoaded', () => {
+  initTimeSelectors();
   setLanguage(currentLang);
   initSSE();
   setInterval(fetchTasksREST, 1500);
