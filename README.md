@@ -22,6 +22,11 @@
 
 ## ✨ Key Features | قابلیت‌های کلیدی
 
+- 📱 **Wi-Fi Mobile Sharing via QR Code:** Scan a QR code on any smartphone camera to stream and download files over the local network with zero cables.
+- 🎬 **In-Flight Media Streaming Preview:** Stream partial video/audio files directly from disk via HTTP 206 `Range` requests while the download is actively running.
+- 🛡️ **Smart SOCKS5 & HTTP Proxy Engine:** Pure-Go RFC 1928 client with automatic domestic Iranian traffic bypass (`ProxyBypassDomestic`) preserving half-price domestic tariffs.
+- ⚡ **Built-in Network Ping & Speed Benchmark:** Live latency and download throughput tester with an animated 60 FPS HTML5 Canvas speedometer gauge.
+- 🔌 **WordPress Companion Plugin:** Official companion plugin (`[vortex_download]`) offering modern download cards, one-click `vortexdm://` deep-links, and domestic traffic badges.
 - 🎛️ **Dual-Mode Interface (Simple vs PRO):** One-click toggle between an ultra-clean, distraction-free minimalist mode and an advanced IDM-grade power studio.
 - 📁 **Custom Download Destination Paths:** Set a global default download folder or specify custom save folders per task.
 - 🔗 **Expired Link Refresher:** Update expired temporary or tokenized download URLs in-place and resume seamlessly from the exact byte where interruption occurred.
@@ -56,11 +61,16 @@
 | **Language & Performance** | Pure Go (Native) | C++ (Proprietary) | C++ (CLI only) | Python (Interpreted) |
 | **Zero Runtime Needed** | ✅ (Single binary) | ⚠️ (Windows installer) | ✅ (Binary) | ❌ (Requires Python runtime) |
 | **Dual-Mode UI (Simple & PRO)** | ✅ 1-Click Toggle | ❌ Cluttered always | ❌ None | ❌ Rare |
+| **Wi-Fi Mobile Sharing (QR Code)**| ✅ LAN Stream + QR | ❌ None | ❌ None | ❌ None |
+| **In-Flight Streaming Preview**| ✅ HTTP 206 Partial Stream | ⚠️ Video only with limitations | ❌ None | ❌ None |
+| **SOCKS5 with Domestic Bypass**| ✅ RFC 1928 + Smart Bypass | ⚠️ Proxy without smart bypass | ⚠️ Manual proxy | ⚠️ Needs PySocks |
 | **Direct WriteAt (No Merge)**| ✅ Instant | ❌ Merges at 100% | ✅ Chunk mapping | ❌ Slow disk merge |
 | **Expired Link Refresher** | ✅ In-place refresh | ✅ Supported | ❌ Manual reconfigure | ❌ Rare |
 | **Built-in Archive Extractor**| ✅ Pure Go (.zip) | ❌ None | ❌ None | ⚠️ Requires external |
+| **Built-in Speed Benchmark** | ✅ Ping + MB/s Gauge | ❌ None | ❌ None | ❌ None |
 | **System Tray Minimization** | ✅ Windows Win32 Tray | ✅ Windows Tray | ❌ None | ⚠️ Heavy PyQt / None |
 | **Bandwidth & Traffic Analytics**| ✅ 24h/14d + Domestic (نیم‌بها) | ❌ Basic log | ❌ None | ❌ None |
+| **WordPress Companion Plugin** | ✅ Official Companion Plugin | ❌ None | ❌ None | ❌ None |
 | **Custom Queues & Reordering**| ✅ Dynamic + ▲/▼ Priority | ✅ Queues | ⚠️ Manual CLI | ❌ Rare |
 | **Mouse-Wheel Time Picker** | ✅ Smooth Scroll | ❌ Spinners | ❌ None | ❌ None |
 | **Iranian Domestic Traffic (نیم‌بها)**| ✅ Native LinkIrani check | ❌ None | ❌ None | ❌ None |
@@ -124,27 +134,42 @@ VortexDM/
 │   │   ├── chunk.go         # HTTP Range worker & atomic byte tracker
 │   │   ├── engine.go        # Goroutine orchestrator & speed ticker
 │   │   └── task.go          # Task model, ETA calculation & .vortex state
+│   ├── proxy/               # Pure-Go RFC 1928 SOCKS5 & HTTP proxy engine
+│   │   └── proxy.go         # Proxy dialer with Iranian domestic traffic bypass
+│   ├── scheduler/           # Night queue scheduler & OS actions
+│   │   └── scheduler.go     # Background queue timer & PC power actions
 │   ├── server/              # HTTP Server & Real-Time SSE Streamer
-│   │   └── server.go        # REST API & Server-Sent Events hub
+│   │   └── server.go        # REST API, SSE hub, QR Wi-Fi share, Range stream & speedtest
+│   ├── settings/            # Thread-safe persistent configuration
+│   │   └── settings.go      # vortex_settings.json persistence manager
+│   ├── traffic/             # Network traffic inspector & analytics
+│   │   ├── analytics.go     # Domestic vs intl billing cycle logger
+│   │   └── iran.go          # LinkIrani CIDR heuristic evaluator
+│   ├── unpacker/            # Pure-Go zip extractor
+│   │   └── unpacker.go      # Zip-Slip protected archive unpacker
 │   └── utils/               # Formatters & MIME category classifier
 │       ├── category.go      # Extension category matcher
 │       └── format.go        # Bytes & Duration formatters
 ├── extensions/              # Official browser extensions
 │   └── vortexdm-chrome/     # Chrome / Edge / Brave Manifest V3 extension
+├── wordpress-plugin/        # Official WordPress Companion Integration
+│   └── vortexdm-companion/  # MVC WordPress plugin (shortcodes, deep-link, admin)
 ├── ui/                      # Cyber Dark Glassmorphic Web Dashboard
-│   ├── app.js               # SSE subscriber, canvas chart & i18n controller
-│   ├── index.html           # Modern responsive layout & chunk grid
+│   ├── app.js               # Dual-mode, QR generator, media player, speedtest & i18n
+│   ├── index.html           # Modern responsive layout & modal dialogues
 │   └── style.css            # Glowing neon dark cyber theme
-├── tests/                   # Automated unit & integration tests
+├── tests/                   # Automated unit & integration tests (19 tests)
 │   ├── batch_test.go        # Multi-URL batch importer unit test
 │   ├── checksum_test.go     # SHA-256 & MD5 verifier test
 │   ├── downloader_test.go   # Mock range server & chunk integrity verification
+│   ├── proxy_test.go        # SOCKS5 handshake & domestic bypass unit test
+│   ├── share_test.go        # QR share, media stream & speedtest unit test
 │   └── utils_test.go        # Formatter & category unit tests
 ├── Dockerfile               # Alpine multi-stage container
 ├── docker-compose.yml       # Production stack definition
 ├── build.bat                # Standalone Windows build script
 ├── run.bat                  # Quick launch batch script
-├── test.bat                 # Automated test runner
+├── test.bat                 # Automated test runner (19 tests)
 ├── main.go                  # Main entry point & embedded UI launcher
 ├── TECHNICAL_DOCS.md        # Technical architecture documentation
 ├── LICENSE                  # MIT License

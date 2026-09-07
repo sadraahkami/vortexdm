@@ -3,10 +3,13 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -129,6 +132,15 @@ func (s *Server) SetupRoutes() http.Handler {
 	mux.HandleFunc("/api/tasks/refresh-url", s.handleRefreshURL)
 	mux.HandleFunc("/api/tasks/extract", s.handleExtractZip)
 	mux.HandleFunc("/api/settings", s.handleSettings)
+
+	// Wi-Fi Local Sharing & In-Flight Media Streaming
+	mux.HandleFunc("/api/share/info", s.handleShareInfo)
+	mux.HandleFunc("/share/file", s.handleShareFile)
+	mux.HandleFunc("/api/media/stream", s.handleMediaStream)
+
+	// Built-in Speed & Latency Test
+	mux.HandleFunc("/api/speedtest/ping", s.handleSpeedtestPing)
+	mux.HandleFunc("/api/speedtest/download", s.handleSpeedtestDownload)
 
 	// Static Web UI Files
 	if s.staticFS != nil {
@@ -694,6 +706,183 @@ func (s *Server) handleExtractZip(w http.ResponseWriter, r *http.Request) {
 		"status": "extracted",
 		"path":   extractedDir,
 	})
+}
+
+func getLocalOutboundIP() string {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		return "127.0.0.1"
+	}
+	defer conn.Close()
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+	return localAddr.IP.String()
+}
+
+func (s *Server) handleShareInfo(w http.ResponseWriter, r *http.Request) {
+	taskID := r.URL.Query().Get("id")
+	if taskID == "" {
+		http.Error(w, `{"error":"Task ID required"}`, http.StatusBadRequest)
+		return
+	}
+
+	task := s.engine.GetTask(taskID)
+	if task == nil {
+		http.Error(w, `{"error":"Task not found"}`, http.StatusNotFound)
+		return
+	}
+
+	lanIP := getLocalOutboundIP()
+	host := r.Host
+	port := "4890"
+	if strings.Contains(host, ":") {
+		_, p, err := net.SplitHostPort(host)
+		if err == nil && p != "" {
+			port = p
+		}
+	}
+
+	shareURL := fmt.Sprintf("http://%s:%s/share/file?id=%s", lanIP, port, task.ID)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"task_id":   task.ID,
+		"filename":  task.Filename,
+		"size":      task.TotalSize,
+		"lan_ip":    lanIP,
+		"share_url": shareURL,
+		"completed": task.Status == downloader.StatusCompleted,
+	})
+}
+
+func (s *Server) handleShareFile(w http.ResponseWriter, r *http.Request) {
+	taskID := r.URL.Query().Get("id")
+	if taskID == "" {
+		http.Error(w, "Task ID required", http.StatusBadRequest)
+		return
+	}
+
+	task := s.engine.GetTask(taskID)
+	if task == nil {
+		http.Error(w, "Task not found", http.StatusNotFound)
+		return
+	}
+
+	file, err := os.Open(task.FinalPath)
+	if err != nil {
+		http.Error(w, "File not available on disk", http.StatusNotFound)
+		return
+	}
+	defer file.Close()
+
+	stat, err := file.Stat()
+	if err != nil {
+		http.Error(w, "Failed to inspect file", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filepath.Base(task.Filename)))
+	w.Header().Set("Accept-Ranges", "bytes")
+	http.ServeContent(w, r, task.Filename, stat.ModTime(), file)
+}
+
+func (s *Server) handleMediaStream(w http.ResponseWriter, r *http.Request) {
+	taskID := r.URL.Query().Get("id")
+	if taskID == "" {
+		http.Error(w, "Task ID required", http.StatusBadRequest)
+		return
+	}
+
+	task := s.engine.GetTask(taskID)
+	if task == nil {
+		http.Error(w, "Task not found", http.StatusNotFound)
+		return
+	}
+
+	file, err := os.Open(task.FinalPath)
+	if err != nil {
+		http.Error(w, "Media file not available", http.StatusNotFound)
+		return
+	}
+	defer file.Close()
+
+	stat, err := file.Stat()
+	if err != nil {
+		http.Error(w, "Failed to inspect media file", http.StatusInternalServerError)
+		return
+	}
+
+	ext := strings.ToLower(filepath.Ext(task.Filename))
+	mimeType := "application/octet-stream"
+	switch ext {
+	case ".mp4", ".m4v":
+		mimeType = "video/mp4"
+	case ".webm":
+		mimeType = "video/webm"
+	case ".mkv":
+		mimeType = "video/x-matroska"
+	case ".mov":
+		mimeType = "video/quicktime"
+	case ".mp3":
+		mimeType = "audio/mpeg"
+	case ".wav":
+		mimeType = "audio/wav"
+	case ".flac":
+		mimeType = "audio/flac"
+	case ".m4a":
+		mimeType = "audio/mp4"
+	case ".ogg":
+		mimeType = "audio/ogg"
+	case ".aac":
+		mimeType = "audio/aac"
+	}
+
+	w.Header().Set("Content-Type", mimeType)
+	w.Header().Set("Accept-Ranges", "bytes")
+	w.Header().Set("Content-Disposition", fmt.Sprintf(`inline; filename="%s"`, filepath.Base(task.Filename)))
+	http.ServeContent(w, r, task.Filename, stat.ModTime(), file)
+}
+
+func (s *Server) handleSpeedtestPing(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"pong":        true,
+		"server_time": time.Now().UnixMilli(),
+	})
+}
+
+func (s *Server) handleSpeedtestDownload(w http.ResponseWriter, r *http.Request) {
+	sizeStr := r.URL.Query().Get("size")
+	sizeMB, _ := strconv.Atoi(sizeStr)
+	if sizeMB <= 0 || sizeMB > 50 {
+		sizeMB = 10
+	}
+	totalBytes := int64(sizeMB) * 1024 * 1024
+
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Content-Length", strconv.FormatInt(totalBytes, 10))
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+
+	chunk := make([]byte, 64*1024)
+	for i := range chunk {
+		chunk[i] = byte(i % 256)
+	}
+
+	var written int64
+	for written < totalBytes {
+		remaining := totalBytes - written
+		toWrite := int64(len(chunk))
+		if remaining < toWrite {
+			toWrite = remaining
+		}
+		n, err := w.Write(chunk[:toWrite])
+		if err != nil {
+			return
+		}
+		written += int64(n)
+		if flusher, ok := w.(http.Flusher); ok {
+			flusher.Flush()
+		}
+	}
 }
 
 

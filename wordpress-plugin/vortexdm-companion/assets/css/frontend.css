@@ -1,0 +1,256 @@
+/**
+ * VortexDM Companion - Frontend Download Card Styles
+ */
+
+.vortexdm-card-wrap {
+    margin: 20px 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    box-sizing: border-box;
+}
+
+.vortexdm-card-wrap *,
+.vortexdm-card-wrap *::before,
+.vortexdm-card-wrap *::after {
+    box-sizing: inherit;
+}
+
+.vortexdm-card-inner {
+    border-radius: 12px;
+    padding: 20px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Modern Dark Theme (Default) */
+.vortex-theme-modern_dark .vortexdm-card-inner {
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #f8fafc;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.vortex-theme-modern_dark .vortexdm-card-inner:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.3);
+}
+
+.vortex-theme-modern_dark .vortexdm-file-title {
+    color: #ffffff;
+}
+
+.vortex-theme-modern_dark .vortexdm-file-icon {
+    background: rgba(2, 132, 199, 0.15);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.25);
+}
+
+.vortex-theme-modern_dark .vortexdm-badge-ver {
+    background: rgba(255, 255, 255, 0.08);
+    color: #cbd5e1;
+}
+
+.vortex-theme-modern_dark .vortexdm-badge-size {
+    background: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+}
+
+.vortex-theme-modern_dark .vortexdm-hash-row {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    color: #94a3b8;
+}
+
+/* Sleek Light Theme */
+.vortex-theme-sleek_light .vortexdm-card-inner {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    color: #1e293b;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.vortex-theme-sleek_light .vortexdm-file-title {
+    color: #0f172a;
+}
+
+.vortex-theme-sleek_light .vortexdm-file-icon {
+    background: #f0f9ff;
+    color: #0284c7;
+    border: 1px solid #bae6fd;
+}
+
+.vortex-theme-sleek_light .vortexdm-badge-ver {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.vortex-theme-sleek_light .vortexdm-badge-size {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.vortex-theme-sleek_light .vortexdm-hash-row {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+}
+
+/* Common Meta Layout */
+.vortexdm-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.vortexdm-file-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.vortexdm-file-icon svg {
+    width: 24px;
+    height: 24px;
+}
+
+.vortexdm-file-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.vortexdm-file-title {
+    margin: 0 0 6px 0;
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.3;
+    word-break: break-word;
+}
+
+.vortexdm-badges-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.vortexdm-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.vortexdm-badge-domestic {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+/* Hash row */
+.vortexdm-hash-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+}
+
+.vortexdm-hash-label {
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.vortexdm-hash-code {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: monospace;
+    font-size: 12px;
+}
+
+.vortexdm-btn-copy-hash {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: background 0.15s ease;
+}
+
+.vortexdm-btn-copy-hash:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Buttons */
+.vortexdm-actions-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+}
+
+.vortexdm-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.vortexdm-btn:hover {
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+.vortexdm-btn-primary {
+    background: linear-gradient(135deg, #0284c7, #0369a1);
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3);
+}
+
+.vortexdm-btn-primary:hover {
+    background: linear-gradient(135deg, #0369a1, #075985);
+    box-shadow: 0 6px 18px rgba(2, 132, 199, 0.4);
+}
+
+.vortexdm-btn-secondary {
+    background: rgba(255, 255, 255, 0.08);
+    color: inherit !important;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.vortex-theme-sleek_light .vortexdm-btn-secondary {
+    background: #f1f5f9;
+    color: #1e293b !important;
+    border: 1px solid #cbd5e1;
+}
+
+.vortexdm-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.vortex-theme-sleek_light .vortexdm-btn-secondary:hover {
+    background: #e2e8f0;
+}
+
+@media (max-width: 600px) {
+    .vortexdm-actions-row {
+        flex-direction: column;
+    }
+    .vortexdm-btn {
+        width: 100%;
+    }
+}

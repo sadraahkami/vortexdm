@@ -1779,4 +1779,122 @@ body.mode-switching .grid-row {
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
+/* ==========================================================================
+   Wi-Fi Local Sharing & QR Code Modal
+   ========================================================================== */
+.qr-canvas-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.75rem;
+  background: #ffffff;
+  border-radius: var(--radius-sm);
+  width: fit-content;
+  margin: 0.75rem auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.share-file-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.75rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--border-color);
+  font-size: 0.75rem;
+}
+
+.share-size-badge {
+  background: rgba(0, 242, 254, 0.12);
+  color: var(--primary);
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   In-Flight Media Streaming Preview Modal
+   ========================================================================== */
+.preview-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.media-player-wrap {
+  width: 100%;
+  min-height: 240px;
+  max-height: 460px;
+  background: #000;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.media-element {
+  width: 100%;
+  max-height: 440px;
+  outline: none;
+}
+
+.preview-footer-note {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+/* ==========================================================================
+   Built-in Speed & Latency Test Modal
+   ========================================================================== */
+.speedtest-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.speedtest-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  padding: 0.75rem 0.5rem;
+  border-radius: var(--radius-xs);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.st-lbl {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+.st-val {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #fff;
+  font-family: var(--font-mono);
+}
+
+.st-speed-glow {
+  color: var(--primary);
+  text-shadow: 0 0 10px rgba(0, 242, 254, 0.35);
+}
+
+.speedtest-gauge-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 0.5rem 0;
+}
+
+.proxy-settings-box {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border-color);
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--radius-xs);
+  margin-top: 0.4rem;
+}
+
+
 

@@ -137,14 +137,18 @@ Triggers native Go extraction of a downloaded `.zip` archive into a folder along
   ```
 
 ### `GET /api/settings`
-Returns global application preferences (default download directory, default UI mode, sound feedback toggle, auto ZIP extraction toggle).
+Returns global application preferences (default download directory, default UI mode, sound feedback toggle, auto ZIP extraction toggle, proxy routing configuration).
 - **Response:**
   ```json
   {
     "default_download_dir": "D:\\Downloads",
     "default_ui_mode": "simple",
     "sound_enabled": true,
-    "auto_extract_zip": true
+    "auto_extract_zip": true,
+    "proxy_enabled": false,
+    "proxy_type": "socks5",
+    "proxy_address": "127.0.0.1:10808",
+    "proxy_bypass_domestic": true
   }
   ```
 
@@ -156,7 +160,11 @@ Updates and persists global application preferences to `vortex_settings.json`.
     "default_download_dir": "D:\\Downloads",
     "default_ui_mode": "pro",
     "sound_enabled": true,
-    "auto_extract_zip": false
+    "auto_extract_zip": false,
+    "proxy_enabled": true,
+    "proxy_type": "socks5",
+    "proxy_address": "127.0.0.1:10808",
+    "proxy_bypass_domestic": true
   }
   ```
 
@@ -243,6 +251,37 @@ Sets global download speed cap using token-bucket rate limiter.
 ### `GET /api/traffic/check?url=<url>`
 Analyzes URL host/IP against Iranian domestic CIDRs and ASNs. Returns `{ is_domestic: bool, label: "نیم‌بها", linkirani_url: "..." }`.
 
+### `GET /api/share/info?id=<id>`
+Detects outbound local network IP (`192.168.x.x`) and generates direct Wi-Fi download link for mobile browser access.
+- **Response:**
+  ```json
+  {
+    "task_id": "18f293b4a20",
+    "filename": "video.mp4",
+    "total_size": 104857600,
+    "share_url": "http://192.168.1.150:8080/share/file?id=18f293b4a20"
+  }
+  ```
+
+### `GET /share/file?id=<id>`
+Streams/serves the target file over local network with standard `Accept-Ranges: bytes` and `Content-Disposition: attachment; filename="..."` headers via Go's `http.ServeContent`.
+
+### `GET /api/media/stream?id=<id>`
+Streams in-flight video or audio chunks directly from disk with full HTTP 206 Partial Content support, enabling smooth media playback in HTML5 video/audio players before the download completes.
+
+### `GET /api/speedtest/ping`
+Measures active network latency and returns ping roundtrip time in milliseconds:
+- **Response:**
+  ```json
+  {
+    "ping_ms": 18.4,
+    "status": "ok"
+  }
+  ```
+
+### `GET /api/speedtest/download`
+Streams 15 MB of uncompressed synthetic zero-fill data over HTTP chunked transfer to benchmark downstream transfer rates in real-time.
+
 ---
 
 ## 5. Advanced Engine Subsystems
@@ -315,6 +354,31 @@ Analyzes URL host/IP against Iranian domestic CIDRs and ASNs. Returns `{ is_dome
 - Zero external MP3/WAV file downloads (0-byte footprint).
 - Generates procedural pleasant futuristic ascending chimes on completion and subtle acoustic blips on download start via browser `AudioContext` sine and triangle oscillator synthesis with exponential decay envelopes.
 
+### 5.13 Wi-Fi Local File Sharing & Offline QR Code Engine (`pkg/server/server.go`)
+- **Outbound Local UDP Dial:** Detects real LAN network IP (`192.168.x.x` / `10.x.x.x`) without external lookups by connecting a UDP socket to standard routing table gateways.
+- **Zero-Cables Mobile Transfer:** Direct phone-to-PC file transfer at maximum local Wi-Fi speeds (up to 80+ MB/s).
+- **Embedded Offline QR Code Generator:** Implements pure-JS ISO/IEC 18004 QR matrix generator directly in the UI. No CDNs, no external npm packages, works 100% offline.
+
+### 5.14 In-Flight Media Streaming Preview Player (`pkg/server/server.go`)
+- **Real-Time Partial Disk Streaming:** Implements HTTP 206 `Range` header streaming on in-progress downloads.
+- **Instant Media Verification:** Users can inspect video/audio quality, subtitles, and codec integrity immediately after the first 1-2% is downloaded without waiting for 100% completion.
+- **HTML5 Multi-Format Media Player:** Supports MP4, WebM, MKV, MP3, FLAC, WAV, and AAC with integrated audio/video modal.
+
+### 5.15 Smart SOCKS5 & HTTP Proxy Engine (`pkg/proxy/proxy.go`)
+- **Pure-Go RFC 1928 SOCKS5 Client:** Implemented entirely with Go standard library `net` package — zero external dependencies. Supports `NO_AUTH (0x00)` and `CONNECT (0x01)` with IPv4, IPv6, and domain name target resolution (`0x03`).
+- **HTTP Tunneling Proxy:** Standard HTTP `CONNECT` tunnel dialer for corporate and web proxies.
+- **Smart Iranian Domestic Bypass (`ProxyBypassDomestic`):** Automatically routes domestic `.ir` and Iranian ISP IP ranges directly through the local interface to preserve half-price domestic tariffs, while routing restricted/international downloads through the proxy tunnel.
+
+### 5.16 Built-in Network Latency & Speed Benchmark Engine (`pkg/server/server.go`)
+- **Ping Latency Measurement:** Evaluates roundtrip latency against the server instance in milliseconds.
+- **Downstream Throughput Benchmark:** Streams synthetic uncompressed test packets over HTTP chunked transfer and computes real-time MB/s throughput with an animated HTML5 Canvas speedometer gauge.
+
+### 5.17 WordPress Companion Plugin (`wordpress-plugin/vortexdm-companion/`)
+- **Enterprise MVC WordPress Architecture:** Cleanly organized plugin with separated controllers, views, assets, and standard WordPress action hooks.
+- **Deep-Link Protocol Launcher:** `[vortex_download]` shortcode embeds high-conversion download cards with one-click `vortexdm://download?url=...` protocol launch.
+- **Domestic Traffic Verification Badge:** Highlights domestic half-price hosts to visitors with customizable visual themes (Modern Dark, Sleek Light, Minimal).
+- **Admin Connection Tester:** Built-in AJAX heartbeat to ping local or remote VortexDM instances.
+
 ---
 
 ## 6. High-Density UI Architecture
@@ -343,19 +407,23 @@ Analyzes URL host/IP against Iranian domestic CIDRs and ASNs. Returns `{ is_dome
 
 ## 7. Automated Testing Strategy
 
-Suite of 15 unit and integration tests covering:
+Comprehensive suite of 19 unit and integration tests covering:
 1. `TestBatchAddTasksAndAPI`: Validates bulk URL creation, queue assignment, and `POST /api/tasks/batch` REST endpoint.
 2. `TestChecksumVerification`: Validates streaming SHA-256 and MD5 hash generation and `GET /api/tasks/checksum` endpoint.
 3. `TestTrafficAnalytics`: Verifies thread-safe traffic recording, domestic/international separation, savings calculation, and cycle reset.
 4. `TestCustomQueuesAndReordering`: Verifies custom queue creation, task assignment, order priority changes, and deletion.
 5. `TestMultiThreadedDownload`: Multi-goroutine concurrent HTTP Range download with byte-by-byte integrity verification.
 6. `TestSpeedLimiter`: Token-bucket throttle enforcement and unthrottled throughput.
-7. `TestServerEndpointsAndAssets`: Validates root HTML, dark color-scheme meta, favicon, manifest, and window minimize endpoints.
-8. `TestDetectTraffic`: Iranian domain detection (`soft98.ir` -> domestic نیم‌بها) vs international (`github.com` -> تمام‌بها).
-9. `TestFormatBytes`, `TestFormatSpeed`, `TestFormatDuration`, `TestDetectCategory`.
-10. `TestSettingsManagement`: Validates default download directory persistence, audio toggles, and mode defaults.
-11. `TestRefreshExpiredTaskURL`: Validates header probe, size validation, and in-place URL refreshment.
-12. `TestZipExtractionAndZipSlipProtection`: Validates pure Go zip unarchiving and path traversal security guards.
+7. `TestSOCKS5HandshakeMock`: RFC 1928 SOCKS5 handshake, version/auth negotiation, and domain address packet parsing.
+8. `TestProxyDomesticBypass`: Routing validation ensuring domestic `.ir` and Iranian subnets bypass proxy while international traffic routes through proxy.
+9. `TestServerEndpointsAndAssets`: Validates root HTML, dark color-scheme meta, favicon, manifest, and window minimize endpoints.
+10. `TestShareInfoAndFileDownload`: Outbound UDP LAN IP detection, HTTP file download serving, Range streaming headers, and speedtest endpoints.
+11. `TestSpeedtestEndpoints`: Latency ping endpoint calculation and chunked download stream throughput generator.
+12. `TestDetectTraffic`: Iranian domain detection (`soft98.ir` -> domestic نیم‌بها) vs international (`github.com` -> تمام‌بها).
+13. `TestFormatBytes`, `TestFormatSpeed`, `TestFormatDuration`, `TestDetectCategory`.
+14. `TestSettingsManagement`: Validates default download directory persistence, audio toggles, and mode defaults.
+15. `TestRefreshExpiredTaskURL`: Validates header probe, size validation, and in-place URL refreshment.
+16. `TestZipExtractionAndZipSlipProtection`: Validates pure Go zip unarchiving and path traversal security guards.
 
 Run tests:
 ```bash

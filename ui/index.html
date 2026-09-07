@@ -98,6 +98,11 @@
           <span data-i18n="tb_analytics">گزارش مصرف</span>
         </button>
 
+        <button id="tbSpeedtest" class="tb-btn pro-only" title="تست پینگ و سرعت شبکه" data-i18n-title="tb_speedtest_tip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+          <span data-i18n="tb_speedtest">تست سرعت</span>
+        </button>
+
         <button id="tbSettings" class="tb-btn" title="تنظیمات نرم‌افزار" data-i18n-title="tb_settings_tip">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
           <span data-i18n="tb_settings">تنظیمات</span>
@@ -746,11 +751,118 @@
             <span data-i18n="settings_extract_toggle">استخراج خودکار فایل‌های فشرده (ZIP) پس از دانلود</span>
           </label>
         </div>
+
+        <div class="form-row checkbox-row mt-2">
+          <label class="checkbox-label">
+            <input type="checkbox" id="settingProxyToggle">
+            <span data-i18n="settings_proxy_toggle">فعال‌سازی پروکسی برای دانلودها</span>
+          </label>
+        </div>
+
+        <div id="proxySettingsSection" class="proxy-settings-box hidden">
+          <div class="form-cols">
+            <div class="form-row">
+              <label data-i18n="settings_proxy_type">نوع پروکسی:</label>
+              <select id="settingProxyType" class="form-select">
+                <option value="socks5" selected>SOCKS5</option>
+                <option value="http">HTTP</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label data-i18n="settings_proxy_addr">نشانی و پورت سرور:</label>
+              <input type="text" id="settingProxyAddr" class="form-input ltr-input" placeholder="127.0.0.1:10808">
+            </div>
+          </div>
+          <div class="form-row checkbox-row">
+            <label class="checkbox-label">
+              <input type="checkbox" id="settingProxyBypassDomestic" checked>
+              <span data-i18n="settings_proxy_bypass">بای‌پَس خودکار سایت‌های داخلی و نیم‌بها</span>
+            </label>
+          </div>
+        </div>
+
         <div id="settingsStatusMsg" class="form-status-msg hidden"></div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" id="cancelSettingsModalBtn" data-i18n="btn_cancel">انصراف</button>
         <button class="btn btn-primary" id="saveSettingsModalBtn" data-i18n="btn_save">ذخیره تنظیمات</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Share to Mobile via Local Wi-Fi QR Code -->
+  <div id="shareModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 data-i18n="share_modal_title">انتقال بی‌سیم به موبایل</h3>
+        <button class="modal-close-btn" id="closeShareModal">✖</button>
+      </div>
+      <div class="modal-body text-center">
+        <p class="modal-intro" data-i18n="share_intro">با دوربین موبایل کد زیر را اسکن کنید تا فایل با نهایت سرعت وای‌فای محلی روی گوشی دانلود شود:</p>
+        <div class="qr-canvas-wrap">
+          <canvas id="shareQrCanvas" width="190" height="190"></canvas>
+        </div>
+        <div class="form-row mt-2">
+          <label data-i18n="share_lbl_url">یا این آدرس را در مرورگر موبایل باز کنید:</label>
+          <div class="hash-copy-group">
+            <input type="text" id="shareUrlInput" readonly class="form-input ltr-input" value="http://...">
+            <button class="btn btn-copy" id="btnCopyShareUrl" title="کپی آدرس" data-i18n-title="tip_copy">📋</button>
+          </div>
+        </div>
+        <div class="share-file-meta">
+          <span id="shareFileName" class="cs-filename"></span>
+          <span id="shareFileSize" class="share-size-badge ltr-num"></span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="closeShareModalBtn" data-i18n="btn_close">بستن</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: In-Flight Media Streaming Preview -->
+  <div id="previewModal" class="modal-overlay hidden">
+    <div class="modal-card modal-large">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <h3 id="previewTitle" data-i18n="preview_title">پیش‌نمایش مدیا</h3>
+          <span id="previewBadge" class="traffic-tag domestic">استریم زنده محلی</span>
+        </div>
+        <button class="modal-close-btn" id="closePreviewModal">✖</button>
+      </div>
+      <div class="modal-body preview-body">
+        <div class="media-player-wrap">
+          <video id="previewVideoPlayer" controls playsinline class="media-element hidden"></video>
+          <audio id="previewAudioPlayer" controls class="media-element hidden"></audio>
+        </div>
+        <div class="preview-footer-note" data-i18n="preview_note">پخش زنده قطعات ذخیره‌شده بر روی دیسک با هدر Range بدون نیاز به اتمام دانلود</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Built-in Speed & Latency Test -->
+  <div id="speedtestModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 data-i18n="speedtest_title">تست پینگ و سرعت اتصال شبکه</h3>
+        <button class="modal-close-btn" id="closeSpeedtestModal">✖</button>
+      </div>
+      <div class="modal-body text-center">
+        <div class="speedtest-grid">
+          <div class="speedtest-card">
+            <span class="st-lbl" data-i18n="st_ping">پینگ (تاخیر)</span>
+            <span class="st-val ltr-num" id="stPingVal">-- ms</span>
+          </div>
+          <div class="speedtest-card">
+            <span class="st-lbl" data-i18n="st_speed">سرعت دریافت</span>
+            <span class="st-val ltr-num st-speed-glow" id="stSpeedVal">-- MB/s</span>
+          </div>
+        </div>
+        <div class="speedtest-gauge-wrap">
+          <canvas id="speedtestGaugeCanvas" width="260" height="120"></canvas>
+        </div>
+        <div id="speedtestStatus" class="form-status-msg hidden"></div>
+        <button id="btnRunSpeedtest" class="btn btn-primary w-full mt-3" data-i18n="st_btn_start">شروع تست پینگ و سرعت</button>
       </div>
     </div>
   </div>
@@ -761,6 +873,8 @@
     <div class="cm-item" data-cm="pause"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg> <span data-i18n="cm_pause">توقف موقت</span></div>
     <div class="cm-item" data-cm="refresh_url"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"></path><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg> <span data-i18n="cm_refresh_url">تمدید نشانی دانلود (لینک منقضی‌شده)</span></div>
     <div class="cm-divider"></div>
+    <div class="cm-item" data-cm="preview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> <span data-i18n="cm_preview">پیش‌نمایش مدیا</span></div>
+    <div class="cm-item" data-cm="share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg> <span data-i18n="cm_share">ارسال به موبایل با اسکن کد</span></div>
     <div class="cm-item" data-cm="open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> <span data-i18n="cm_open_folder">باز کردن در پوشه</span></div>
     <div class="cm-item" data-cm="extract"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg> <span data-i18n="cm_extract">استخراج فایل فشرده (ZIP)</span></div>
     <div class="cm-item" data-cm="checksum"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> <span data-i18n="cm_checksum">بررسی هش و اصالت (SHA-256 / MD5)</span></div>

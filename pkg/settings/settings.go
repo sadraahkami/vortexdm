@@ -8,10 +8,14 @@ import (
 )
 
 type Settings struct {
-	DefaultDownloadDir string `json:"default_download_dir"`
-	SoundEnabled       bool   `json:"sound_enabled"`
-	AutoExtractZip     bool   `json:"auto_extract_zip"`
-	UIMode             string `json:"ui_mode"` // "simple" or "pro"
+	DefaultDownloadDir  string `json:"default_download_dir"`
+	SoundEnabled        bool   `json:"sound_enabled"`
+	AutoExtractZip      bool   `json:"auto_extract_zip"`
+	UIMode              string `json:"ui_mode"` // "simple" or "pro"
+	ProxyEnabled        bool   `json:"proxy_enabled"`
+	ProxyType           string `json:"proxy_type"` // "socks5" or "http"
+	ProxyAddress        string `json:"proxy_address"`
+	ProxyBypassDomestic bool   `json:"proxy_bypass_domestic"`
 }
 
 type Manager struct {
@@ -32,10 +36,14 @@ func Init(baseDir string) *Manager {
 		m := &Manager{
 			filePath: cfgPath,
 			data: Settings{
-				DefaultDownloadDir: filepath.Join(baseDir, "downloads"),
-				SoundEnabled:       true,
-				AutoExtractZip:     false,
-				UIMode:             "simple",
+				DefaultDownloadDir:  filepath.Join(baseDir, "downloads"),
+				SoundEnabled:        true,
+				AutoExtractZip:      false,
+				UIMode:              "simple",
+				ProxyEnabled:        false,
+				ProxyType:           "socks5",
+				ProxyAddress:        "127.0.0.1:10808",
+				ProxyBypassDomestic: true,
 			},
 		}
 		m.load()
@@ -67,6 +75,14 @@ func (m *Manager) load() {
 		if loaded.UIMode != "" {
 			m.data.UIMode = loaded.UIMode
 		}
+		m.data.ProxyEnabled = loaded.ProxyEnabled
+		if loaded.ProxyType != "" {
+			m.data.ProxyType = loaded.ProxyType
+		}
+		if loaded.ProxyAddress != "" {
+			m.data.ProxyAddress = loaded.ProxyAddress
+		}
+		m.data.ProxyBypassDomestic = loaded.ProxyBypassDomestic
 	}
 }
 
@@ -103,6 +119,14 @@ func (m *Manager) Update(newSettings Settings) error {
 	if newSettings.UIMode != "" {
 		m.data.UIMode = newSettings.UIMode
 	}
+	m.data.ProxyEnabled = newSettings.ProxyEnabled
+	if newSettings.ProxyType != "" {
+		m.data.ProxyType = newSettings.ProxyType
+	}
+	if newSettings.ProxyAddress != "" {
+		m.data.ProxyAddress = newSettings.ProxyAddress
+	}
+	m.data.ProxyBypassDomestic = newSettings.ProxyBypassDomestic
 
 	return m.saveUnlocked()
 }

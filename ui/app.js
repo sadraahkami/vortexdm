@@ -166,7 +166,28 @@ const translations = {
     refresh_btn_apply: 'به‌روزرسانی نشانی و ادامه دانلود',
     refresh_success: 'نشانی با موفقیت به‌روز شد و دانلود از نقطه قبلی ادامه یافت',
     extract_success: 'فایل فشرده با موفقیت در کنار فایل اصلی استخراج شد',
-    extract_err: 'خطا در استخراج فایل فشرده'
+    extract_err: 'خطا در استخراج فایل فشرده',
+    tb_speedtest: 'تست سرعت',
+    tb_speedtest_tip: 'تست پینگ و سنجش سرعت اتصال اینترنت',
+    settings_proxy_toggle: 'فعال‌سازی پروکسی برای دانلودها',
+    settings_proxy_type: 'نوع پروکسی:',
+    settings_proxy_addr: 'نشانی و پورت سرور:',
+    settings_proxy_bypass: 'عبور مستقیم ترافیک داخلی و سایت‌های نیم‌بها',
+    share_modal_title: 'انتقال بی‌سیم به موبایل',
+    share_intro: 'با دوربین موبایل کد زیر را اسکن کنید تا فایل با نهایت سرعت شبکه محلی دانلود شود:',
+    share_lbl_url: 'یا این آدرس را در مرورگر موبایل باز کنید:',
+    preview_title: 'پیش‌نمایش مدیا',
+    preview_note: 'پخش زنده قطعات ذخیره‌شده روی دیسک بدون نیاز به اتمام دانلود',
+    speedtest_title: 'تست پینگ و سرعت اتصال شبکه',
+    st_ping: 'زمان تاخیر شبکه',
+    st_speed: 'سرعت دریافت',
+    st_btn_start: 'شروع تست سرعت و تاخیر',
+    st_testing_ping: 'در حال ارزیابی تاخیر سرور...',
+    st_testing_speed: 'در حال سنجش سرعت دانلود...',
+    st_completed: 'آزمون اتصال با موفقیت انجام شد',
+    cm_preview: 'پیش‌نمایش مدیا',
+    cm_share: 'ارسال به موبایل با اسکن کد',
+    preview_unsupported: 'پیش‌نمایش برای این نوع فایل پشتیبانی نمی‌شود'
   },
   en: {
     tb_add: 'Add URL',
@@ -329,7 +350,28 @@ const translations = {
     refresh_btn_apply: 'Update URL & Resume',
     refresh_success: 'Download URL refreshed successfully, resuming...',
     extract_success: 'Archive extracted successfully next to original file',
-    extract_err: 'Failed to extract archive'
+    extract_err: 'Failed to extract archive',
+    tb_speedtest: 'Speed Test',
+    tb_speedtest_tip: 'Network latency and download speed benchmark',
+    settings_proxy_toggle: 'Enable Proxy for Downloads',
+    settings_proxy_type: 'Proxy Protocol:',
+    settings_proxy_addr: 'Server Address & Port:',
+    settings_proxy_bypass: 'Automatically bypass domestic and Iranian traffic',
+    share_modal_title: 'Wi-Fi Share to Mobile',
+    share_intro: 'Scan this QR code with your mobile camera to stream and download over Wi-Fi:',
+    share_lbl_url: 'Or open this direct URL in mobile browser:',
+    preview_title: 'Media Streaming Preview',
+    preview_note: 'Stream available chunks directly from disk with Range headers before completion',
+    speedtest_title: 'Network Ping & Speed Benchmark',
+    st_ping: 'Network Latency',
+    st_speed: 'Download Throughput',
+    st_btn_start: 'Run Speed Benchmark',
+    st_testing_ping: 'Measuring network latency...',
+    st_testing_speed: 'Benchmarking download throughput...',
+    st_completed: 'Speed benchmark completed successfully',
+    cm_preview: 'Streaming Preview',
+    cm_share: 'Share to Mobile via QR',
+    preview_unsupported: 'Preview is not supported for this file format'
   }
 };
 
@@ -346,7 +388,11 @@ let appSettings = {
   default_download_dir: '',
   default_ui_mode: 'simple',
   sound_enabled: true,
-  auto_extract_zip: true
+  auto_extract_zip: true,
+  proxy_enabled: false,
+  proxy_type: 'socks5',
+  proxy_address: '',
+  proxy_bypass_domestic: true
 };
 let currentUIMode = localStorage.getItem('vortex_ui_mode') || 'simple';
 let previousTaskStatuses = new Map();
@@ -948,6 +994,10 @@ if (contextMenu) {
       handleExtractZip(task);
     } else if (action === 'copy' && task) {
       navigator.clipboard.writeText(task.url);
+    } else if (action === 'preview' && task) {
+      openPreviewModal(task);
+    } else if (action === 'share' && task) {
+      openShareModal(task);
     } else if (action === 'checksum' && task) {
       openChecksumModal(task);
     } else if (action === 'linkirani' && task) {
@@ -2082,7 +2132,18 @@ const settingDefaultDirInput = document.getElementById('settingDefaultDirInput')
 const settingDefaultModeSelect = document.getElementById('settingDefaultModeSelect');
 const settingSoundToggle = document.getElementById('settingSoundToggle');
 const settingAutoExtractToggle = document.getElementById('settingAutoExtractToggle');
+const settingProxyToggle = document.getElementById('settingProxyToggle');
+const proxySettingsSection = document.getElementById('proxySettingsSection');
+const settingProxyType = document.getElementById('settingProxyType');
+const settingProxyAddr = document.getElementById('settingProxyAddr');
+const settingProxyBypassDomestic = document.getElementById('settingProxyBypassDomestic');
 const settingsStatusMsg = document.getElementById('settingsStatusMsg');
+
+if (settingProxyToggle && proxySettingsSection) {
+  settingProxyToggle.addEventListener('change', () => {
+    proxySettingsSection.classList.toggle('hidden', !settingProxyToggle.checked);
+  });
+}
 
 async function loadSettings() {
   try {
@@ -2093,7 +2154,11 @@ async function loadSettings() {
         default_download_dir: data.default_download_dir || '',
         default_ui_mode: data.default_ui_mode || 'simple',
         sound_enabled: data.sound_enabled !== false,
-        auto_extract_zip: data.auto_extract_zip !== false
+        auto_extract_zip: data.auto_extract_zip !== false,
+        proxy_enabled: !!data.proxy_enabled,
+        proxy_type: data.proxy_type || 'socks5',
+        proxy_address: data.proxy_address || '',
+        proxy_bypass_domestic: data.proxy_bypass_domestic !== false
       };
 
       const savedMode = localStorage.getItem('vortex_ui_mode') || appSettings.default_ui_mode || 'simple';
@@ -2110,6 +2175,16 @@ function openSettingsModal() {
   if (settingDefaultModeSelect) settingDefaultModeSelect.value = appSettings.default_ui_mode || 'simple';
   if (settingSoundToggle) settingSoundToggle.checked = appSettings.sound_enabled;
   if (settingAutoExtractToggle) settingAutoExtractToggle.checked = appSettings.auto_extract_zip;
+  if (settingProxyToggle) {
+    settingProxyToggle.checked = !!appSettings.proxy_enabled;
+    if (proxySettingsSection) {
+      proxySettingsSection.classList.toggle('hidden', !settingProxyToggle.checked);
+    }
+  }
+  if (settingProxyType) settingProxyType.value = appSettings.proxy_type || 'socks5';
+  if (settingProxyAddr) settingProxyAddr.value = appSettings.proxy_address || '';
+  if (settingProxyBypassDomestic) settingProxyBypassDomestic.checked = appSettings.proxy_bypass_domestic !== false;
+
   if (settingsStatusMsg) {
     settingsStatusMsg.className = 'form-status-msg hidden';
     settingsStatusMsg.textContent = '';
@@ -2127,6 +2202,10 @@ if (saveSettingsModalBtn) {
     const defaultMode = settingDefaultModeSelect ? settingDefaultModeSelect.value : 'simple';
     const soundEnabled = settingSoundToggle ? settingSoundToggle.checked : true;
     const autoExtract = settingAutoExtractToggle ? settingAutoExtractToggle.checked : true;
+    const proxyEnabled = settingProxyToggle ? settingProxyToggle.checked : false;
+    const proxyType = settingProxyType ? settingProxyType.value : 'socks5';
+    const proxyAddr = settingProxyAddr ? settingProxyAddr.value.trim() : '';
+    const proxyBypass = settingProxyBypassDomestic ? settingProxyBypassDomestic.checked : true;
 
     try {
       const res = await fetch('/api/settings', {
@@ -2136,7 +2215,11 @@ if (saveSettingsModalBtn) {
           default_download_dir: defaultDir,
           default_ui_mode: defaultMode,
           sound_enabled: soundEnabled,
-          auto_extract_zip: autoExtract
+          auto_extract_zip: autoExtract,
+          proxy_enabled: proxyEnabled,
+          proxy_type: proxyType,
+          proxy_address: proxyAddr,
+          proxy_bypass_domestic: proxyBypass
         })
       });
       const data = await res.json();
@@ -2145,6 +2228,10 @@ if (saveSettingsModalBtn) {
         appSettings.default_ui_mode = defaultMode;
         appSettings.sound_enabled = soundEnabled;
         appSettings.auto_extract_zip = autoExtract;
+        appSettings.proxy_enabled = proxyEnabled;
+        appSettings.proxy_type = proxyType;
+        appSettings.proxy_address = proxyAddr;
+        appSettings.proxy_bypass_domestic = proxyBypass;
 
         setUIMode(defaultMode, true);
 
@@ -2170,6 +2257,528 @@ if (saveSettingsModalBtn) {
         settingsStatusMsg.textContent = 'Connection error';
         settingsStatusMsg.classList.remove('hidden');
       }
+    }
+  });
+}
+
+// --- 24. Standalone Offline QR Code Matrix Generator ---
+function createQRCodeMatrix(text) {
+  const PAD0 = 0xEC;
+  const PAD1 = 0x11;
+  const EXP_TABLE = new Uint8Array(256);
+  const LOG_TABLE = new Uint8Array(256);
+  for (let i = 0, x = 1; i < 256; i++) {
+    EXP_TABLE[i] = x;
+    LOG_TABLE[x] = i;
+    x = (x << 1) ^ (x >= 128 ? 0x11d : 0);
+  }
+  function glog(n) { if (n < 1) return 0; return LOG_TABLE[n]; }
+  function gexp(n) { while (n < 0) n += 255; while (n >= 255) n -= 255; return EXP_TABLE[n]; }
+
+  function getErrorCorrectionPolynomial(ecLen) {
+    let a = [1];
+    for (let i = 0; i < ecLen; i++) {
+      let b = [1, gexp(i)];
+      let c = new Array(a.length + b.length - 1).fill(0);
+      for (let j = 0; j < a.length; j++) {
+        for (let k = 0; k < b.length; k++) {
+          if (a[j] && b[k]) c[j + k] ^= gexp(glog(a[j]) + glog(b[k]));
+        }
+      }
+      a = c;
+    }
+    return a;
+  }
+
+  const VERSION_SPECS = [
+    null,
+    { total: 26, ec: 7, blocks: 1 },
+    { total: 44, ec: 10, blocks: 1 },
+    { total: 70, ec: 15, blocks: 1 },
+    { total: 100, ec: 20, blocks: 1 },
+    { total: 134, ec: 26, blocks: 1 },
+    { total: 172, ec: 18, blocks: 2 },
+    { total: 196, ec: 20, blocks: 2 },
+    { total: 242, ec: 24, blocks: 2 },
+    { total: 292, ec: 30, blocks: 2 },
+    { total: 346, ec: 18, blocks: 4 }
+  ];
+
+  const ALIGN_POS = [
+    [], [], [6, 18], [6, 22], [6, 26], [6, 30], [6, 34],
+    [6, 22, 38], [6, 24, 42], [6, 26, 46], [6, 28, 50]
+  ];
+
+  const utf8Bytes = [];
+  for (let i = 0; i < text.length; i++) {
+    let c = text.charCodeAt(i);
+    if (c < 128) utf8Bytes.push(c);
+    else if (c < 2048) { utf8Bytes.push(192 | (c >> 6)); utf8Bytes.push(128 | (c & 63)); }
+    else if (c < 65536) { utf8Bytes.push(224 | (c >> 12)); utf8Bytes.push(128 | ((c >> 6) & 63)); utf8Bytes.push(128 | (c & 63)); }
+  }
+
+  let version = 1;
+  let totalDataCodewords = 0;
+  for (; version <= 10; version++) {
+    const spec = VERSION_SPECS[version];
+    totalDataCodewords = spec.total - (spec.ec * spec.blocks);
+    const headerBits = 4 + (version < 10 ? 8 : 16);
+    if (Math.ceil((headerBits + utf8Bytes.length * 8) / 8) <= totalDataCodewords) break;
+  }
+  if (version > 10) version = 10;
+
+  const spec = VERSION_SPECS[version];
+  const ecPerBlock = spec.ec;
+  const numBlocks = spec.blocks;
+  const dataCodewords = spec.total - (ecPerBlock * numBlocks);
+
+  class BitBuf {
+    constructor() { this.buf = []; this.len = 0; }
+    put(n, l) {
+      for (let i = 0; i < l; i++) this.putBit(((n >>> (l - i - 1)) & 1) === 1);
+    }
+    putBit(b) {
+      const idx = Math.floor(this.len / 8);
+      if (this.buf.length <= idx) this.buf.push(0);
+      if (b) this.buf[idx] |= (0x80 >>> (this.len % 8));
+      this.len++;
+    }
+  }
+
+  const bb = new BitBuf();
+  bb.put(0x04, 4);
+  bb.put(utf8Bytes.length, version < 10 ? 8 : 16);
+  for (let b of utf8Bytes) bb.put(b, 8);
+  for (let i = 0; i < 4 && bb.len < dataCodewords * 8; i++) bb.putBit(false);
+  while (bb.len % 8 !== 0) bb.putBit(false);
+  let pIdx = 0;
+  while (bb.len < dataCodewords * 8) {
+    bb.put(pIdx % 2 === 0 ? PAD0 : PAD1, 8);
+    pIdx++;
+  }
+
+  const blockSize = Math.floor(dataCodewords / numBlocks);
+  const remainder = dataCodewords % numBlocks;
+  const blocks = [];
+  let byteOffset = 0;
+  for (let b = 0; b < numBlocks; b++) {
+    const curBlockLen = blockSize + (b >= numBlocks - remainder ? 1 : 0);
+    const dataPart = bb.buf.slice(byteOffset, byteOffset + curBlockLen);
+    byteOffset += curBlockLen;
+
+    const rsPoly = getErrorCorrectionPolynomial(ecPerBlock);
+    const rawData = dataPart.slice();
+    const ecPart = new Array(ecPerBlock).fill(0);
+    const poly = rawData.concat(ecPart);
+
+    for (let i = 0; i < dataPart.length; i++) {
+      const coef = poly[i];
+      if (coef !== 0) {
+        const logVal = glog(coef);
+        for (let j = 0; j < rsPoly.length; j++) {
+          poly[i + j] ^= gexp(logVal + glog(rsPoly[j]));
+        }
+      }
+    }
+    blocks.push({ data: dataPart, ec: poly.slice(dataPart.length) });
+  }
+
+  const finalCodewords = [];
+  const maxDataLen = Math.max(...blocks.map(b => b.data.length));
+  for (let i = 0; i < maxDataLen; i++) {
+    for (let b = 0; b < numBlocks; b++) {
+      if (i < blocks[b].data.length) finalCodewords.push(blocks[b].data[i]);
+    }
+  }
+  for (let i = 0; i < ecPerBlock; i++) {
+    for (let b = 0; b < numBlocks; b++) {
+      finalCodewords.push(blocks[b].ec[i]);
+    }
+  }
+
+  const moduleCount = version * 4 + 17;
+  const modules = Array.from({ length: moduleCount }, () => new Array(moduleCount).fill(null));
+  const isFunc = Array.from({ length: moduleCount }, () => new Array(moduleCount).fill(false));
+
+  function setM(r, c, v, func = true) {
+    if (r >= 0 && r < moduleCount && c >= 0 && c < moduleCount) {
+      modules[r][c] = v;
+      if (func) isFunc[r][c] = true;
+    }
+  }
+
+  function drawFinder(row, col) {
+    for (let r = -1; r <= 7; r++) {
+      for (let c = -1; c <= 7; c++) {
+        const tr = row + r;
+        const tc = col + c;
+        if (tr < 0 || tr >= moduleCount || tc < 0 || tc >= moduleCount) continue;
+        if (r >= 0 && r <= 6 && c >= 0 && c <= 6) {
+          setM(tr, tc, r === 0 || r === 6 || c === 0 || c === 6 || (r >= 2 && r <= 4 && c >= 2 && c <= 4));
+        } else {
+          setM(tr, tc, false);
+        }
+      }
+    }
+  }
+
+  drawFinder(0, 0);
+  drawFinder(0, moduleCount - 7);
+  drawFinder(moduleCount - 7, 0);
+
+  const align = ALIGN_POS[version] || [];
+  for (let r of align) {
+    for (let c of align) {
+      if (isFunc[r][c]) continue;
+      for (let dr = -2; dr <= 2; dr++) {
+        for (let dc = -2; dc <= 2; dc++) {
+          setM(r + dr, c + dc, Math.abs(dr) === 2 || Math.abs(dc) === 2 || (dr === 0 && dc === 0));
+        }
+      }
+    }
+  }
+
+  for (let i = 8; i < moduleCount - 8; i++) {
+    if (!isFunc[6][i]) setM(6, i, i % 2 === 0);
+    if (!isFunc[i][6]) setM(i, 6, i % 2 === 0);
+  }
+
+  setM(4 * version + 9, 8, true);
+
+  const FORMAT_BITS = 0x77C4;
+  for (let i = 0; i < 15; i++) {
+    const bit = ((FORMAT_BITS >>> (14 - i)) & 1) === 1;
+    if (i < 6) setM(i, 8, bit);
+    else if (i < 8) setM(i + 1, 8, bit);
+    else setM(moduleCount - 15 + i, 8, bit);
+
+    if (i < 8) setM(8, moduleCount - i - 1, bit);
+    else if (i === 8) setM(8, 8, bit);
+    else setM(8, 14 - i, bit);
+  }
+
+  let dir = -1;
+  let row = moduleCount - 1;
+  let bitIdx = 0;
+  const totBits = finalCodewords.length * 8;
+
+  for (let col = moduleCount - 1; col > 0; col -= 2) {
+    if (col === 6) col--;
+    while (true) {
+      for (let c = 0; c < 2; c++) {
+        const curCol = col - c;
+        if (!isFunc[row][curCol]) {
+          let bit = false;
+          if (bitIdx < totBits) {
+            const byte = finalCodewords[Math.floor(bitIdx / 8)];
+            bit = ((byte >>> (7 - (bitIdx % 8))) & 1) === 1;
+            bitIdx++;
+          }
+          const mask = (row + curCol) % 2 === 0;
+          modules[row][curCol] = mask ? !bit : bit;
+        }
+      }
+      row += dir;
+      if (row < 0 || row >= moduleCount) {
+        dir = -dir;
+        row += dir;
+        break;
+      }
+    }
+  }
+
+  return {
+    moduleCount,
+    isDark: (r, c) => !!modules[r][c]
+  };
+}
+
+function drawQRCodeToCanvas(canvas, text) {
+  if (!canvas) return;
+  const qr = createQRCodeMatrix(text);
+  const ctx = canvas.getContext('2d');
+  const count = qr.moduleCount;
+  const padding = 12;
+  const cellSize = Math.floor((canvas.width - padding * 2) / count);
+  const offset = Math.floor((canvas.width - cellSize * count) / 2);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = '#0f172a';
+  for (let r = 0; r < count; r++) {
+    for (let c = 0; c < count; c++) {
+      if (qr.isDark(r, c)) {
+        ctx.fillRect(offset + c * cellSize, offset + r * cellSize, cellSize, cellSize);
+      }
+    }
+  }
+}
+
+// --- 25. Modal: Wi-Fi Share to Mobile Controller ---
+const shareModal = document.getElementById('shareModal');
+const closeShareModal = document.getElementById('closeShareModal');
+const closeShareModalBtn = document.getElementById('closeShareModalBtn');
+const shareQrCanvas = document.getElementById('shareQrCanvas');
+const shareUrlInput = document.getElementById('shareUrlInput');
+const btnCopyShareUrl = document.getElementById('btnCopyShareUrl');
+const shareFileName = document.getElementById('shareFileName');
+const shareFileSize = document.getElementById('shareFileSize');
+
+async function openShareModal(task) {
+  if (!shareModal || !task) return;
+  if (shareFileName) shareFileName.textContent = task.filename || task.id;
+  if (shareFileSize) shareFileSize.textContent = formatBytes(task.downloaded_size || task.total_size || 0);
+
+  shareModal.classList.remove('hidden');
+
+  try {
+    const res = await fetch(`/api/share/info?id=${task.id}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.share_url) {
+        if (shareUrlInput) shareUrlInput.value = data.share_url;
+        drawQRCodeToCanvas(shareQrCanvas, data.share_url);
+      }
+    }
+  } catch (e) {
+    console.warn('Share info failed', e);
+  }
+}
+
+if (closeShareModal) closeShareModal.addEventListener('click', () => shareModal.classList.add('hidden'));
+if (closeShareModalBtn) closeShareModalBtn.addEventListener('click', () => shareModal.classList.add('hidden'));
+
+if (btnCopyShareUrl) {
+  btnCopyShareUrl.addEventListener('click', () => {
+    if (shareUrlInput && shareUrlInput.value) {
+      navigator.clipboard.writeText(shareUrlInput.value);
+      const originalText = btnCopyShareUrl.textContent;
+      btnCopyShareUrl.textContent = '✓';
+      setTimeout(() => { btnCopyShareUrl.textContent = originalText; }, 1200);
+    }
+  });
+}
+
+// --- 26. Modal: In-Flight Media Streaming Preview Controller ---
+const previewModal = document.getElementById('previewModal');
+const closePreviewModal = document.getElementById('closePreviewModal');
+const previewTitle = document.getElementById('previewTitle');
+const previewVideoPlayer = document.getElementById('previewVideoPlayer');
+const previewAudioPlayer = document.getElementById('previewAudioPlayer');
+
+function openPreviewModal(task) {
+  if (!previewModal || !task) return;
+  const ext = (task.filename || '').split('.').pop().toLowerCase();
+  const videoExts = ['mp4', 'webm', 'mkv', 'mov', 'avi', 'm4v'];
+  const audioExts = ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'opus'];
+
+  const isVideo = videoExts.includes(ext);
+  const isAudio = audioExts.includes(ext);
+
+  if (!isVideo && !isAudio) {
+    alert(translations[currentLang].preview_unsupported || 'Unsupported format');
+    return;
+  }
+
+  if (previewTitle) previewTitle.textContent = task.filename || task.id;
+
+  const streamURL = `/api/media/stream?id=${encodeURIComponent(task.id)}`;
+
+  if (isVideo) {
+    if (previewAudioPlayer) {
+      previewAudioPlayer.pause();
+      previewAudioPlayer.classList.add('hidden');
+      previewAudioPlayer.src = '';
+    }
+    if (previewVideoPlayer) {
+      previewVideoPlayer.classList.remove('hidden');
+      previewVideoPlayer.src = streamURL;
+      previewVideoPlayer.load();
+      previewVideoPlayer.play().catch(() => {});
+    }
+  } else {
+    if (previewVideoPlayer) {
+      previewVideoPlayer.pause();
+      previewVideoPlayer.classList.add('hidden');
+      previewVideoPlayer.src = '';
+    }
+    if (previewAudioPlayer) {
+      previewAudioPlayer.classList.remove('hidden');
+      previewAudioPlayer.src = streamURL;
+      previewAudioPlayer.load();
+      previewAudioPlayer.play().catch(() => {});
+    }
+  }
+
+  previewModal.classList.remove('hidden');
+}
+
+function closePreview() {
+  if (previewVideoPlayer) {
+    previewVideoPlayer.pause();
+    previewVideoPlayer.src = '';
+  }
+  if (previewAudioPlayer) {
+    previewAudioPlayer.pause();
+    previewAudioPlayer.src = '';
+  }
+  if (previewModal) previewModal.classList.add('hidden');
+}
+
+if (closePreviewModal) closePreviewModal.addEventListener('click', closePreview);
+
+// --- 27. Modal: Built-in Network Speed & Latency Benchmark Controller ---
+const speedtestModal = document.getElementById('speedtestModal');
+const tbSpeedtest = document.getElementById('tbSpeedtest');
+const closeSpeedtestModal = document.getElementById('closeSpeedtestModal');
+const btnRunSpeedtest = document.getElementById('btnRunSpeedtest');
+const stPingVal = document.getElementById('stPingVal');
+const stSpeedVal = document.getElementById('stSpeedVal');
+const speedtestStatus = document.getElementById('speedtestStatus');
+const speedtestGaugeCanvas = document.getElementById('speedtestGaugeCanvas');
+
+let speedtestRunning = false;
+
+function drawSpeedGauge(valMB, maxMB = 50) {
+  if (!speedtestGaugeCanvas) return;
+  const ctx = speedtestGaugeCanvas.getContext('2d');
+  const w = speedtestGaugeCanvas.width;
+  const h = speedtestGaugeCanvas.height;
+  const cx = w / 2;
+  const cy = h - 15;
+  const radius = 80;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Background Arc
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, Math.PI, 0, false);
+  ctx.lineWidth = 12;
+  ctx.strokeStyle = '#1e293b';
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  // Value Arc
+  const ratio = Math.min(Math.max(valMB / maxMB, 0), 1);
+  const angle = Math.PI + ratio * Math.PI;
+
+  const grad = ctx.createLinearGradient(cx - radius, cy, cx + radius, cy);
+  grad.addColorStop(0, '#0284c7');
+  grad.addColorStop(0.5, '#06b6d4');
+  grad.addColorStop(1, '#10b981');
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, Math.PI, angle, false);
+  ctx.lineWidth = 12;
+  ctx.strokeStyle = grad;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  // Needle pointer
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(angle);
+  ctx.beginPath();
+  ctx.moveTo(-4, 0);
+  ctx.lineTo(radius - 16, 0);
+  ctx.strokeStyle = '#38bdf8';
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+  ctx.restore();
+
+  // Center hub
+  ctx.beginPath();
+  ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+  ctx.fillStyle = '#f8fafc';
+  ctx.fill();
+}
+
+function openSpeedtestModal() {
+  if (!speedtestModal) return;
+  if (stPingVal) stPingVal.textContent = '-- ms';
+  if (stSpeedVal) stSpeedVal.textContent = '-- MB/s';
+  if (speedtestStatus) {
+    speedtestStatus.className = 'form-status-msg hidden';
+    speedtestStatus.textContent = '';
+  }
+  drawSpeedGauge(0);
+  speedtestModal.classList.remove('hidden');
+}
+
+if (tbSpeedtest) tbSpeedtest.addEventListener('click', openSpeedtestModal);
+if (closeSpeedtestModal) closeSpeedtestModal.addEventListener('click', () => {
+  if (speedtestModal) speedtestModal.classList.add('hidden');
+});
+
+if (btnRunSpeedtest) {
+  btnRunSpeedtest.addEventListener('click', async () => {
+    if (speedtestRunning) return;
+    speedtestRunning = true;
+    btnRunSpeedtest.disabled = true;
+    const t = translations[currentLang];
+
+    if (speedtestStatus) {
+      speedtestStatus.className = 'form-status-msg';
+      speedtestStatus.textContent = t.st_testing_ping;
+      speedtestStatus.classList.remove('hidden');
+    }
+
+    try {
+      // Step 1: Ping
+      const pingRes = await fetch('/api/speedtest/ping');
+      const pingData = await pingRes.json();
+      if (stPingVal && pingData.ping_ms !== undefined) {
+        stPingVal.textContent = `${pingData.ping_ms.toFixed(1)} ms`;
+      }
+
+      // Step 2: Download Throughput
+      if (speedtestStatus) {
+        speedtestStatus.textContent = t.st_testing_speed;
+      }
+
+      const startTime = performance.now();
+      const speedRes = await fetch('/api/speedtest/download');
+      const reader = speedRes.body.getReader();
+      let bytesReceived = 0;
+      let lastUpdate = startTime;
+      let maxSpeed = 0;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        bytesReceived += value.length;
+
+        const now = performance.now();
+        if (now - lastUpdate > 100) {
+          const elapsedSec = (now - startTime) / 1000;
+          const currentSpeedMB = (bytesReceived / (1024 * 1024)) / elapsedSec;
+          if (currentSpeedMB > maxSpeed) maxSpeed = currentSpeedMB;
+
+          if (stSpeedVal) stSpeedVal.textContent = `${currentSpeedMB.toFixed(2)} MB/s`;
+          drawSpeedGauge(currentSpeedMB, 40);
+          lastUpdate = now;
+        }
+      }
+
+      const totalElapsed = (performance.now() - startTime) / 1000;
+      const finalSpeedMB = (bytesReceived / (1024 * 1024)) / (totalElapsed || 1);
+      if (stSpeedVal) stSpeedVal.textContent = `${finalSpeedMB.toFixed(2)} MB/s`;
+      drawSpeedGauge(finalSpeedMB, 40);
+
+      if (speedtestStatus) {
+        speedtestStatus.className = 'form-status-msg success';
+        speedtestStatus.textContent = t.st_completed;
+      }
+    } catch (e) {
+      if (speedtestStatus) {
+        speedtestStatus.className = 'form-status-msg error';
+        speedtestStatus.textContent = 'Speed test failed: connection error';
+      }
+    } finally {
+      speedtestRunning = false;
+      btnRunSpeedtest.disabled = false;
     }
   });
 }

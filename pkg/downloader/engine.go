@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/sadraahkami/vortexdm/pkg/analytics"
+	"github.com/sadraahkami/vortexdm/pkg/proxy"
 	"github.com/sadraahkami/vortexdm/pkg/settings"
 	"github.com/sadraahkami/vortexdm/pkg/traffic"
 	"github.com/sadraahkami/vortexdm/pkg/tray"
@@ -148,14 +149,33 @@ func (e *Engine) startSpeedTicker() {
 	}()
 }
 
+func (e *Engine) getClientForURL(targetURL string) *http.Client {
+	mgr := settings.GetInstance()
+	if mgr != nil {
+		cfg := mgr.Get()
+		if cfg.ProxyEnabled && strings.TrimSpace(cfg.ProxyAddress) != "" {
+			tr := proxy.NewTransport(cfg, targetURL)
+			tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+			tr.ResponseHeaderTimeout = 30 * time.Second
+			return &http.Client{
+				Transport: tr,
+				Timeout:   60 * time.Second,
+			}
+		}
+	}
+	return e.client
+}
+
 func (e *Engine) ProbeURL(rawURL string) (filename string, size int64, supportsRange bool, err error) {
+	client := e.getClientForURL(rawURL)
+
 	req, err := http.NewRequest("HEAD", rawURL, nil)
 	if err != nil {
 		return "", 0, false, err
 	}
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) VortexDM/1.0")
 
-	resp, err := e.client.Do(req)
+	resp, err := client.Do(req)
 	if err != nil || resp.StatusCode >= 400 {
 		// Fallback to GET with Range: bytes=0-0
 		getReq, getErr := http.NewRequest("GET", rawURL, nil)
@@ -165,7 +185,7 @@ func (e *Engine) ProbeURL(rawURL string) (filename string, size int64, supportsR
 		getReq.Header.Set("Range", "bytes=0-0")
 		getReq.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) VortexDM/1.0")
 
-		getResp, getErr := e.client.Do(getReq)
+		getResp, getErr := client.Do(getReq)
 		if getErr != nil {
 			return "", 0, false, getErr
 		}
@@ -546,6 +566,8 @@ func (e *Engine) runDownload(ctx context.Context, task *Task) {
 		}
 	}
 
+	client := e.getClientForURL(task.URL)
+
 	for _, chunk := range task.Chunks {
 		if chunk.Completed {
 			continue
@@ -554,7 +576,7 @@ func (e *Engine) runDownload(ctx context.Context, task *Task) {
 		wg.Add(1)
 		go func(c *Chunk) {
 			defer wg.Done()
-			if err := c.DownloadChunk(ctx, e.client, task.URL, file, onBytesRead); err != nil {
+			if err := c.DownloadChunk(ctx, client, task.URL, file, onBytesRead); err != nil {
 				if err != context.Canceled {
 					errChan <- err
 				}
