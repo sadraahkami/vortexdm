@@ -114,6 +114,29 @@ Adds a new download task.
   }
   ```
 
+### `POST /api/tasks/batch`
+Imports and creates multiple download tasks simultaneously from a list of URLs.
+- **Payload:**
+  ```json
+  {
+    "urls": ["https://example.com/file1.zip", "https://example.com/file2.iso"],
+    "queue": "night",
+    "connections": 16,
+    "start": true
+  }
+  ```
+
+### `GET /api/tasks/checksum?id=<id>`
+Computes and returns cryptographic SHA-256 and MD5 hashes of a completed downloaded file directly on disk using Go standard library streaming hashers (`crypto/sha256`, `crypto/md5`).
+- **Response:**
+  ```json
+  {
+    "task_id": "18f293b4a20",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "md5": "d41d8cd98f00b204e9800998ecf8427e"
+  }
+  ```
+
 ### `POST /api/tasks/start?id=<id>`
 Resumes or starts a queued or paused task.
 
@@ -201,10 +224,12 @@ Analyzes URL host/IP against Iranian domestic CIDRs and ASNs. Returns `{ is_dome
 - **Standalone Web App Manifest (`ui/manifest.json`):** Serves multi-size application icons (16, 24, 32, 48, 64, 128, 192, 256, 512 px) ensuring Microsoft Edge and Chromium standalone app modes render crisp taskbar and window header icons without default web globe fallbacks.
 - **Native Window Minimization (`pkg/server/window_windows.go`):** Direct Windows `user32.dll` enumeration and `ShowWindow` minimize calls wired to top ribbon controls.
 
-### 5.5 Windows System Tray Integration (`pkg/tray/tray_windows.go`)
+### 5.5 Windows System Tray & Balloon Notifications (`pkg/tray/tray_windows.go`)
 - Pure Go implementation using Windows Win32 APIs (`shell32.dll` and `user32.dll`) without CGO dependencies.
 - Registered hidden window class (`WNDCLASSEXW`) receiving `WM_USER+1` tray notification messages.
 - `Shell_NotifyIconW` creates the tray icon in the system clock notification overflow area (`^`).
+- **Native Balloon Notifications (`ShowBalloon`):** Dispatches Win32 `NIF_INFO` toast notifications with native Windows chime upon completion of any download task.
+- **Dynamic Throughput Tooltip (`UpdateTooltip`):** Periodically updates tray hover tooltip with aggregate download speed and active task count (e.g. `VortexDM: 12.45 MB/s (3 active)`).
 - Left-click / double-click restores the window (`ShowWindow(SW_SHOW)`, `ShowWindow(SW_RESTORE)`, `SetForegroundWindow`).
 - Right-click displays native Win32 popup menu (`CreatePopupMenu`, `TrackPopupMenuEx`) with Open, Pause All, Resume All, and Exit.
 - `HideToTray()` calls `ShowWindow(hwnd, SW_HIDE)` to completely remove the app from the taskbar while keeping it active in the background.
@@ -216,10 +241,15 @@ Analyzes URL host/IP against Iranian domestic CIDRs and ASNs. Returns `{ is_dome
 - Maintains 24-hour sliding hourly buckets and 14-day daily buckets for graphical visualization.
 - Maintains an audit log of recent downloads with file names, sizes, and tariff classification.
 
-### 5.7 Custom Queues & Priority Reordering (`pkg/downloader/engine.go`)
-- Dynamic creation, updating, and deletion of custom download queues.
-- `ReorderTask(taskID, newOrder)` allows users to adjust download priorities using Up (`▲`) and Down (`▼`) buttons.
-- Queue workers execute downloads strictly in sorted order of priority.
+### 5.7 Batch Downloader & Cryptographic Checksum Engine (`pkg/downloader/engine.go`)
+- `BatchAddTasks(urls, queue, conns)`: Concurrently or sequentially analyzes and enqueues multiple URLs with uniform chunk partitioning.
+- `CalculateChecksum(taskID)`: Streams file directly into SHA-256 and MD5 cryptographic hashers via `io.MultiWriter`, calculating verification digests without loading full files into RAM.
+
+### 5.8 Official Browser Extension (`extensions/vortexdm-chrome/`)
+- Manifest V3 compliant extension compatible with Google Chrome, Microsoft Edge, Brave, and Opera.
+- Native context menus: "Download with VortexDM" on any link, image, video, or audio file.
+- Optional automatic download capture intercepting standard browser downloads and redirecting them to VortexDM's multi-connection engine.
+- Instant popup status dashboard with one-click URL paste and download trigger.
 
 ---
 
@@ -227,6 +257,9 @@ Analyzes URL host/IP against Iranian domestic CIDRs and ASNs. Returns `{ is_dome
 
 - **IDM-Grade Information Density:** Compact, sticky-header table grid (36px row height), allowing 20+ downloads visible simultaneously.
 - **Tree Navigation & Collapsible Sidebar:** Left sidebar organized into Categories, Statuses, and Queues with one-click collapse/expand (`.sidebar-collapsed`) for maximum data visibility.
+- **Batch Download Modal:** Clean multi-line URL importer supporting target queue selection, thread count configuration, and immediate auto-start.
+- **File Checksum Verifier Modal:** Right-click context menu "Verify Checksum" displaying computed SHA-256 and MD5 hashes with real-time input comparison and visual match confirmation banner.
+- **Clipboard Auto-Sniffing Toast:** Non-intrusive floating glassmorphic banner popping up when downloadable URLs (`.zip`, `.iso`, `.exe`, `.mp4`, etc.) are copied, offering single-click quick download.
 - **Custom Queues Management:** One-click `+` button in sidebar to create named queues with custom concurrency limits, and instant filtering by queue.
 - **Task Priority Reordering:** Dedicated `#` order column and Up/Down (`▲`/`▼`) buttons in each row to prioritize downloads.
 - **Pure Bilingual Localization:** Strictly separated Persian and English typography without awkward parenthetical inline translations.
@@ -234,23 +267,25 @@ Analyzes URL host/IP against Iranian domestic CIDRs and ASNs. Returns `{ is_dome
 - **Interactive Bandwidth Analytics Dashboard:** Full-screen modal with 4 metric cards (Total, Domestic, International, Savings), dual-mode HTML5 Canvas chart (hourly/daily), and recent file history.
 - **International Mode Cleanups:** Automatic conditional hiding of Iran-specific modules (LinkIrani button, tariff column, domestic traffic notices) via `.iran-only` and `html[lang="en"]` selector when operating in English locale.
 - **Universal Dark Translucent Scrollbars:** Engineered custom `::-webkit-scrollbar` and `scrollbar-width: thin` CSS specifications ensuring Windows OS never falls back to glaring white scrollbar tracks upon resizing.
-- **Interactive Context Menu:** Native-like floating menu on right-click for instant file opening, copying URL, checking on LinkIrani.ir, and task management.
 
 ---
 
 ## 7. Automated Testing Strategy
 
-Suite of 10 unit and integration tests covering:
-1. `TestTrafficAnalytics`: Verifies thread-safe traffic recording, domestic/international separation, savings calculation, and cycle reset.
-2. `TestCustomQueuesAndReordering`: Verifies custom queue creation, task assignment, order priority changes, and deletion.
-3. `TestMultiThreadedDownload`: Multi-goroutine concurrent HTTP Range download with byte-by-byte integrity verification.
-4. `TestSpeedLimiter`: Token-bucket throttle enforcement and unthrottled throughput.
-5. `TestServerEndpointsAndAssets`: Validates root HTML, dark color-scheme meta, favicon, manifest, and window minimize endpoints.
-6. `TestDetectTraffic`: Iranian domain detection (`soft98.ir` -> domestic نیم‌بها) vs international (`github.com` -> تمام‌بها).
-7. `TestFormatBytes`, `TestFormatSpeed`, `TestFormatDuration`, `TestDetectCategory`.
+Suite of 12 unit and integration tests covering:
+1. `TestBatchAddTasksAndAPI`: Validates bulk URL creation, queue assignment, and `POST /api/tasks/batch` REST endpoint.
+2. `TestChecksumVerification`: Validates streaming SHA-256 and MD5 hash generation and `GET /api/tasks/checksum` endpoint.
+3. `TestTrafficAnalytics`: Verifies thread-safe traffic recording, domestic/international separation, savings calculation, and cycle reset.
+4. `TestCustomQueuesAndReordering`: Verifies custom queue creation, task assignment, order priority changes, and deletion.
+5. `TestMultiThreadedDownload`: Multi-goroutine concurrent HTTP Range download with byte-by-byte integrity verification.
+6. `TestSpeedLimiter`: Token-bucket throttle enforcement and unthrottled throughput.
+7. `TestServerEndpointsAndAssets`: Validates root HTML, dark color-scheme meta, favicon, manifest, and window minimize endpoints.
+8. `TestDetectTraffic`: Iranian domain detection (`soft98.ir` -> domestic نیم‌بها) vs international (`github.com` -> تمام‌بها).
+9. `TestFormatBytes`, `TestFormatSpeed`, `TestFormatDuration`, `TestDetectCategory`.
 
 Run tests:
 ```bash
 cmd /c test.bat
 ```
+
 

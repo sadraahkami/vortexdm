@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VortexDM</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 320px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0b0f19;
+      color: #e2e8f0;
+      padding: 14px;
+      font-size: 13px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .logo-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .logo-img {
+      width: 22px;
+      height: 22px;
+    }
+    .title {
+      font-weight: 700;
+      font-size: 14px;
+      color: #00f2fe;
+    }
+    .status-badge {
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .status-badge.online {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .status-badge.offline {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .form-group {
+      margin-bottom: 10px;
+    }
+    label {
+      display: block;
+      font-size: 11px;
+      color: #94a3b8;
+      margin-bottom: 4px;
+      font-weight: 500;
+    }
+    input[type="text"] {
+      width: 100%;
+      background: #111827;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 5px;
+      color: #fff;
+      padding: 7px 10px;
+      font-size: 12px;
+      outline: none;
+      transition: border 0.15s;
+    }
+    input[type="text"]:focus {
+      border-color: #00f2fe;
+    }
+    .btn {
+      width: 100%;
+      background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+      color: #030712;
+      border: none;
+      border-radius: 5px;
+      padding: 8px 12px;
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: filter 0.15s;
+    }
+    .btn:hover {
+      filter: brightness(1.1);
+    }
+    .settings-row {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .switch-label {
+      font-size: 11px;
+      color: #cbd5e1;
+      cursor: pointer;
+    }
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 32px;
+      height: 18px;
+    }
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #334155;
+      transition: .2s;
+      border-radius: 18px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: .2s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #00f2fe;
+    }
+    input:checked + .slider:before {
+      transform: translateX(14px);
+    }
+    .footer {
+      margin-top: 10px;
+      text-align: center;
+      font-size: 10px;
+      color: #64748b;
+    }
+    .footer a {
+      color: #00f2fe;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo-box">
+      <img src="icons/icon48.png" alt="logo" class="logo-img">
+      <span class="title">VortexDM</span>
+    </div>
+    <div id="statusBadge" class="status-badge offline">
+      <div class="status-dot"></div>
+      <span id="statusText">Checking...</span>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="urlInput">Download URL</label>
+    <input type="text" id="urlInput" placeholder="Paste URL here..." autofocus>
+  </div>
+
+  <button id="btnDownload" class="btn">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+    Download with VortexDM
+  </button>
+
+  <div class="settings-row">
+    <label for="chkAutoIntercept" class="switch-label">Capture Browser Downloads</label>
+    <label class="toggle-switch">
+      <input type="checkbox" id="chkAutoIntercept">
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="footer">
+    <a href="http://127.0.0.1:8080" target="_blank">Open Desktop Web UI</a>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

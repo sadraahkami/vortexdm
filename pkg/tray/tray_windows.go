@@ -18,6 +18,12 @@ const (
 	NIF_MESSAGE = 0x00000001
 	NIF_ICON    = 0x00000002
 	NIF_TIP     = 0x00000004
+	NIF_INFO    = 0x00000010
+
+	NIIF_NONE    = 0x00000000
+	NIIF_INFO    = 0x00000001
+	NIIF_WARNING = 0x00000002
+	NIIF_ERROR   = 0x00000003
 
 	WM_DESTROY      = 0x0002
 	WM_USER         = 0x0400
@@ -335,3 +341,43 @@ func RestoreAppWindow() {
 	})
 	procEnumWindows.Call(cb, 0)
 }
+
+// UpdateTooltip dynamically changes the hover text shown on the system tray icon
+func UpdateTooltip(text string) {
+	if globalTray == nil || globalTray.hWnd == 0 {
+		return
+	}
+	var nid NOTIFYICONDATAW
+	nid.CbSize = uint32(unsafe.Sizeof(nid))
+	nid.HWnd = globalTray.hWnd
+	nid.UID = 1
+	nid.UFlags = NIF_TIP
+
+	tip, err := syscall.UTF16FromString(text)
+	if err == nil {
+		copy(nid.SzTip[:], tip)
+		procShellNotifyIconW.Call(NIM_MODIFY, uintptr(unsafe.Pointer(&nid)))
+	}
+}
+
+// ShowBalloon triggers a native Windows notification bubble/toast from the tray icon
+func ShowBalloon(title, msg string) {
+	if globalTray == nil || globalTray.hWnd == 0 {
+		return
+	}
+	var nid NOTIFYICONDATAW
+	nid.CbSize = uint32(unsafe.Sizeof(nid))
+	nid.HWnd = globalTray.hWnd
+	nid.UID = 1
+	nid.UFlags = NIF_INFO
+
+	titleUtf, _ := syscall.UTF16FromString(title)
+	msgUtf, _ := syscall.UTF16FromString(msg)
+	copy(nid.SzInfoTitle[:], titleUtf)
+	copy(nid.SzInfo[:], msgUtf)
+	nid.DwInfoFlags = NIIF_INFO
+	nid.UTimeoutOrVersion = 5000 // 5 seconds display
+
+	procShellNotifyIconW.Call(NIM_MODIFY, uintptr(unsafe.Pointer(&nid)))
+}
+

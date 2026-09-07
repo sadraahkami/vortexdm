@@ -2,20 +2,26 @@ package downloader
 
 import (
 	"context"
+	"crypto/md5"
+	"crypto/sha256"
 	"crypto/tls"
+	"encoding/hex"
 	"fmt"
+	"io"
 	"mime"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/sadraahkami/vortexdm/pkg/analytics"
 	"github.com/sadraahkami/vortexdm/pkg/traffic"
+	"github.com/sadraahkami/vortexdm/pkg/tray"
 	"github.com/sadraahkami/vortexdm/pkg/utils"
 )
 
@@ -119,14 +125,22 @@ func (e *Engine) startSpeedTicker() {
 				e.currentSpeed = speed
 
 				// Update tasks that are downloading
+				activeCount := 0
 				e.mu.RLock()
 				for _, t := range e.tasks {
 					if t.Status == StatusDownloading {
+						activeCount++
 						t.UpdateProgressStats(speed)
 						e.broadcast(t)
 					}
 				}
 				e.mu.RUnlock()
+
+				if activeCount > 0 {
+					tray.UpdateTooltip(fmt.Sprintf("VortexDM: %s (%d active)", utils.FormatSpeed(speed), activeCount))
+				} else {
+					tray.UpdateTooltip("VortexDM - Professional Download Manager")
+				}
 			}
 		}
 	}()
@@ -579,8 +593,69 @@ func (e *Engine) runDownload(ctx context.Context, task *Task) {
 		if a := analytics.GetAnalytics(); a != nil {
 			a.RecordDownload(0, isDom, task.Filename)
 		}
+		tray.ShowBalloon("VortexDM", "دانلود تکمیل شد: "+task.Filename)
 	}
 	task.mu.Unlock()
 
 	e.broadcast(task)
 }
+
+// BatchAddTasks probes and creates multiple tasks from a slice of URLs
+func (e *Engine) BatchAddTasks(urls []string, queue string, conns int) ([]*Task, []string) {
+	if conns <= 0 {
+		conns = 8
+	}
+	if queue == "" {
+		queue = "main"
+	}
+	var createdTasks []*Task
+	var errors []string
+
+	for _, rawURL := range urls {
+		rawURL = strings.TrimSpace(rawURL)
+		if rawURL == "" {
+			continue
+		}
+		task, err := e.CreateTask(rawURL, "", conns)
+		if err != nil {
+			errors = append(errors, fmt.Sprintf("%s: %v", rawURL, err))
+			continue
+		}
+		if queue != "main" {
+			task.mu.Lock()
+			task.Queue = queue
+			task.mu.Unlock()
+			task.SaveState()
+		}
+		createdTasks = append(createdTasks, task)
+	}
+	return createdTasks, errors
+}
+
+// CalculateChecksum computes SHA-256 and MD5 hashes of a task's downloaded file
+func (e *Engine) CalculateChecksum(taskID string) (sha256Hex string, md5Hex string, err error) {
+	e.mu.RLock()
+	task, exists := e.tasks[taskID]
+	e.mu.RUnlock()
+
+	if !exists {
+		return "", "", fmt.Errorf("task not found")
+	}
+
+	f, err := os.Open(task.FinalPath)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to open file: %w", err)
+	}
+	defer f.Close()
+
+	hSha := sha256.New()
+	hMd5 := md5.New()
+	w := io.MultiWriter(hSha, hMd5)
+
+	if _, err := io.Copy(w, f); err != nil {
+		return "", "", fmt.Errorf("failed to read file: %w", err)
+	}
+
+	return hex.EncodeToString(hSha.Sum(nil)), hex.EncodeToString(hMd5.Sum(nil)), nil
+}
+

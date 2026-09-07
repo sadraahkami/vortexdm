@@ -25,6 +25,11 @@
 - 🚀 **Turbo Multi-Threaded Engine:** Parallel chunk downloading utilizing Go Goroutines (up to 32 parallel connections).
 - 🧩 **Zero-Concatenation Storage:** Direct byte positioning via `os.File.WriteAt`, eliminating slow final assembly file merging.
 - 💻 **Zero-Friction Standalone Executable:** Single 7MB `.exe` containing all embedded UI assets and PE resources — run directly with zero installation.
+- 🌐 **Official Browser Extension (Chrome/Edge/Brave/Opera):** Manifest V3 extension with context-menu "Download with VortexDM" and automatic download interception.
+- 📥 **Batch Multi-URL Downloader:** Import dozens of download URLs simultaneously with queue selection, parallel thread tuning, and auto-start.
+- 🔒 **Cryptographic Checksum Verifier (SHA-256 & MD5):** Real-time file integrity check directly from the context menu with automated hash comparison banner.
+- 📋 **Clipboard Auto-Sniffing:** Non-intrusive floating toast detecting copied downloadable links (`.zip`, `.iso`, `.exe`, `.mp4`, etc.) with quick-download action.
+- 🔔 **Native Windows Balloon Toasts & Live Tray Tooltip:** Win32 tray notifications on task completion and dynamic throughput + active download count on hover.
 - 📌 **Windows System Tray Minimization:** One-click minimize to Windows notification tray overflow area (`^`), keeping taskbar clean with background downloads.
 - 📊 **Bandwidth & Traffic Usage Analytics:** Live tracking of billing cycle data consumption with domestic (نیم‌بها) vs international breakdown, calculated savings, and interactive 24h/14d HTML5 Canvas distribution charts.
 - 📋 **Dynamic Custom Queues & Priority Ordering:** Create tailored download queues (Movies, Software, Courses) and reorder download sequence with Up/Down (`▲`/`▼`) buttons.
@@ -116,11 +121,15 @@ VortexDM/
 │   └── utils/               # Formatters & MIME category classifier
 │       ├── category.go      # Extension category matcher
 │       └── format.go        # Bytes & Duration formatters
+├── extensions/              # Official browser extensions
+│   └── vortexdm-chrome/     # Chrome / Edge / Brave Manifest V3 extension
 ├── ui/                      # Cyber Dark Glassmorphic Web Dashboard
 │   ├── app.js               # SSE subscriber, canvas chart & i18n controller
 │   ├── index.html           # Modern responsive layout & chunk grid
 │   └── style.css            # Glowing neon dark cyber theme
 ├── tests/                   # Automated unit & integration tests
+│   ├── batch_test.go        # Multi-URL batch importer unit test
+│   ├── checksum_test.go     # SHA-256 & MD5 verifier test
 │   ├── downloader_test.go   # Mock range server & chunk integrity verification
 │   └── utils_test.go        # Formatter & category unit tests
 ├── Dockerfile               # Alpine multi-stage container

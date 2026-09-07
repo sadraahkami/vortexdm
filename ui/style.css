@@ -1433,3 +1433,274 @@ html[lang="en"] .iran-only {
 html[lang="en"] .analytics-metrics-grid {
   grid-template-columns: repeat(2, 1fr);
 }
+
+/* Large Modal Card (Batch Import) */
+.modal-card-lg {
+  max-width: 580px !important;
+}
+
+.form-textarea {
+  width: 100%;
+  background: #090d16;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xs);
+  color: var(--text-main);
+  padding: 0.6rem 0.8rem;
+  font-family: inherit;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  resize: vertical;
+  transition: var(--transition);
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 8px rgba(0, 242, 254, 0.25);
+}
+
+.checkbox-row {
+  margin-top: 0.4rem;
+  margin-bottom: 0.2rem;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-main);
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  accent-color: var(--primary);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.form-status-msg {
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-xs);
+  font-size: 0.78rem;
+  margin-top: 0.5rem;
+}
+.form-status-msg.error {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+}
+.form-status-msg.success {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #6ee7b7;
+}
+
+/* Checksum Modal Styles */
+.checksum-filename-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-color);
+  margin-bottom: 0.8rem;
+}
+
+.cs-label {
+  color: var(--text-dim);
+  font-size: 0.78rem;
+}
+
+.cs-filename {
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 0.82rem;
+  word-break: break-all;
+}
+
+.hash-copy-group {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.hash-input {
+  font-family: monospace;
+  font-size: 0.75rem !important;
+  color: #38bdf8 !important;
+  background: rgba(0, 0, 0, 0.35) !important;
+  cursor: text;
+}
+
+.btn-copy {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 0.35rem 0.65rem;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 0.85rem;
+}
+
+.btn-copy:hover {
+  background: rgba(0, 242, 254, 0.15);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.checksum-verify-box {
+  margin-top: 1rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.checksum-verify-box label {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+
+.cs-result-banner {
+  margin-top: 0.6rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-xs);
+  font-size: 0.78rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cs-result-banner.cs-match {
+  background: rgba(16, 185, 129, 0.18);
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  color: #34d399;
+}
+
+.cs-result-banner.cs-mismatch {
+  background: rgba(239, 68, 68, 0.18);
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  color: #f87171;
+}
+
+/* Floating Clipboard Auto-Sniffing Toast */
+.clipboard-sniff-toast {
+  position: fixed;
+  bottom: 35px;
+  right: 25px;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 242, 254, 0.4);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 15px rgba(0, 242, 254, 0.2);
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  z-index: 2500;
+  max-width: 440px;
+  animation: slideUpSniff 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+html[dir="rtl"] .clipboard-sniff-toast {
+  right: auto;
+  left: 25px;
+}
+
+.clipboard-sniff-toast.hidden {
+  display: none !important;
+}
+
+@keyframes slideUpSniff {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.toast-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(0, 242, 254, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.toast-icon svg {
+  width: 18px;
+  height: 18px;
+  stroke: var(--primary);
+}
+
+.toast-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.toast-title {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 2px;
+}
+
+.toast-url {
+  font-size: 0.72rem;
+  color: var(--primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  direction: ltr;
+  text-align: left;
+}
+
+.toast-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.toast-btn {
+  border: none;
+  font-family: inherit;
+  font-size: 0.75rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.toast-btn-primary {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-glow) 100%);
+  color: #030712;
+  font-weight: 700;
+}
+
+.toast-btn-primary:hover {
+  filter: brightness(1.15);
+  box-shadow: 0 0 10px rgba(0, 242, 254, 0.4);
+}
+
+.toast-btn-close {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-dim);
+}
+
+.toast-btn-close:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+

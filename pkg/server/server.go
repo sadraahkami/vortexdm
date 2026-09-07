@@ -120,6 +120,8 @@ func (s *Server) SetupRoutes() http.Handler {
 	mux.HandleFunc("/api/analytics/reset", s.handleAnalyticsReset)
 	mux.HandleFunc("/api/queues", s.handleQueues)
 	mux.HandleFunc("/api/tasks/reorder", s.handleReorderTask)
+	mux.HandleFunc("/api/tasks/batch", s.handleBatchTasks)
+	mux.HandleFunc("/api/tasks/checksum", s.handleChecksum)
 
 	// Static Web UI Files
 	if s.staticFS != nil {
@@ -521,4 +523,72 @@ func (s *Server) handleReorderTask(w http.ResponseWriter, r *http.Request) {
 	}
 	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 }
+
+type BatchAddTaskRequest struct {
+	URLs        []string `json:"urls"`
+	Queue       string   `json:"queue"`
+	Connections int      `json:"connections"`
+	Start       bool     `json:"start"`
+}
+
+func (s *Server) handleBatchTasks(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req BatchAddTaskRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, `{"error":"Invalid request payload"}`, http.StatusBadRequest)
+		return
+	}
+
+	if len(req.URLs) == 0 {
+		http.Error(w, `{"error":"At least one URL is required"}`, http.StatusBadRequest)
+		return
+	}
+
+	tasks, errs := s.engine.BatchAddTasks(req.URLs, req.Queue, req.Connections)
+	if req.Start {
+		for _, t := range tasks {
+			go s.engine.StartTask(t.ID)
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"tasks":  tasks,
+		"errors": errs,
+		"total":  len(tasks),
+	})
+}
+
+func (s *Server) handleChecksum(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		http.Error(w, `{"error":"Task ID is required"}`, http.StatusBadRequest)
+		return
+	}
+
+	sha256Hash, md5Hash, err := s.engine.CalculateChecksum(id)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"task_id": id,
+		"sha256":  sha256Hash,
+		"md5":     md5Hash,
+	})
+}
+
 

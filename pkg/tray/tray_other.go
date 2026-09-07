@@ -15,3 +15,8 @@ func HideToTray() bool {
 }
 
 func RestoreAppWindow() {}
+
+func UpdateTooltip(text string) {}
+
+func ShowBalloon(title, msg string) {}
+

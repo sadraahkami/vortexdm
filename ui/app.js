@@ -123,7 +123,26 @@ const translations = {
     queue_lbl_concur: 'حداکثر دانلودهای همزمان در این صف:',
     queue_btn_create: 'ایجاد صف',
     col_order: 'ترتیب',
-    col_reorder: 'ترتیب'
+    col_reorder: 'ترتیب',
+    tb_batch: 'دانلود دسته‌ای',
+    tb_batch_tip: 'افزودن دسته‌ای لینک‌ها',
+    batch_modal_title: 'دانلود دسته‌ای لینک‌ها',
+    batch_lbl_urls: 'نشانی‌های دانلود (هر نشانی در یک خط):',
+    batch_lbl_queue: 'صف مقصد:',
+    batch_lbl_threads: 'اتصالات همزمان هر فایل:',
+    batch_chk_autostart: 'شروع دانلود بلافاصله پس از افزودن',
+    batch_btn_import: 'افزودن همه به صف',
+    cm_checksum: 'بررسی هش و اصالت (SHA-256 / MD5)',
+    cs_modal_title: 'بررسی هش و اصالت فایل',
+    cs_file_lbl: 'فایل:',
+    cs_verify_lbl: 'مقایسه با هش ارائه‌شده توسط سایت مبدأ:',
+    cs_verify_placeholder: 'هش SHA-256 یا MD5 را اینجا پیست کنید...',
+    cs_match_msg: '✅ هش فایل کاملاً تطابق دارد (فایل بدون دستکاری و سالم است)',
+    cs_mismatch_msg: '❌ هش تطابق ندارد! ممکن است فایل ناقص یا دستکاری شده باشد',
+    btn_close: 'بستن',
+    tip_copy: 'کپی هش',
+    toast_clip_title: 'لینک دانلود در کلیپ‌بورد شناسایی شد',
+    toast_clip_download: 'دانلود سریع'
   },
   en: {
     tb_add: 'Add URL',
@@ -243,7 +262,26 @@ const translations = {
     queue_lbl_concur: 'Max Concurrent Downloads:',
     queue_btn_create: 'Create Queue',
     col_order: 'Order',
-    col_reorder: 'Order'
+    col_reorder: 'Order',
+    tb_batch: 'Batch Import',
+    tb_batch_tip: 'Import multiple download URLs',
+    batch_modal_title: 'Batch Download URLs',
+    batch_lbl_urls: 'Download URLs (one per line):',
+    batch_lbl_queue: 'Target Queue:',
+    batch_lbl_threads: 'Parallel Connections:',
+    batch_chk_autostart: 'Start downloading immediately after adding',
+    batch_btn_import: 'Add All to Queue',
+    cm_checksum: 'Verify Checksum (SHA-256 / MD5)',
+    cs_modal_title: 'File Checksum Integrity',
+    cs_file_lbl: 'File:',
+    cs_verify_lbl: 'Compare against expected hash:',
+    cs_verify_placeholder: 'Paste SHA-256 or MD5 hash here...',
+    cs_match_msg: '✅ Hash matched perfectly (File is authentic and uncorrupted)',
+    cs_mismatch_msg: '❌ Hash mismatch! The file may be corrupt or modified',
+    btn_close: 'Close',
+    tip_copy: 'Copy Hash',
+    toast_clip_title: 'Download link detected in clipboard',
+    toast_clip_download: 'Download'
   }
 };
 
@@ -743,6 +781,8 @@ if (contextMenu) {
       await fetch(`/api/tasks/open?id=${contextTaskId}`, { method: 'POST' });
     } else if (action === 'copy' && task) {
       navigator.clipboard.writeText(task.url);
+    } else if (action === 'checksum' && task) {
+      openChecksumModal(task);
     } else if (action === 'linkirani' && task) {
       window.open(task.linkirani_url || `https://linkirani.ir/?url=${encodeURIComponent(task.url)}`, '_blank');
     } else if (action === 'delete') {
@@ -1226,13 +1266,14 @@ function renderQueuesUI() {
   const existingCustom = container.querySelectorAll('.tree-node[data-custom="true"]');
   existingCustom.forEach(n => n.remove());
 
-  // Also update modalQueueSelect
+  // Also update modalQueueSelect and batchQueueSelect
+  const t = translations[currentLang];
   const modalQueueSelect = document.getElementById('modalQueueSelect');
   if (modalQueueSelect) {
     const currentSelectedVal = modalQueueSelect.value || 'main';
     modalQueueSelect.innerHTML = `
-      <option value="main">صف اصلی</option>
-      <option value="night">صف دانلود شبانه</option>
+      <option value="main">${t.queue_main}</option>
+      <option value="night">${t.queue_night}</option>
     `;
 
     for (const [qid, qcfg] of Object.entries(customQueues)) {
@@ -1242,6 +1283,22 @@ function renderQueuesUI() {
       modalQueueSelect.appendChild(opt);
     }
     modalQueueSelect.value = currentSelectedVal;
+  }
+
+  const batchQueueSelect = document.getElementById('batchQueueSelect');
+  if (batchQueueSelect) {
+    const curBatchVal = batchQueueSelect.value || 'main';
+    batchQueueSelect.innerHTML = `
+      <option value="main">${t.queue_main}</option>
+      <option value="night">${t.queue_night}</option>
+    `;
+    for (const [qid, qcfg] of Object.entries(customQueues)) {
+      const opt = document.createElement('option');
+      opt.value = qid;
+      opt.textContent = qcfg.name || qid;
+      batchQueueSelect.appendChild(opt);
+    }
+    batchQueueSelect.value = curBatchVal;
   }
 
   for (const [qid, qcfg] of Object.entries(customQueues)) {
@@ -1490,7 +1547,268 @@ window.addEventListener('resize', () => {
   }
 });
 
-// --- 18. App Bootstrapping ---
+// --- 18. Batch Multi-URL Downloader ---
+const batchModal = document.getElementById('batchModal');
+const tbBatch = document.getElementById('tbBatch');
+const closeBatchModal = document.getElementById('closeBatchModal');
+const cancelBatchModalBtn = document.getElementById('cancelBatchModalBtn');
+const submitBatchModalBtn = document.getElementById('submitBatchModalBtn');
+const batchUrlsInput = document.getElementById('batchUrlsInput');
+const batchQueueSelect = document.getElementById('batchQueueSelect');
+const batchConnectionsSelect = document.getElementById('batchConnectionsSelect');
+const batchAutoStart = document.getElementById('batchAutoStart');
+const batchStatusMsg = document.getElementById('batchStatusMsg');
+
+function openBatchModal() {
+  if (!batchModal) return;
+  batchModal.classList.remove('hidden');
+  if (batchUrlsInput) {
+    batchUrlsInput.value = '';
+    batchUrlsInput.focus();
+  }
+  if (batchStatusMsg) {
+    batchStatusMsg.className = 'form-status-msg hidden';
+    batchStatusMsg.textContent = '';
+  }
+}
+
+if (tbBatch) tbBatch.addEventListener('click', openBatchModal);
+if (closeBatchModal) closeBatchModal.addEventListener('click', () => batchModal.classList.add('hidden'));
+if (cancelBatchModalBtn) cancelBatchModalBtn.addEventListener('click', () => batchModal.classList.add('hidden'));
+
+if (submitBatchModalBtn) {
+  submitBatchModalBtn.addEventListener('click', async () => {
+    const rawText = batchUrlsInput.value.trim();
+    if (!rawText) {
+      batchUrlsInput.focus();
+      return;
+    }
+
+    const urls = rawText.split('\n')
+      .map(u => u.trim())
+      .filter(u => u.length > 0 && (u.startsWith('http://') || u.startsWith('https://')));
+
+    if (urls.length === 0) {
+      batchStatusMsg.className = 'form-status-msg error';
+      batchStatusMsg.textContent = (currentLang === 'fa')
+        ? 'هیچ نشانی معتبری با پیشوند http:// یا https:// یافت نشد.'
+        : 'No valid URLs found starting with http:// or https://.';
+      batchStatusMsg.classList.remove('hidden');
+      return;
+    }
+
+    submitBatchModalBtn.disabled = true;
+    submitBatchModalBtn.textContent = (currentLang === 'fa') ? 'در حال افزودن...' : 'Importing...';
+
+    try {
+      const res = await fetch('/api/tasks/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          urls: urls,
+          queue: batchQueueSelect ? (batchQueueSelect.value || 'main') : 'main',
+          connections: batchConnectionsSelect ? (parseInt(batchConnectionsSelect.value, 10) || 8) : 8,
+          start: batchAutoStart ? batchAutoStart.checked : true
+        })
+      });
+
+      if (res.ok) {
+        batchModal.classList.add('hidden');
+        fetchTasksREST();
+      } else {
+        const errData = await res.json();
+        batchStatusMsg.className = 'form-status-msg error';
+        batchStatusMsg.textContent = errData.error || 'Failed to import URLs';
+        batchStatusMsg.classList.remove('hidden');
+      }
+    } catch (e) {
+      batchStatusMsg.className = 'form-status-msg error';
+      batchStatusMsg.textContent = 'Connection error';
+      batchStatusMsg.classList.remove('hidden');
+    } finally {
+      submitBatchModalBtn.disabled = false;
+      submitBatchModalBtn.textContent = translations[currentLang].batch_btn_import;
+    }
+  });
+}
+
+// --- 19. Checksum Integrity Verifier ---
+const checksumModal = document.getElementById('checksumModal');
+const closeChecksumModal = document.getElementById('closeChecksumModal');
+const closeChecksumBtn = document.getElementById('closeChecksumBtn');
+const csFileName = document.getElementById('csFileName');
+const csSha256Val = document.getElementById('csSha256Val');
+const csMd5Val = document.getElementById('csMd5Val');
+const csVerifyInput = document.getElementById('csVerifyInput');
+const csVerifyResult = document.getElementById('csVerifyResult');
+const btnCopySha256 = document.getElementById('btnCopySha256');
+const btnCopyMd5 = document.getElementById('btnCopyMd5');
+
+async function openChecksumModal(task) {
+  if (!checksumModal || !task) return;
+  checksumModal.classList.remove('hidden');
+  if (csFileName) csFileName.textContent = task.filename || task.id;
+  if (csSha256Val) csSha256Val.value = (currentLang === 'fa') ? 'در حال محاسبه هش...' : 'Calculating hash...';
+  if (csMd5Val) csMd5Val.value = (currentLang === 'fa') ? 'در حال محاسبه هش...' : 'Calculating hash...';
+  if (csVerifyInput) csVerifyInput.value = '';
+  if (csVerifyResult) {
+    csVerifyResult.className = 'cs-result-banner hidden';
+    csVerifyResult.textContent = '';
+  }
+
+  try {
+    const res = await fetch(`/api/tasks/checksum?id=${encodeURIComponent(task.id)}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (csSha256Val) csSha256Val.value = data.sha256 || '';
+      if (csMd5Val) csMd5Val.value = data.md5 || '';
+    } else {
+      const err = await res.json();
+      if (csSha256Val) csSha256Val.value = err.error || 'Error';
+      if (csMd5Val) csMd5Val.value = err.error || 'Error';
+    }
+  } catch (e) {
+    if (csSha256Val) csSha256Val.value = 'Failed to load checksum';
+    if (csMd5Val) csMd5Val.value = 'Failed to load checksum';
+  }
+}
+
+function checkExpectedChecksum() {
+  if (!csVerifyInput || !csVerifyResult) return;
+  const entered = csVerifyInput.value.trim().toLowerCase();
+  if (!entered) {
+    csVerifyResult.className = 'cs-result-banner hidden';
+    csVerifyResult.textContent = '';
+    return;
+  }
+  const currentSha = (csSha256Val ? csSha256Val.value : '').trim().toLowerCase();
+  const currentMd5 = (csMd5Val ? csMd5Val.value : '').trim().toLowerCase();
+
+  const t = translations[currentLang];
+  if (entered === currentSha || entered === currentMd5) {
+    csVerifyResult.className = 'cs-result-banner cs-match';
+    csVerifyResult.textContent = t.cs_match_msg;
+  } else {
+    csVerifyResult.className = 'cs-result-banner cs-mismatch';
+    csVerifyResult.textContent = t.cs_mismatch_msg;
+  }
+}
+
+if (csVerifyInput) {
+  csVerifyInput.addEventListener('input', checkExpectedChecksum);
+}
+
+if (btnCopySha256 && csSha256Val) {
+  btnCopySha256.addEventListener('click', () => {
+    navigator.clipboard.writeText(csSha256Val.value);
+    btnCopySha256.textContent = '✔️';
+    setTimeout(() => { btnCopySha256.textContent = '📋'; }, 1500);
+  });
+}
+
+if (btnCopyMd5 && csMd5Val) {
+  btnCopyMd5.addEventListener('click', () => {
+    navigator.clipboard.writeText(csMd5Val.value);
+    btnCopyMd5.textContent = '✔️';
+    setTimeout(() => { btnCopyMd5.textContent = '📋'; }, 1500);
+  });
+}
+
+if (closeChecksumModal) closeChecksumModal.addEventListener('click', () => checksumModal.classList.add('hidden'));
+if (closeChecksumBtn) closeChecksumBtn.addEventListener('click', () => checksumModal.classList.add('hidden'));
+
+// --- 20. Clipboard Auto-Sniffing with Floating Prompt ---
+const clipboardToast = document.getElementById('clipboardToast');
+const toastClipUrl = document.getElementById('toastClipUrl');
+const toastBtnDownload = document.getElementById('toastBtnDownload');
+const toastBtnDismiss = document.getElementById('toastBtnDismiss');
+let lastSniffedUrl = '';
+let sniffTimeout = null;
+
+const downloadableExts = [
+  '.zip', '.rar', '.7z', '.tar', '.gz', '.bz2', '.xz',
+  '.iso', '.img', '.dmg',
+  '.exe', '.msi', '.apk', '.deb', '.rpm', '.appimage',
+  '.mp4', '.mkv', '.avi', '.mov', '.webm',
+  '.mp3', '.flac', '.wav', '.aac', '.m4a',
+  '.pdf', '.epub', '.docx', '.xlsx', '.pptx',
+  '.bin', '.dat'
+];
+
+function isDownloadableUrl(raw) {
+  try {
+    const parsed = new URL(raw);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
+    const pathname = parsed.pathname.toLowerCase();
+    return downloadableExts.some(ext => pathname.endsWith(ext));
+  } catch (e) {
+    return false;
+  }
+}
+
+async function checkClipboardForUrl() {
+  if (!document.hasFocus()) return;
+  if (!navigator.clipboard || !navigator.clipboard.readText) return;
+
+  try {
+    const text = (await navigator.clipboard.readText()).trim();
+    if (!text || text === lastSniffedUrl) return;
+
+    if (isDownloadableUrl(text)) {
+      lastSniffedUrl = text;
+      showClipboardToast(text);
+    }
+  } catch (e) {
+    // Clipboard permission not granted or restricted
+  }
+}
+
+function showClipboardToast(url) {
+  if (!clipboardToast) return;
+  if (toastClipUrl) toastClipUrl.textContent = url;
+  clipboardToast.classList.remove('hidden');
+
+  if (sniffTimeout) clearTimeout(sniffTimeout);
+  sniffTimeout = setTimeout(() => {
+    clipboardToast.classList.add('hidden');
+  }, 8000);
+}
+
+if (toastBtnDismiss) {
+  toastBtnDismiss.addEventListener('click', () => {
+    if (clipboardToast) clipboardToast.classList.add('hidden');
+    if (sniffTimeout) clearTimeout(sniffTimeout);
+  });
+}
+
+if (toastBtnDownload) {
+  toastBtnDownload.addEventListener('click', async () => {
+    const url = lastSniffedUrl;
+    if (!url) return;
+    if (clipboardToast) clipboardToast.classList.add('hidden');
+    if (sniffTimeout) clearTimeout(sniffTimeout);
+
+    try {
+      const res = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: url, connections: 16 })
+      });
+      if (res.ok) {
+        fetchTasksREST();
+      }
+    } catch (e) {}
+  });
+}
+
+window.addEventListener('focus', () => {
+  setTimeout(checkClipboardForUrl, 400);
+});
+document.addEventListener('copy', () => {
+  setTimeout(checkClipboardForUrl, 500);
+});
+
+// --- 21. App Bootstrapping ---
 window.addEventListener('DOMContentLoaded', () => {
   initTimeSelectors();
   loadQueues();
