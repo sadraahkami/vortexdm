@@ -1,0 +1,76 @@
+name: Build & Release VortexDM
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Multi-Platform Binaries
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: true
+
+      - name: Run Unit Tests
+        run: |
+          go test -v ./tests/...
+
+      - name: Build Windows Binary
+        env:
+          CGO_ENABLED: '0'
+          GOOS: 'windows'
+          GOARCH: 'amd64'
+        run: |
+          go build -ldflags="-s -w" -o dist/VortexDM.exe .
+
+      - name: Build Linux Binary
+        env:
+          CGO_ENABLED: '0'
+          GOOS: 'linux'
+          GOARCH: 'amd64'
+        run: |
+          go build -ldflags="-s -w" -o dist/vortexdm-linux-amd64 .
+
+      - name: Package Windows Portable Zip
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "dist/VortexDM.exe", "README.md", "LICENSE" -DestinationPath "dist/VortexDM-Windows-x64.zip" -Force
+          Get-ChildItem -Path dist
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            dist/VortexDM.exe
+            dist/VortexDM-Windows-x64.zip
+            dist/vortexdm-linux-amd64
+          name: "VortexDM ${{ github.ref_name }} - Blazing Fast Go Download Manager"
+          body: |
+            ## ⚡ VortexDM - Next-Gen Multi-Connection Download Manager
+
+            Turbocharge your downloads with concurrent Goroutines! Modern IDM alternative with zero Python dependencies, single-binary execution, and live visual chunk mapping.
+
+            ### 🚀 Highlights:
+            - 🏎️ **Parallel Goroutine Chunking:** Splits downloads into 8-32 simultaneous HTTP range connections.
+            - 🧩 **Live Neon Chunk Map:** Real-time visual progress of each segment block.
+            - 📈 **Dynamic Speed Visualizer:** Real-time transfer rate graph and estimated arrival time (ETA).
+            - ⏯️ **Smart Pause & Resume:** Checkpointed state persistence (`.vortex`).
+            - 📦 **Zero Install Needed:** Download `VortexDM.exe` below and run instantly!
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

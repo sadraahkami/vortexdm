@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  vortexdm:
+    build: .
+    container_name: vortexdm-server
+    ports:
+      - "7070:7070"
+    restart: unless-stopped
+    volumes:
+      - ./downloads:/app/downloads

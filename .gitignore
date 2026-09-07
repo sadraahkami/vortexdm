@@ -1,0 +1,23 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+dist/
+
+# Go cache and packages on drive A
+.gocache/
+.gopath/
+
+# Runtime downloads and state
+downloads/
+temp/
+*.vortex
+*.tmp
+*.log
+
+# IDEs
+.idea/
+.vscode/

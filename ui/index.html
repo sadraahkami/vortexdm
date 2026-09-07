@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VortexDM | Next-Gen Multi-Threaded Download Manager</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo-icon">⚡</div>
+        <div class="brand-text">
+          <h2>VortexDM</h2>
+          <span class="badge-status">v1.0.0 Go</span>
+        </div>
+      </div>
+
+      <button id="btnNewDownload" class="btn-new-task">
+        <span class="plus-icon">+</span>
+        <span data-i18n="btn_new_download">دانلود جدید</span>
+      </button>
+
+      <nav class="nav-menu">
+        <div class="nav-section-title" data-i18n="menu_status">وضعیت</div>
+        <a href="#" class="nav-item active" data-filter="all">
+          <span class="icon">📥</span>
+          <span data-i18n="cat_all">همه دانلودها</span>
+          <span class="count-badge" id="countAll">0</span>
+        </a>
+        <a href="#" class="nav-item" data-filter="downloading">
+          <span class="icon">⚡</span>
+          <span data-i18n="cat_downloading">در حال دانلود</span>
+          <span class="count-badge" id="countActive">0</span>
+        </a>
+        <a href="#" class="nav-item" data-filter="completed">
+          <span class="icon">✅</span>
+          <span data-i18n="cat_completed">تکمیل‌شده‌ها</span>
+          <span class="count-badge" id="countDone">0</span>
+        </a>
+
+        <div class="nav-section-title" data-i18n="menu_categories">دسته‌بندی فایل‌ها</div>
+        <a href="#" class="nav-item" data-filter="video">
+          <span class="icon">🎬</span>
+          <span data-i18n="cat_video">ویدیوها</span>
+        </a>
+        <a href="#" class="nav-item" data-filter="audio">
+          <span class="icon">🎵</span>
+          <span data-i18n="cat_audio">موزیک و صدا</span>
+        </a>
+        <a href="#" class="nav-item" data-filter="software">
+          <span class="icon">💿</span>
+          <span data-i18n="cat_software">برنامه‌ها</span>
+        </a>
+        <a href="#" class="nav-item" data-filter="archive">
+          <span class="icon">📦</span>
+          <span data-i18n="cat_archive">فایل‌های فشرده</span>
+        </a>
+        <a href="#" class="nav-item" data-filter="document">
+          <span class="icon">📄</span>
+          <span data-i18n="cat_document">اسناد</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button id="langToggleBtn" class="btn-lang">English</button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Top Bar with Global Speedometer -->
+      <header class="topbar">
+        <div class="topbar-search">
+          <input type="text" id="searchInput" placeholder="جستجو در بین فایل‌ها..." data-i18n-placeholder="search_placeholder">
+        </div>
+
+        <div class="speed-cluster">
+          <div class="speed-info">
+            <span class="speed-label" data-i18n="total_speed">سرعت لحظه‌ای کل</span>
+            <span class="speed-value" id="globalSpeedVal">0.00 MB/s</span>
+          </div>
+          <div class="speed-chart-box">
+            <canvas id="speedCanvas" width="160" height="40"></canvas>
+          </div>
+        </div>
+      </header>
+
+      <!-- Task List Container -->
+      <div class="tasks-scroll-area">
+        <div class="tasks-table-header">
+          <div class="col col-info" data-i18n="col_name">نام فایل / نشانی</div>
+          <div class="col col-progress" data-i18n="col_progress">پیشرفت و قطعات (Chunks)</div>
+          <div class="col col-size" data-i18n="col_size">حجم</div>
+          <div class="col col-speed" data-i18n="col_speed">سرعت / زمان</div>
+          <div class="col col-actions" data-i18n="col_actions">عملیات</div>
+        </div>
+
+        <div id="tasksList" class="tasks-list">
+          <!-- Empty State -->
+          <div class="empty-tasks" id="emptyTasks">
+            <div class="empty-icon">⚡</div>
+            <h3 data-i18n="empty_title">هیچ دانلودی در صف نیست</h3>
+            <p data-i18n="empty_desc">روی دکمه "دانلود جدید" کلیک کنید یا لینک را در پنجره بیندازید تا موتور همروند Go با حداکثر سرعت شروع به دانلود کند.</p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal: Add New Download -->
+  <div id="taskModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 data-i18n="modal_title">افزودن دانلود چندتکه‌ای جدید</h3>
+        <button id="closeModalBtn" class="btn-close">✖</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="modalUrlInput" data-i18n="label_url">آدرس مستقیم فایل (URL):</label>
+          <input type="url" id="modalUrlInput" placeholder="https://example.com/file.zip" class="modal-input">
+        </div>
+        <div class="form-group">
+          <label for="modalFilenameInput" data-i18n="label_filename">نام دلخواه فایل (اختیاری):</label>
+          <input type="text" id="modalFilenameInput" placeholder="نام خودکار از سرور استخراج می‌شود" class="modal-input">
+        </div>
+        <div class="form-group">
+          <label for="modalConnectionsSelect" data-i18n="label_connections">تعداد کانکشن‌های موازی (Goroutines):</label>
+          <select id="modalConnectionsSelect" class="modal-select">
+            <option value="8" selected>8 کانکشن همزمان (استاندارد پرسرعت)</option>
+            <option value="16">16 کانکشن همزمان (حداکثر سرعت و توربو)</option>
+            <option value="32">32 کانکشن همزمان (سرورهای فوق‌العاده سریع)</option>
+            <option value="4">4 کانکشن (اینترنت‌های ضعیف‌تر)</option>
+            <option value="1">1 کانکشن تکی (بدون تکه‌بندی)</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="cancelModalBtn" class="btn btn-secondary" data-i18n="btn_cancel">انصراف</button>
+        <button id="submitTaskBtn" class="btn btn-primary" data-i18n="btn_start_download">شروع دانلود با توربو</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
