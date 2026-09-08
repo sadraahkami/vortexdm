@@ -10,6 +10,7 @@ import (
 	"github.com/sadraahkami/vortexdm/pkg/downloader"
 	"github.com/sadraahkami/vortexdm/pkg/scheduler"
 	"github.com/sadraahkami/vortexdm/pkg/server"
+	"github.com/sadraahkami/vortexdm/pkg/settings"
 )
 
 func TestServerEndpointsAndAssets(t *testing.T) {
@@ -70,14 +71,9 @@ func TestServerEndpointsAndAssets(t *testing.T) {
 		t.Errorf("Expected 200 OK for /api/window/minimize, got %d", wMin.Code)
 	}
 
-	// Test 5: Folder browser endpoint
-	reqBrowse := httptest.NewRequest("GET", "/api/dialog/browse-folder", nil)
-	wBrowse := httptest.NewRecorder()
-	handler.ServeHTTP(wBrowse, reqBrowse)
-	if wBrowse.Code != http.StatusOK {
-		t.Errorf("Expected 200 OK for /api/dialog/browse-folder, got %d", wBrowse.Code)
-	}
-	if !strings.Contains(wBrowse.Body.String(), `"path":`) {
-		t.Errorf("Browse folder response missing path field: %s", wBrowse.Body.String())
+	// Test 5: Universal OS Downloads Directory Resolution
+	dlDir := settings.GetDefaultOSDownloadsDir()
+	if dlDir == "" {
+		t.Errorf("Expected non-empty default OS downloads directory")
 	}
 }

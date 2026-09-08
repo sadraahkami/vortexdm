@@ -423,6 +423,12 @@ Invokes the native operating system folder selection dialog (PowerShell Windows 
   - Added an interactive help trigger (`?` with `.help-tooltip-trigger`) next to "Parallel Connections (Q)" detailing how dividing files into concurrent HTTP Range streams saturates bandwidth to dramatically boost transfer throughput.
 - **Comprehensive 100% Bilingual Localization (FA & EN):**
   - Complete parity across all modal inputs, button tooltips, placeholders (`data-i18n-placeholder`), `<option>` items (`data-i18n`), day pickers, and dynamic traffic detection badges.
+- **Global Browser Context Menu Suppression & Dual-Tier Native Context Menus:**
+  - Globally intercepts `contextmenu` events across the entire application window (`document.addEventListener('contextmenu')`), completely eradicating the browser's default context menu (Back, Refresh, Save as, Print, View page source, Inspect, third-party browser hooks).
+  - **Download Item Context Menu (`#contextMenu`):** Context-aware operations for specific download tasks (Resume, Pause, Refresh Expired URL, Streaming Preview, Mobile Wi-Fi Share, Open Folder, Extract ZIP, Checksum Verification, Copy Link, Delete).
+  - **Empty Workspace Context Menu (`#blankContextMenu`):** Desktop-grade workspace actions when right-clicking on empty table space, sidebar, or background (Add URL, Batch Import, Resume All, Pause All, Clear Completed, Settings).
+  - **Input Field Preservation:** Standard text editing behaviors (Cut/Copy/Paste) remain functional on editable inputs while suppressing browser menus everywhere else.
+  - **Browser Shortcut Protection:** Suppressed destructive browser accelerator keys (`Ctrl+S`, `Ctrl+P`) and wired `Escape` key to instantly dismiss active context menus.
 - **IDM-Grade Information Density:** Compact, sticky-header table grid (36px row height), allowing 20+ downloads visible simultaneously.
 - **Batch Download Modal:** Clean multi-line URL importer supporting target queue selection, thread count configuration, and immediate auto-start.
 - **File Checksum Verifier Modal:** Right-click context menu "Verify Checksum" displaying computed SHA-256 and MD5 hashes with real-time input comparison and visual match confirmation banner.

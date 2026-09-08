@@ -1021,31 +1021,108 @@ if (tbClearDone) {
   });
 }
 
-// --- 10. Context Menu Logic ---
+// --- 10. Context Menu Logic & Global Browser Context Menu Prevention ---
 const contextMenu = document.getElementById('contextMenu');
+const blankContextMenu = document.getElementById('blankContextMenu');
 
-window.addEventListener('click', () => {
+function hideAllContextMenus() {
   if (contextMenu) contextMenu.classList.add('hidden');
-});
+  if (blankContextMenu) blankContextMenu.classList.add('hidden');
+}
 
-tasksGridBody.addEventListener('contextmenu', (e) => {
-  const row = e.target.closest('.grid-row');
-  if (!row) return;
+window.addEventListener('click', hideAllContextMenus);
+
+// Global contextmenu handler preventing default browser context menu everywhere in the app
+document.addEventListener('contextmenu', (e) => {
+  // Allow default native context menu ONLY on editable text inputs (for Copy/Paste)
+  const isEditableInput = e.target.matches('input:not([readonly]), textarea, [contenteditable="true"]') ||
+                          e.target.closest('input:not([readonly]), textarea, [contenteditable="true"]');
+  if (isEditableInput) {
+    hideAllContextMenus();
+    return;
+  }
+
+  // Prevent browser default popup (Back, Refresh, Save as, Print, Inspect) everywhere
   e.preventDefault();
 
-  contextTaskId = row.dataset.id;
-  selectedTaskIds.clear();
-  selectedTaskIds.add(contextTaskId);
-  renderTasksGrid();
+  const row = e.target.closest('.grid-row');
+  if (row) {
+    // Right-clicked on an active download row
+    if (blankContextMenu) blankContextMenu.classList.add('hidden');
+    contextTaskId = row.dataset.id;
+    selectedTaskIds.clear();
+    selectedTaskIds.add(contextTaskId);
+    renderTasksGrid();
 
-  if (contextMenu) {
-    contextMenu.classList.remove('hidden');
+    if (contextMenu) {
+      contextMenu.classList.remove('hidden');
+      let x = e.clientX;
+      let y = e.clientY;
+      if (x + 185 > window.innerWidth) x = window.innerWidth - 190;
+      if (y + 320 > window.innerHeight) y = Math.max(10, window.innerHeight - 325);
+      contextMenu.style.left = `${x}px`;
+      contextMenu.style.top = `${y}px`;
+    }
+    return;
+  }
+
+  // Check if right-clicked on table empty area or workspace background
+  const isTableArea = e.target.closest('.table-container') || e.target.closest('.workspace-layout') || e.target.closest('.categories-tree');
+  const isModalOpen = document.querySelector('.modal-overlay:not(.hidden)');
+
+  if (isTableArea && !isModalOpen && blankContextMenu) {
+    if (contextMenu) contextMenu.classList.add('hidden');
+    blankContextMenu.classList.remove('hidden');
     let x = e.clientX;
     let y = e.clientY;
-    if (x + 180 > window.innerWidth) x = window.innerWidth - 185;
-    if (y + 220 > window.innerHeight) y = window.innerHeight - 225;
-    contextMenu.style.left = `${x}px`;
-    contextMenu.style.top = `${y}px`;
+    if (x + 185 > window.innerWidth) x = window.innerWidth - 190;
+    if (y + 240 > window.innerHeight) y = Math.max(10, window.innerHeight - 245);
+    blankContextMenu.style.left = `${x}px`;
+    blankContextMenu.style.top = `${y}px`;
+    return;
+  }
+
+  // Anywhere else: simply close our menus (default browser menu is already prevented)
+  hideAllContextMenus();
+});
+
+if (blankContextMenu) {
+  blankContextMenu.addEventListener('click', async (e) => {
+    const item = e.target.closest('[data-cm-blank]');
+    if (!item) return;
+    const action = item.dataset.cmBlank;
+    hideAllContextMenus();
+
+    if (action === 'add') {
+      openAddModal();
+    } else if (action === 'batch' && typeof openBatchModal === 'function') {
+      openBatchModal();
+    } else if (action === 'resume_all') {
+      playStartChime();
+      await fetch('/api/tasks/start-all', { method: 'POST' });
+      fetchTasksREST();
+    } else if (action === 'pause_all') {
+      await fetch('/api/tasks/pause-all', { method: 'POST' });
+      fetchTasksREST();
+    } else if (action === 'clear') {
+      await fetch('/api/tasks/clear-completed', { method: 'POST' });
+      fetchTasksREST();
+    } else if (action === 'settings' && typeof openSettingsModal === 'function') {
+      openSettingsModal();
+    }
+  });
+}
+
+// Prevent browser accelerator shortcuts that can reload or print the desktop app
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+    e.preventDefault();
+  }
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 'P')) {
+    e.preventDefault();
+  }
+  if (e.key === 'Escape') {
+    hideAllContextMenus();
   }
 });
 
