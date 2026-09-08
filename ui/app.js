@@ -3061,6 +3061,23 @@ if (tbOverflowBtn && toolbarOverflowMenu) {
   });
 }
 
+// --- Ribbon Toolbar Mouse-Wheel Horizontal Scrolling ---
+const toolbarButtonsStrip = document.querySelector('.toolbar-buttons');
+if (toolbarButtonsStrip) {
+  toolbarButtonsStrip.addEventListener('wheel', (e) => {
+    if (e.deltaY !== 0 && e.deltaX === 0) {
+      e.preventDefault();
+      const isRTL = document.documentElement.dir === 'rtl';
+      const scrollAmount = e.deltaY * 0.85;
+      if (isRTL) {
+        toolbarButtonsStrip.scrollLeft -= scrollAmount;
+      } else {
+        toolbarButtonsStrip.scrollLeft += scrollAmount;
+      }
+    }
+  }, { passive: false });
+}
+
 // --- 25. App Bootstrapping ---
 window.addEventListener('DOMContentLoaded', () => {
   const savedSidebarCollapsed = localStorage.getItem('vortex_sidebar_collapsed') === 'true';
