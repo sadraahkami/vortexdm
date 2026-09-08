@@ -2075,8 +2075,27 @@ body.mode-switching .grid-row {
   margin: 0.25rem 0;
 }
 
-/* --- Tier 1: Large Screen (<= 1600px) -> Compact universal secondary tools --- */
-@media (max-width: 1600px) {
+/* Custom Half-Price (½) Badge Icon */
+.svg-half-price {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  display: block;
+}
+
+.svg-half-price rect {
+  transition: var(--transition);
+}
+
+.tb-btn-iran:hover .svg-half-price rect,
+.overflow-item:hover .svg-half-price rect {
+  fill: rgba(16, 185, 129, 0.3);
+  stroke: #10b981;
+}
+
+/* --- Tier 1: Large Screen / Fullscreen (> 1300px) -> ALL buttons show full text + icons --- */
+/* When <= 1300px -> Compact universal secondary tools */
+@media (max-width: 1300px) {
   .tb-btn-compact span {
     display: none;
   }
@@ -2087,8 +2106,8 @@ body.mode-switching .grid-row {
   }
 }
 
-/* --- Tier 2: Medium Screen (<= 1150px) -> All ribbon buttons become icon-only --- */
-@media (max-width: 1150px) {
+/* --- Tier 2: Medium Screen (<= 1020px) -> All ribbon buttons become icon-only --- */
+@media (max-width: 1020px) {
   .tb-btn span {
     display: none;
   }

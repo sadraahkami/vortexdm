@@ -388,10 +388,10 @@ Streams 15 MB of uncompressed synthetic zero-fill data over HTTP chunked transfe
   - **PRO Mode:** Full IDM-grade power studio displaying advanced metrics, priority controls, parallel thread count, schedule automation, traffic analytics, and LinkIrani domestic inspector.
   - **Animated Mode Switching:** Smooth 1-click transition (`#btnModeToggle`) with subtle layout animations.
 - **Responsive PRO Ribbon Toolbar (3-Tier Adaptive Architecture & Overflow Menu):**
-  - **Tier 1 (Wide Viewport >1150px):** Primary actions display full text and icons, while universal secondary actions use compact iconography with localized tooltips.
-  - **Tier 2 (Medium Viewport 850px–1150px):** All toolbar buttons cleanly collapse to icon-only mode (`.tb-btn span { display: none; }`). The PRO mode badge contracts, and sparklines adapt smoothly, keeping all controls accessible without collision or wrapping.
-  - **Tier 3 (Compact / Mobile Viewport <850px):** Dedicated glassmorphic overflow button (`#tbOverflowBtn` •••) appears at the end of the action group. Secondary and utility buttons (`Batch`, `Scheduler`, `Speed Limit`, `LinkIrani`, `Analytics`, `Speedtest`, `Settings`) are automatically hidden from the ribbon and grouped inside a floating glassmorphic popover menu (`#toolbarOverflowMenu`), leaving only core download actions in the ribbon.
-  - **Dynamic Positioning & RTL/LTR Awareness:** The overflow popover automatically calculates its position relative to the overflow button, adapting seamlessly to both Persian RTL and English LTR layouts with outside-click dismissal.
+  - **Tier 1 (Large Screen & Fullscreen >1300px):** All 13 toolbar buttons display full descriptive text labels alongside their icons, ensuring maximum clarity and intuitive operation on standard and large desktop displays.
+  - **Tier 2 (Medium Viewport 1020px–1300px):** Secondary and utility buttons (`Batch`, `Scheduler`, `Speed Limit`, `LinkIrani`, `Analytics`, `Speedtest`, `Settings`) smoothly collapse to compact icon-only buttons with rich hover tooltips, while primary download controls (`Add`, `Resume`, `Pause`, `Stop All`, `Delete`, `Clear`) retain their prominent text labels.
+  - **Tier 3 (Compact / Mobile Viewport <750px):** Dedicated glassmorphic overflow button (`#tbOverflowBtn` •••) appears at the end of the ribbon. Secondary tools are cleanly moved into the floating glassmorphic popover menu (`#toolbarOverflowMenu`), leaving only core download actions in the top ribbon.
+  - **Intuitive Half-Price (½) Domestic Traffic Badge:** Replaced generic globe icon with a custom emerald vector badge featuring the universal `½` fraction symbol (`.svg-half-price`), making Iranian domestic half-price tariff verification instantly recognizable at a glance.
   - Proportional 55px real-time throughput sparkline.
 - **Unified Single-Toggle 34px Rail Sidebar:**
   - Removed duplicate buttons and awkward floating overlay tabs (`#btnToggleSidebarStrip` and `#btnExpandSidebar`).
