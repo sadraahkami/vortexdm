@@ -125,6 +125,8 @@ const translations = {
     queue_btn_create: 'ایجاد صف',
     col_order: 'ترتیب',
     col_reorder: 'ترتیب',
+    col_queue: 'صف',
+    col_conn: 'اتصال',
     tb_batch: 'دانلود دسته‌ای',
     tb_batch_tip: 'افزودن دسته‌ای لینک‌ها',
     batch_modal_title: 'دانلود دسته‌ای لینک‌ها',
@@ -310,6 +312,8 @@ const translations = {
     queue_btn_create: 'Create Queue',
     col_order: 'Order',
     col_reorder: 'Order',
+    col_queue: 'Queue',
+    col_conn: 'Threads',
     tb_batch: 'Batch Import',
     tb_batch_tip: 'Import multiple download URLs',
     batch_modal_title: 'Batch Download URLs',
@@ -1276,29 +1280,31 @@ if (saveSchedBtn) {
   });
 }
 
-// Sidebar Toggle & Expand Controllers
+// Sidebar Toggle Controller (Unified Single Controller)
 const btnToggleSidebar = document.getElementById('btnToggleSidebar');
-const btnExpandSidebar = document.getElementById('btnExpandSidebar');
-const btnToggleSidebarStrip = document.getElementById('btnToggleSidebarStrip');
 const workspaceLayout = document.querySelector('.workspace-layout');
 
 function setSidebarCollapsed(collapsed) {
   if (!workspaceLayout) return;
   workspaceLayout.classList.toggle('sidebar-collapsed', collapsed);
   localStorage.setItem('vortex_sidebar_collapsed', collapsed ? 'true' : 'false');
+  if (btnToggleSidebar) {
+    const t = translations[currentLang] || {};
+    const titleText = collapsed 
+      ? (t.tip_expand_sidebar || (currentLang === 'fa' ? 'نمایش پنل دسته‌بندی‌ها' : 'Show Categories Panel'))
+      : (t.tip_toggle_sidebar || (currentLang === 'fa' ? 'کوچک‌سازی پنل' : 'Collapse Panel'));
+    btnToggleSidebar.title = titleText;
+    btnToggleSidebar.setAttribute('data-i18n-title', collapsed ? 'tip_expand_sidebar' : 'tip_toggle_sidebar');
+  }
+}
+
+function toggleSidebar() {
+  const isCollapsed = workspaceLayout ? workspaceLayout.classList.contains('sidebar-collapsed') : false;
+  setSidebarCollapsed(!isCollapsed);
 }
 
 if (btnToggleSidebar) {
-  btnToggleSidebar.addEventListener('click', () => setSidebarCollapsed(true));
-}
-if (btnExpandSidebar) {
-  btnExpandSidebar.addEventListener('click', () => setSidebarCollapsed(false));
-}
-if (btnToggleSidebarStrip) {
-  btnToggleSidebarStrip.addEventListener('click', () => {
-    const isCollapsed = workspaceLayout ? workspaceLayout.classList.contains('sidebar-collapsed') : false;
-    setSidebarCollapsed(!isCollapsed);
-  });
+  btnToggleSidebar.addEventListener('click', toggleSidebar);
 }
 
 // --- 13. Modal: Speed Limiter & Smart Allocator ---
@@ -2812,7 +2818,8 @@ if (btnModeToggle) {
 
 // --- 25. App Bootstrapping ---
 window.addEventListener('DOMContentLoaded', () => {
-  setSidebarCollapsed(false);
+  const savedSidebarCollapsed = localStorage.getItem('vortex_sidebar_collapsed') === 'true';
+  setSidebarCollapsed(savedSidebarCollapsed);
   initTimeSelectors();
   loadQueues();
   loadSettings();

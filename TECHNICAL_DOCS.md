@@ -387,11 +387,23 @@ Streams 15 MB of uncompressed synthetic zero-fill data over HTTP chunked transfe
   - **Simple Mode:** Ultra-clean, distraction-free minimalist interface designed for everyday users. Automatically expands the file name column, hiding technical queuing, connection count, priority reordering, batch importer, and scheduler controls.
   - **PRO Mode:** Full IDM-grade power studio displaying advanced metrics, priority controls, parallel thread count, schedule automation, traffic analytics, and LinkIrani domestic inspector.
   - **Animated Mode Switching:** Smooth 1-click transition (`#btnModeToggle`) with subtle layout animations.
+- **Responsive PRO Ribbon Toolbar:**
+  - Compact button architecture with `.tb-btn-compact` applied to universal secondary controls (Resume, Pause, Pause All, Delete, Clear, Settings).
+  - Multi-tier responsive CSS media queries (`@media (max-width: 1550px)`, `@media (max-width: 1280px)`, `@media (max-width: 1100px)`) that dynamically collapse text to icon-only buttons with hover tooltips, guaranteeing all 13 buttons fit cleanly without clipping, overflow, or horizontal scrolling on screens down to 1024px.
+  - Proportional 55px real-time throughput sparkline.
+- **Unified Single-Toggle 34px Rail Sidebar:**
+  - Removed duplicate buttons and awkward floating overlay tabs (`#btnToggleSidebarStrip` and `#btnExpandSidebar`).
+  - Strict separation of concerns: table search/filter strip is 100% dedicated to task filtering and never hosts sidebar controls.
+  - Minimal 34px collapsed vertical rail keeping a single, centered `#btnToggleSidebar` button.
+  - Direction-aware SVG chevron rotation handling both Persian RTL and English LTR layouts smoothly.
+  - Persistent sidebar collapsed state saved and restored via `localStorage`.
+- **Harmonized High-Density Grid Headers & Rows:**
+  - Pixel-perfect column matching between `.grid-header` and `.grid-row` across both Simple and PRO modes.
+  - Dedicated headers for Queue (`col-queue`), Threads/Connections (`col-conn`), and Reorder (`col-reorder`) matching high-density 36px table rows with zero horizontal misalignment.
 - **Custom Download Destination Selector:**
   - Global default download folder configuration via Settings modal.
   - Per-task custom folder input directly in Add Download dialog (`#modalDirInput`).
 - **IDM-Grade Information Density:** Compact, sticky-header table grid (36px row height), allowing 20+ downloads visible simultaneously.
-- **Tree Navigation & Collapsible Sidebar:** Left sidebar organized into Categories, Statuses, and Queues with multiple intuitive expand/collapse triggers: dedicated header toggle button, floating edge expand handle (`.sidebar-expand-tab`), and search strip toggle icon (`#btnToggleSidebarStrip`). Guarantees the sidebar is easily restored whenever collapsed.
 - **Batch Download Modal:** Clean multi-line URL importer supporting target queue selection, thread count configuration, and immediate auto-start.
 - **File Checksum Verifier Modal:** Right-click context menu "Verify Checksum" displaying computed SHA-256 and MD5 hashes with real-time input comparison and visual match confirmation banner.
 - **Clipboard Auto-Sniffing Toast:** Non-intrusive floating glassmorphic banner popping up when downloadable URLs (`.zip`, `.iso`, `.exe`, `.mp4`, etc.) are copied, offering single-click quick download.

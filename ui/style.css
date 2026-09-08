@@ -95,26 +95,26 @@ html[lang="en"] body {
 
 /* Ribbon Toolbar (IDM-Style Top Bar) */
 .app-toolbar {
-  height: 52px;
+  height: 48px;
   background: var(--bg-toolbar);
   border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
-  padding: 0 0.85rem;
-  gap: 0.5rem;
+  padding: 0 0.65rem;
+  gap: 0.35rem;
   flex-shrink: 0;
 }
 
 .brand-group {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  padding-inline-end: 0.5rem;
+  gap: 0.5rem;
+  padding-inline-end: 0.35rem;
 }
 
 .brand-logo svg {
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   display: block;
 }
 
@@ -124,7 +124,7 @@ html[lang="en"] body {
 }
 
 .brand-title {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 800;
   color: #fff;
   letter-spacing: -0.3px;
@@ -139,15 +139,15 @@ html[lang="en"] body {
 
 .toolbar-divider {
   width: 1px;
-  height: 28px;
+  height: 24px;
   background: var(--border-color);
-  margin: 0 0.35rem;
+  margin: 0 0.25rem;
 }
 
 .toolbar-buttons {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.22rem;
   flex: 1;
   min-width: 0;
   overflow-x: auto;
@@ -162,23 +162,28 @@ html[lang="en"] body {
 .tb-btn {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.38rem 0.65rem;
+  gap: 0.32rem;
+  padding: 0.28rem 0.48rem;
   background: rgba(255, 255, 255, 0.035);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xs);
   color: var(--text-muted);
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
   transition: var(--transition);
   white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.tb-btn-compact {
+  padding: 0.28rem 0.42rem;
 }
 
 .tb-btn svg {
-  width: 15px;
-  height: 15px;
+  width: 14px;
+  height: 14px;
   stroke: currentColor;
   flex-shrink: 0;
 }
@@ -230,7 +235,7 @@ html[lang="en"] body {
 .toolbar-status-right {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.4rem;
   margin-inline-start: auto;
   flex-shrink: 0;
 }
@@ -238,20 +243,20 @@ html[lang="en"] body {
 .global-speed-display {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.35rem;
   background: rgba(0, 0, 0, 0.3);
-  padding: 0.25rem 0.65rem;
+  padding: 0.2rem 0.45rem;
   border-radius: var(--radius-xs);
   border: 1px solid var(--border-color);
 }
 
 .speed-unit-lbl {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   color: var(--text-dim);
 }
 
 .speed-val {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 700;
   color: var(--primary);
 }
@@ -260,9 +265,9 @@ html[lang="en"] body {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border-color);
   color: var(--text-muted);
-  padding: 0.3rem 0.55rem;
+  padding: 0.22rem 0.45rem;
   border-radius: var(--radius-xs);
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   font-family: var(--font-mono);
   font-weight: 700;
   cursor: pointer;
@@ -307,93 +312,45 @@ html[lang="en"] body {
   flex: 1;
   overflow: hidden;
   position: relative;
-  transition: grid-template-columns 0.2s ease;
+  transition: grid-template-columns 0.22s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .workspace-layout.sidebar-collapsed {
-  grid-template-columns: 0px 1fr;
+  grid-template-columns: 34px 1fr;
 }
 
 .workspace-layout.sidebar-collapsed .categories-tree {
+  padding: 0.5rem 0.2rem;
+  align-items: center;
+  overflow: hidden;
+}
+
+.workspace-layout.sidebar-collapsed .tree-header {
+  padding: 0;
+  justify-content: center;
+  width: 100%;
+}
+
+.workspace-layout.sidebar-collapsed .tree-header span {
   display: none;
 }
 
-/* Floating Sidebar Expand Tab (Revealed when sidebar is collapsed) */
-.sidebar-expand-tab {
+.workspace-layout.sidebar-collapsed .tree-list {
   display: none;
-  position: absolute;
-  top: 10px;
-  inset-inline-start: 0;
-  background: var(--bg-card);
+}
+
+.workspace-layout.sidebar-collapsed .sidebar-toggle-btn {
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border-color);
-  border-inline-start: none;
   color: var(--primary);
-  width: 24px;
-  height: 48px;
-  border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
-  cursor: pointer;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
-  transition: all 0.2s ease;
-  z-index: 25;
+  width: 26px;
+  height: 26px;
 }
 
-html[dir="rtl"] .sidebar-expand-tab {
-  border-radius: var(--radius-xs) 0 0 var(--radius-xs);
-  border-inline-start: 1px solid var(--border-color);
-  border-inline-end: none;
-}
-
-.sidebar-expand-tab svg {
-  width: 14px;
-  height: 14px;
-  stroke: currentColor;
-}
-
-.sidebar-expand-tab:hover {
+.workspace-layout.sidebar-collapsed .sidebar-toggle-btn:hover {
   background: rgba(0, 242, 254, 0.15);
-  color: #fff;
-  width: 28px;
-  box-shadow: 0 0 12px rgba(0, 242, 254, 0.5);
-}
-
-.workspace-layout.sidebar-collapsed .sidebar-expand-tab {
-  display: flex;
-}
-
-/* Sidebar Strip Toggle Button (Inside Filter Bar) */
-.sidebar-strip-toggle-btn {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border-color);
-  color: var(--text-muted);
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-xs);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: var(--transition);
-  flex-shrink: 0;
-}
-
-.sidebar-strip-toggle-btn svg {
-  width: 14px;
-  height: 14px;
-}
-
-.sidebar-strip-toggle-btn:hover {
-  background: rgba(0, 242, 254, 0.1);
-  color: var(--primary);
-  border-color: rgba(0, 242, 254, 0.3);
-}
-
-.workspace-layout.sidebar-collapsed .sidebar-strip-toggle-btn {
-  background: rgba(0, 242, 254, 0.15);
-  color: var(--primary);
   border-color: var(--primary);
-  box-shadow: 0 0 8px rgba(0, 242, 254, 0.3);
+  box-shadow: 0 0 10px rgba(0, 242, 254, 0.35);
 }
 
 /* Categories Tree Sidebar (IDM Left Tree) */
@@ -405,6 +362,7 @@ html[dir="rtl"] .sidebar-expand-tab {
   overflow-y: auto;
   padding: 0.75rem 0.5rem;
   gap: 0.2rem;
+  transition: padding 0.22s ease;
 }
 
 .tree-header {
@@ -421,20 +379,35 @@ html[dir="rtl"] .sidebar-expand-tab {
 
 .sidebar-toggle-btn {
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   color: var(--text-dim);
   cursor: pointer;
-  padding: 2px;
+  padding: 3px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 3px;
-  transition: var(--transition);
+  border-radius: var(--radius-xs);
+  transition: all 0.2s ease;
+  width: 24px;
+  height: 24px;
 }
 
 .sidebar-toggle-btn svg {
-  width: 13px;
-  height: 13px;
+  width: 14px;
+  height: 14px;
+  transition: transform 0.22s ease;
+}
+
+html[dir="rtl"] .sidebar-toggle-btn svg {
+  transform: scaleX(-1);
+}
+
+.workspace-layout.sidebar-collapsed .sidebar-toggle-btn svg {
+  transform: rotate(180deg);
+}
+
+html[dir="rtl"] .workspace-layout.sidebar-collapsed .sidebar-toggle-btn svg {
+  transform: scaleX(-1) rotate(180deg);
 }
 
 .sidebar-toggle-btn:hover {
@@ -533,7 +506,11 @@ html[dir="rtl"] .sidebar-expand-tab {
   justify-content: space-between;
   gap: 1rem;
   background: rgba(12, 17, 28, 0.5);
-  min-width: 820px;
+  min-width: 760px;
+}
+
+body.mode-pro .filter-strip {
+  min-width: 960px;
 }
 
 .search-box {
@@ -580,7 +557,11 @@ html[dir="rtl"] .sidebar-expand-tab {
   text-transform: uppercase;
   padding: 0.35rem 0.6rem;
   flex-shrink: 0;
-  min-width: 820px;
+  min-width: 760px;
+}
+
+body.mode-pro .grid-header {
+  min-width: 960px;
 }
 
 .grid-body {
@@ -588,7 +569,11 @@ html[dir="rtl"] .sidebar-expand-tab {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  min-width: 820px;
+  min-width: 760px;
+}
+
+body.mode-pro .grid-body {
+  min-width: 960px;
 }
 
 /* Grid Columns Widths */
@@ -1981,6 +1966,50 @@ body.mode-switching .grid-row {
   padding: 0.65rem 0.75rem;
   border-radius: var(--radius-xs);
   margin-top: 0.4rem;
+}
+
+/* ==========================================================================
+   Responsive Toolbar Media Queries for PRO Mode
+   ========================================================================== */
+@media (max-width: 1550px) {
+  .tb-btn-compact span {
+    display: none;
+  }
+  .tb-btn-compact {
+    padding: 0.28rem 0.45rem;
+    min-width: 28px;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 1280px) {
+  #tbAnalytics span,
+  #tbSpeedtest span {
+    display: none;
+  }
+  #tbAnalytics,
+  #tbSpeedtest {
+    padding: 0.28rem 0.45rem;
+    min-width: 28px;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 1100px) {
+  #speedSparkline {
+    display: none;
+  }
+  #tbSpeedLimit span {
+    display: none;
+  }
+  #tbSpeedLimit {
+    padding: 0.28rem 0.45rem;
+    min-width: 28px;
+    justify-content: center;
+  }
+  .global-speed-display {
+    padding: 0.18rem 0.35rem;
+  }
 }
 
 
