@@ -85,6 +85,11 @@ html[lang="en"] body {
   font-family: var(--font-mono);
 }
 
+/* Global Hidden Utility */
+.hidden {
+  display: none !important;
+}
+
 /* App Window Grid Layout */
 .app-window {
   display: flex;
@@ -2025,6 +2030,10 @@ body.mode-switching .grid-row {
   animation: fadeInPop 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.toolbar-overflow-popover.hidden {
+  display: none !important;
+}
+
 @keyframes fadeInPop {
   from { opacity: 0; transform: translateY(-6px) scale(0.97); }
   to { opacity: 1; transform: translateY(0) scale(1); }
@@ -2066,8 +2075,8 @@ body.mode-switching .grid-row {
   margin: 0.25rem 0;
 }
 
-/* --- Tier 1: Large Screen (<= 1500px) -> Compact universal buttons --- */
-@media (max-width: 1500px) {
+/* --- Tier 1: Large Screen (<= 1600px) -> Compact universal secondary tools --- */
+@media (max-width: 1600px) {
   .tb-btn-compact span {
     display: none;
   }
@@ -2102,8 +2111,8 @@ body.mode-switching .grid-row {
   }
 }
 
-/* --- Tier 3: Narrow Screen (<= 850px) -> Overflow Trigger appears, extra tools moved to menu --- */
-@media (max-width: 850px) {
+/* --- Tier 3: Narrow Screen (<= 750px) -> Overflow Trigger appears, extra tools moved to menu --- */
+@media (max-width: 750px) {
   #tbOverflowBtn {
     display: flex;
   }
