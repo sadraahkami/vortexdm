@@ -224,7 +224,20 @@ const translations = {
     traffic_notice_domestic: '🟢 ترافیک داخلی (نیم‌بها)',
     traffic_notice_intl: '🌐 ترافیک بین‌الملل (تمام‌بها)',
     traffic_desc_domestic: 'سرور در دیتاسنتر داخلی ایران واقع شده است',
-    traffic_desc_intl: 'سرور در خارج از کشور میزبانی می‌شود'
+    traffic_desc_intl: 'سرور در خارج از کشور میزبانی می‌شود',
+    q_start_tip: 'شروع دانلودهای این صف',
+    q_pause_tip: 'توقف دانلودهای این صف',
+    q_sched_tip: 'زمان‌بندی و تنظیمات صف',
+    q_del_tip: 'حذف صف',
+    q_cm_start: 'شروع دانلودهای این صف',
+    q_cm_pause: 'توقف دانلودهای این صف',
+    q_cm_sched: 'زمان‌بندی و تنظیمات صف',
+    q_cm_delete: 'حذف صف',
+    settings_tab_general: 'عمومی',
+    settings_tab_scheduler: 'زمان‌بندی و صف‌ها',
+    settings_tab_speed: 'سقف سرعت',
+    settings_tab_proxy: 'پروکسی و شبکه',
+    settings_studio_badge: 'مرکز پیکربندی یکپارچه'
   },
   en: {
     tb_add: 'Add URL',
@@ -446,7 +459,20 @@ const translations = {
     traffic_notice_domestic: '🟢 Domestic Traffic (Half-Price)',
     traffic_notice_intl: '🌐 International Traffic (Full-Price)',
     traffic_desc_domestic: 'Hosted on Iranian domestic datacenter network',
-    traffic_desc_intl: 'Hosted on international datacenter network'
+    traffic_desc_intl: 'Hosted on international datacenter network',
+    q_start_tip: 'Start downloads in this queue',
+    q_pause_tip: 'Pause downloads in this queue',
+    q_sched_tip: 'Schedule and queue settings',
+    q_del_tip: 'Delete queue',
+    q_cm_start: 'Start downloads in this queue',
+    q_cm_pause: 'Pause downloads in this queue',
+    q_cm_sched: 'Schedule & queue settings',
+    q_cm_delete: 'Delete queue',
+    settings_tab_general: 'General',
+    settings_tab_scheduler: 'Scheduler & Queues',
+    settings_tab_speed: 'Speed Limit',
+    settings_tab_proxy: 'Proxy & Network',
+    settings_studio_badge: 'Unified Configuration Hub'
   }
 };
 
@@ -1024,10 +1050,13 @@ if (tbClearDone) {
 // --- 10. Context Menu Logic & Global Browser Context Menu Prevention ---
 const contextMenu = document.getElementById('contextMenu');
 const blankContextMenu = document.getElementById('blankContextMenu');
+const queueContextMenu = document.getElementById('queueContextMenu');
+let contextQueueId = null;
 
 function hideAllContextMenus() {
   if (contextMenu) contextMenu.classList.add('hidden');
   if (blankContextMenu) blankContextMenu.classList.add('hidden');
+  if (queueContextMenu) queueContextMenu.classList.add('hidden');
 }
 
 window.addEventListener('click', hideAllContextMenus);
@@ -1045,10 +1074,32 @@ document.addEventListener('contextmenu', (e) => {
   // Prevent browser default popup (Back, Refresh, Save as, Print, Inspect) everywhere
   e.preventDefault();
 
+  // 1. Right-clicked on a queue in sidebar
+  const queueNode = e.target.closest('.tree-node[data-qid]');
+  if (queueNode) {
+    hideAllContextMenus();
+    contextQueueId = queueNode.dataset.qid;
+    const isCustom = queueNode.dataset.custom === 'true';
+    const qcmDeleteItem = document.getElementById('qcmDeleteItem');
+    if (qcmDeleteItem) {
+      qcmDeleteItem.classList.toggle('hidden', !isCustom);
+    }
+    if (queueContextMenu) {
+      queueContextMenu.classList.remove('hidden');
+      let x = e.clientX;
+      let y = e.clientY;
+      if (x + 195 > window.innerWidth) x = window.innerWidth - 200;
+      if (y + 160 > window.innerHeight) y = Math.max(10, window.innerHeight - 165);
+      queueContextMenu.style.left = `${x}px`;
+      queueContextMenu.style.top = `${y}px`;
+    }
+    return;
+  }
+
+  // 2. Right-clicked on an active download row
   const row = e.target.closest('.grid-row');
   if (row) {
-    // Right-clicked on an active download row
-    if (blankContextMenu) blankContextMenu.classList.add('hidden');
+    hideAllContextMenus();
     contextTaskId = row.dataset.id;
     selectedTaskIds.clear();
     selectedTaskIds.add(contextTaskId);
@@ -1066,12 +1117,12 @@ document.addEventListener('contextmenu', (e) => {
     return;
   }
 
-  // Check if right-clicked on table empty area or workspace background
+  // 3. Check if right-clicked on table empty area or workspace background
   const isTableArea = e.target.closest('.table-container') || e.target.closest('.workspace-layout') || e.target.closest('.categories-tree');
   const isModalOpen = document.querySelector('.modal-overlay:not(.hidden)');
 
   if (isTableArea && !isModalOpen && blankContextMenu) {
-    if (contextMenu) contextMenu.classList.add('hidden');
+    hideAllContextMenus();
     blankContextMenu.classList.remove('hidden');
     let x = e.clientX;
     let y = e.clientY;
@@ -1085,6 +1136,38 @@ document.addEventListener('contextmenu', (e) => {
   // Anywhere else: simply close our menus (default browser menu is already prevented)
   hideAllContextMenus();
 });
+
+if (queueContextMenu) {
+  queueContextMenu.addEventListener('click', async (e) => {
+    const item = e.target.closest('[data-qcm]');
+    if (!item) return;
+    const action = item.dataset.qcm;
+    const qid = contextQueueId;
+    hideAllContextMenus();
+    if (!qid) return;
+
+    if (action === 'start') {
+      startQueue(qid);
+    } else if (action === 'pause') {
+      pauseQueue(qid);
+    } else if (action === 'sched') {
+      openSettingsModal('scheduler', qid);
+    } else if (action === 'delete') {
+      const qcfg = customQueues[qid] || {};
+      const qName = qcfg.name || qid;
+      if (confirm(`آیا از حذف صف «${qName}» اطمینان دارید؟`)) {
+        await fetch(`/api/queues?id=${encodeURIComponent(qid)}`, { method: 'DELETE' });
+        if (activeFilter === `queue-${qid}`) {
+          activeFilter = 'all';
+          const allNode = document.querySelector('.tree-node[data-filter="all"]');
+          if (allNode) allNode.classList.add('active');
+        }
+        await loadQueues();
+        renderTasksGrid();
+      }
+    }
+  });
+}
 
 if (blankContextMenu) {
   blankContextMenu.addEventListener('click', async (e) => {
@@ -1289,11 +1372,7 @@ if (submitAddBtn) {
   });
 }
 
-// --- 12. Modal: Scheduler & Night Download ---
-const schedulerModal = document.getElementById('schedulerModal');
-const closeSchedModal = document.getElementById('closeSchedModal');
-const cancelSchedBtn = document.getElementById('cancelSchedBtn');
-const saveSchedBtn = document.getElementById('saveSchedBtn');
+// --- 12. Scheduler & Queues Dynamic Management ---
 const schedEnable = document.getElementById('schedEnable');
 const schedStartCheck = document.getElementById('schedStartCheck');
 const schedStopCheck = document.getElementById('schedStopCheck');
@@ -1363,33 +1442,83 @@ function getTimePickerValue(prefix) {
   return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`;
 }
 
-async function openSchedulerModal() {
-  schedulerModal.classList.remove('hidden');
-  initTimeSelectors();
-  try {
-    const res = await fetch('/api/scheduler');
-    if (res.ok) {
-      schedulerConfig = await res.json();
+function getQueueConfig(qid) {
+  if (!schedulerConfig) return null;
+  if (qid === 'night') return schedulerConfig.night_queue;
+  if (qid === 'main') return schedulerConfig.main_queue;
+  if (!schedulerConfig.custom_queues) {
+    schedulerConfig.custom_queues = {};
+  }
+  if (!schedulerConfig.custom_queues[qid]) {
+    const qMeta = customQueues[qid] || {};
+    schedulerConfig.custom_queues[qid] = {
+      name: qMeta.name || qid,
+      enabled: false,
+      start_time: '02:00',
+      stop_time: '07:30',
+      days: [0, 1, 2, 3, 4, 5, 6],
+      shutdown_on_done: false,
+      sleep_on_done: false,
+      exit_on_done: false,
+      max_concurrent: qMeta.max_concurrent || 1
+    };
+  }
+  return schedulerConfig.custom_queues[qid];
+}
+
+function renderSchedTabs() {
+  const container = document.getElementById('schedTabsContainer');
+  if (!container) return;
+  const t = translations[currentLang] || {};
+
+  let html = `
+    <button type="button" class="sched-tab ${activeSchedTab === 'night' ? 'active' : ''}" data-queue="night">
+      🌙 ${t.sched_tab_night || 'صف شبانه'}
+    </button>
+    <button type="button" class="sched-tab ${activeSchedTab === 'main' ? 'active' : ''}" data-queue="main">
+      📋 ${t.sched_tab_main || 'صف اصلی'}
+    </button>
+  `;
+
+  for (const [qid, qcfg] of Object.entries(customQueues)) {
+    const isActive = activeSchedTab === qid ? 'active' : '';
+    const qName = escapeHtml(qcfg.name || qid);
+    html += `
+      <button type="button" class="sched-tab ${isActive}" data-queue="${escapeHtml(qid)}">
+        📁 ${qName}
+      </button>
+    `;
+  }
+
+  container.innerHTML = html;
+
+  container.querySelectorAll('.sched-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      container.querySelectorAll('.sched-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      activeSchedTab = tab.dataset.queue;
       populateSchedulerUI();
-    }
-  } catch (e) {}
+    });
+  });
 }
 
 function populateSchedulerUI() {
   if (!schedulerConfig) return;
   initTimeSelectors();
-  const qCfg = (activeSchedTab === 'night') ? schedulerConfig.night_queue : schedulerConfig.main_queue;
+  renderSchedTabs();
+
+  const qCfg = getQueueConfig(activeSchedTab);
   if (!qCfg) return;
 
-  schedEnable.checked = qCfg.enabled;
+  if (schedEnable) schedEnable.checked = !!qCfg.enabled;
   setTimePickerValue('schedStart', qCfg.start_time || '02:00');
   setTimePickerValue('schedStop', qCfg.stop_time || '07:30');
-  schedStartCheck.checked = !!qCfg.start_time;
-  schedStopCheck.checked = !!qCfg.stop_time;
-  schedShutdownPC.checked = !!qCfg.shutdown_on_done;
-  schedSleepPC.checked = !!qCfg.sleep_on_done;
-  schedExitApp.checked = !!qCfg.exit_on_done;
-  schedMaxConcur.value = qCfg.max_concurrent || 1;
+  if (schedStartCheck) schedStartCheck.checked = !!qCfg.start_time;
+  if (schedStopCheck) schedStopCheck.checked = !!qCfg.stop_time;
+  if (schedShutdownPC) schedShutdownPC.checked = !!qCfg.shutdown_on_done;
+  if (schedSleepPC) schedSleepPC.checked = !!qCfg.sleep_on_done;
+  if (schedExitApp) schedExitApp.checked = !!qCfg.exit_on_done;
+  if (schedMaxConcur) schedMaxConcur.value = qCfg.max_concurrent || 1;
 
   const dayCbs = document.querySelectorAll('.day-cb');
   const daysSet = new Set(qCfg.days || []);
@@ -1398,55 +1527,49 @@ function populateSchedulerUI() {
   });
 }
 
-document.querySelectorAll('.sched-tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.sched-tab').forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    activeSchedTab = tab.dataset.queue;
-    populateSchedulerUI();
+async function saveActiveSchedulerQueue() {
+  if (!schedulerConfig) return;
+
+  const selectedDays = [];
+  document.querySelectorAll('.day-cb:checked').forEach(cb => {
+    selectedDays.push(parseInt(cb.value, 10));
   });
-});
 
-if (tbScheduler) tbScheduler.addEventListener('click', openSchedulerModal);
-if (closeSchedModal) closeSchedModal.addEventListener('click', () => schedulerModal.classList.add('hidden'));
-if (cancelSchedBtn) cancelSchedBtn.addEventListener('click', () => schedulerModal.classList.add('hidden'));
+  const targetQueue = getQueueConfig(activeSchedTab);
+  if (!targetQueue) return;
 
-if (saveSchedBtn) {
-  saveSchedBtn.addEventListener('click', async () => {
-    if (!schedulerConfig) return;
+  targetQueue.enabled = schedEnable ? schedEnable.checked : false;
+  targetQueue.start_time = (schedStartCheck && schedStartCheck.checked) ? getTimePickerValue('schedStart') : '';
+  targetQueue.stop_time = (schedStopCheck && schedStopCheck.checked) ? getTimePickerValue('schedStop') : '';
+  targetQueue.days = selectedDays;
+  targetQueue.shutdown_on_done = schedShutdownPC ? schedShutdownPC.checked : false;
+  targetQueue.sleep_on_done = schedSleepPC ? schedSleepPC.checked : false;
+  targetQueue.exit_on_done = schedExitApp ? schedExitApp.checked : false;
+  targetQueue.max_concurrent = schedMaxConcur ? (parseInt(schedMaxConcur.value, 10) || 1) : 1;
 
-    const selectedDays = [];
-    document.querySelectorAll('.day-cb:checked').forEach(cb => {
-      selectedDays.push(parseInt(cb.value, 10));
+  try {
+    await fetch('/api/scheduler', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(schedulerConfig)
     });
 
-    const targetQueue = (activeSchedTab === 'night') ? schedulerConfig.night_queue : schedulerConfig.main_queue;
-    targetQueue.enabled = schedEnable.checked;
-    targetQueue.start_time = schedStartCheck.checked ? getTimePickerValue('schedStart') : '';
-    targetQueue.stop_time = schedStopCheck.checked ? getTimePickerValue('schedStop') : '';
-    targetQueue.days = selectedDays;
-    targetQueue.shutdown_on_done = schedShutdownPC.checked;
-    targetQueue.sleep_on_done = schedSleepPC.checked;
-    targetQueue.exit_on_done = schedExitApp.checked;
-    targetQueue.max_concurrent = parseInt(schedMaxConcur.value, 10) || 1;
-
-    try {
-      await fetch('/api/scheduler', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(schedulerConfig)
-      });
-      schedulerModal.classList.add('hidden');
-
-      const sbSchedStatus = document.getElementById('sbSchedStatus');
-      const t = translations[currentLang];
-      if (sbSchedStatus) {
-        sbSchedStatus.textContent = (schedulerConfig.night_queue.enabled || schedulerConfig.main_queue.enabled) ? t.active_state : t.inactive_state;
+    const sbSchedStatus = document.getElementById('sbSchedStatus');
+    const t = translations[currentLang] || {};
+    if (sbSchedStatus) {
+      let anyEnabled = schedulerConfig.night_queue?.enabled || schedulerConfig.main_queue?.enabled;
+      if (!anyEnabled && schedulerConfig.custom_queues) {
+        anyEnabled = Object.values(schedulerConfig.custom_queues).some(q => q && q.enabled);
       }
-    } catch (e) {
-      alert('Failed to save scheduler');
+      sbSchedStatus.textContent = anyEnabled ? t.active_state : t.inactive_state;
     }
-  });
+  } catch (e) {
+    console.error('Failed to save scheduler', e);
+  }
+}
+
+function openSchedulerModal(targetQueue) {
+  openSettingsModal('scheduler', typeof targetQueue === 'string' ? targetQueue : null);
 }
 
 // Sidebar Toggle Controller (Unified Single Controller)
@@ -1476,23 +1599,11 @@ if (btnToggleSidebar) {
   btnToggleSidebar.addEventListener('click', toggleSidebar);
 }
 
-// --- 13. Modal: Speed Limiter & Smart Allocator ---
-const speedLimitModal = document.getElementById('speedLimitModal');
-const closeLimitModal = document.getElementById('closeLimitModal');
-const cancelLimitBtn = document.getElementById('cancelLimitBtn');
-const saveLimitBtn = document.getElementById('saveLimitBtn');
+// --- 13. Speed Limiter & Smart Allocator ---
 const customLimitInput = document.getElementById('customLimitInput');
 
 function openSpeedLimitModal() {
-  speedLimitModal.classList.remove('hidden');
-  const currentKb = Math.round(currentSpeedLimit / 1024);
-  customLimitInput.value = currentKb > 0 ? currentKb : '';
-
-  document.querySelectorAll('.preset-btn').forEach(btn => {
-    const kb = parseInt(btn.dataset.kb, 10);
-    if (kb === currentKb) btn.classList.add('active');
-    else btn.classList.remove('active');
-  });
+  openSettingsModal('speed');
 }
 
 document.querySelectorAll('.preset-btn').forEach(btn => {
@@ -1500,32 +1611,9 @@ document.querySelectorAll('.preset-btn').forEach(btn => {
     document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     const kb = parseInt(btn.dataset.kb, 10);
-    customLimitInput.value = kb > 0 ? kb : '';
+    if (customLimitInput) customLimitInput.value = kb > 0 ? kb : '';
   });
 });
-
-if (tbSpeedLimit) tbSpeedLimit.addEventListener('click', openSpeedLimitModal);
-if (closeLimitModal) closeLimitModal.addEventListener('click', () => speedLimitModal.classList.add('hidden'));
-if (cancelLimitBtn) cancelLimitBtn.addEventListener('click', () => speedLimitModal.classList.add('hidden'));
-
-if (saveLimitBtn) {
-  saveLimitBtn.addEventListener('click', async () => {
-    let kb = parseInt(customLimitInput.value, 10) || 0;
-    const limitBytes = kb * 1024;
-    try {
-      await fetch('/api/speed-limit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ limit: limitBytes })
-      });
-      currentSpeedLimit = limitBytes;
-      updateSpeedLimitStatus(limitBytes);
-      speedLimitModal.classList.add('hidden');
-    } catch (e) {
-      alert('Failed to set speed limit');
-    }
-  });
-}
 
 // --- 14. Modal: LinkIrani.ir Domestic Check Dialog ---
 const linkIraniModal = document.getElementById('linkIraniModal');
@@ -1675,16 +1763,59 @@ async function loadQueues() {
   } catch (e) {}
 }
 
+async function startQueue(qid) {
+  try {
+    const res = await fetch(`/api/queues/start?queue=${encodeURIComponent(qid)}`, { method: 'POST' });
+    if (res.ok) {
+      playStartChime();
+      fetchTasksREST();
+    }
+  } catch (e) {
+    console.error('Failed to start queue', e);
+  }
+}
+
+async function pauseQueue(qid) {
+  try {
+    const res = await fetch(`/api/queues/pause?queue=${encodeURIComponent(qid)}`, { method: 'POST' });
+    if (res.ok) {
+      fetchTasksREST();
+    }
+  } catch (e) {
+    console.error('Failed to pause queue', e);
+  }
+}
+
+function initBuiltinQueueActions() {
+  document.querySelectorAll('#queuesContainer > .tree-node:not([data-custom="true"]) .q-act-btn').forEach(btn => {
+    if (btn.dataset.bound) return;
+    btn.dataset.bound = 'true';
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const qid = btn.dataset.qid;
+      if (btn.classList.contains('q-start-btn')) {
+        startQueue(qid);
+      } else if (btn.classList.contains('q-pause-btn')) {
+        pauseQueue(qid);
+      } else if (btn.classList.contains('q-sched-btn')) {
+        openSettingsModal('scheduler', qid);
+      }
+    });
+  });
+}
+
 function renderQueuesUI() {
   const container = document.getElementById('queuesContainer');
   if (!container) return;
+
+  initBuiltinQueueActions();
 
   // Remove existing dynamic custom nodes
   const existingCustom = container.querySelectorAll('.tree-node[data-custom="true"]');
   existingCustom.forEach(n => n.remove());
 
   // Also update modalQueueSelect and batchQueueSelect
-  const t = translations[currentLang];
+  const t = translations[currentLang] || {};
   const modalQueueSelect = document.getElementById('modalQueueSelect');
   if (modalQueueSelect) {
     const currentSelectedVal = modalQueueSelect.value || 'main';
@@ -1724,22 +1855,50 @@ function renderQueuesUI() {
     if (activeFilter === `queue-${qid}`) node.classList.add('active');
     node.dataset.filter = `queue-${qid}`;
     node.dataset.custom = 'true';
+    node.dataset.qid = qid;
     node.innerHTML = `
       <svg class="tree-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
       <span class="tree-label">${escapeHtml(qcfg.name || qid)}</span>
-      <button class="queue-delete-btn" data-qid="${qid}" title="حذف صف">✖</button>
+      <div class="queue-node-actions">
+        <button type="button" class="q-act-btn q-start-btn" title="${t.q_start_tip || 'شروع این صف'}" data-qid="${qid}">
+          <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+        </button>
+        <button type="button" class="q-act-btn q-pause-btn" title="${t.q_pause_tip || 'توقف این صف'}" data-qid="${qid}">
+          <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+        </button>
+        <button type="button" class="q-act-btn q-sched-btn" title="${t.q_sched_tip || 'زمان‌بندی و تنظیمات صف'}" data-qid="${qid}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        </button>
+        <button type="button" class="q-act-btn q-del-btn" title="${t.q_del_tip || 'حذف صف'}" data-qid="${qid}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+        </button>
+      </div>
     `;
 
     node.addEventListener('click', (e) => {
-      if (e.target.closest('.queue-delete-btn')) return;
+      if (e.target.closest('.q-act-btn')) return;
       document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('active'));
       node.classList.add('active');
       activeFilter = `queue-${qid}`;
       renderTasksGrid();
     });
 
-    const delBtn = node.querySelector('.queue-delete-btn');
-    delBtn.addEventListener('click', async (e) => {
+    node.querySelector('.q-start-btn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      startQueue(qid);
+    });
+
+    node.querySelector('.q-pause-btn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      pauseQueue(qid);
+    });
+
+    node.querySelector('.q-sched-btn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openSettingsModal('scheduler', qid);
+    });
+
+    node.querySelector('.q-del-btn')?.addEventListener('click', async (e) => {
       e.stopPropagation();
       if (confirm(`آیا از حذف صف «${qcfg.name || qid}» اطمینان دارید؟`)) {
         await fetch(`/api/queues?id=${encodeURIComponent(qid)}`, { method: 'DELETE' });
@@ -2369,12 +2528,36 @@ async function loadSettings() {
   }
 }
 
-function openSettingsModal() {
+function switchSettingsTab(tabName) {
+  const tabs = document.querySelectorAll('.settings-tab-btn');
+  const panes = document.querySelectorAll('.settings-tab-pane');
+
+  tabs.forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.stab === tabName);
+  });
+
+  panes.forEach(pane => {
+    const paneId = 'stab' + tabName.charAt(0).toUpperCase() + tabName.slice(1);
+    pane.classList.toggle('active', pane.id === paneId);
+  });
+}
+
+document.querySelectorAll('.settings-tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    switchSettingsTab(btn.dataset.stab);
+  });
+});
+
+async function openSettingsModal(initialTab = 'general', targetQueue = null) {
   if (!settingsModal) return;
+
+  // 1. General settings
   if (settingDefaultDirInput) settingDefaultDirInput.value = appSettings.default_download_dir || '';
   if (settingDefaultModeSelect) settingDefaultModeSelect.value = appSettings.default_ui_mode || 'simple';
   if (settingSoundToggle) settingSoundToggle.checked = appSettings.sound_enabled;
   if (settingAutoExtractToggle) settingAutoExtractToggle.checked = appSettings.auto_extract_zip;
+
+  // 2. Proxy settings
   if (settingProxyToggle) {
     settingProxyToggle.checked = !!appSettings.proxy_enabled;
     if (proxySettingsSection) {
@@ -2385,6 +2568,30 @@ function openSettingsModal() {
   if (settingProxyAddr) settingProxyAddr.value = appSettings.proxy_address || '';
   if (settingProxyBypassDomestic) settingProxyBypassDomestic.checked = appSettings.proxy_bypass_domestic !== false;
 
+  // 3. Speed Limit settings
+  const currentKb = Math.round(currentSpeedLimit / 1024);
+  if (customLimitInput) customLimitInput.value = currentKb > 0 ? currentKb : '';
+  document.querySelectorAll('.preset-btn').forEach(btn => {
+    const kb = parseInt(btn.dataset.kb, 10);
+    if (kb === currentKb) btn.classList.add('active');
+    else btn.classList.remove('active');
+  });
+
+  // 4. Scheduler settings
+  if (targetQueue) {
+    activeSchedTab = targetQueue;
+  }
+  try {
+    const res = await fetch('/api/scheduler');
+    if (res.ok) {
+      schedulerConfig = await res.json();
+    }
+  } catch (e) {}
+  populateSchedulerUI();
+
+  // Switch to requested tab
+  switchSettingsTab(initialTab);
+
   if (settingsStatusMsg) {
     settingsStatusMsg.className = 'form-status-msg hidden';
     settingsStatusMsg.textContent = '';
@@ -2392,7 +2599,7 @@ function openSettingsModal() {
   settingsModal.classList.remove('hidden');
 }
 
-if (tbSettings) tbSettings.addEventListener('click', openSettingsModal);
+if (tbSettings) tbSettings.addEventListener('click', () => openSettingsModal('general'));
 if (closeSettingsModal) closeSettingsModal.addEventListener('click', () => settingsModal.classList.add('hidden'));
 if (cancelSettingsModalBtn) cancelSettingsModalBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
 
@@ -2408,6 +2615,7 @@ if (saveSettingsModalBtn) {
     const proxyBypass = settingProxyBypassDomestic ? settingProxyBypassDomestic.checked : true;
 
     try {
+      // 1. Save Settings
       const res = await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2435,15 +2643,31 @@ if (saveSettingsModalBtn) {
 
         setUIMode(defaultMode, true);
 
-        const t = translations[currentLang];
+        // 2. Save Speed Limit
+        if (customLimitInput) {
+          let kb = parseInt(customLimitInput.value, 10) || 0;
+          const limitBytes = kb * 1024;
+          await fetch('/api/speed-limit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ limit: limitBytes })
+          });
+          currentSpeedLimit = limitBytes;
+          updateSpeedLimitStatus(limitBytes);
+        }
+
+        // 3. Save Active Scheduler Queue
+        await saveActiveSchedulerQueue();
+
+        const t = translations[currentLang] || {};
         if (settingsStatusMsg) {
           settingsStatusMsg.className = 'form-status-msg success';
-          settingsStatusMsg.textContent = t.settings_saved;
+          settingsStatusMsg.textContent = t.settings_saved || 'تنظیمات با موفقیت ذخیره شد';
           settingsStatusMsg.classList.remove('hidden');
         }
         setTimeout(() => {
           settingsModal.classList.add('hidden');
-        }, 1000);
+        }, 900);
       } else {
         if (settingsStatusMsg) {
           settingsStatusMsg.className = 'form-status-msg error';
@@ -3039,14 +3263,35 @@ if (tbOverflowBtn && toolbarOverflowMenu) {
     }
   });
 
+  const ovScheduler = document.getElementById('ovScheduler');
+  if (ovScheduler) {
+    ovScheduler.addEventListener('click', () => {
+      toolbarOverflowMenu.classList.add('hidden');
+      openSettingsModal('scheduler');
+    });
+  }
+
+  const ovSpeedLimit = document.getElementById('ovSpeedLimit');
+  if (ovSpeedLimit) {
+    ovSpeedLimit.addEventListener('click', () => {
+      toolbarOverflowMenu.classList.add('hidden');
+      openSettingsModal('speed');
+    });
+  }
+
+  const ovSettings = document.getElementById('ovSettings');
+  if (ovSettings) {
+    ovSettings.addEventListener('click', () => {
+      toolbarOverflowMenu.classList.add('hidden');
+      openSettingsModal('general');
+    });
+  }
+
   const overflowActionMap = {
     ovBatch: 'tbBatch',
-    ovScheduler: 'tbScheduler',
-    ovSpeedLimit: 'tbSpeedLimit',
     ovLinkIrani: 'tbLinkIrani',
     ovAnalytics: 'tbAnalytics',
-    ovSpeedtest: 'tbSpeedtest',
-    ovSettings: 'tbSettings'
+    ovSpeedtest: 'tbSpeedtest'
   };
 
   Object.entries(overflowActionMap).forEach(([ovId, tbId]) => {

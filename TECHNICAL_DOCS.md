@@ -230,6 +230,12 @@ Retrieves all download queue configurations including built-in and dynamic custo
 ### `POST /api/queues`
 Creates or updates a custom download queue with custom name, concurrency limit, and schedules.
 
+### `POST /api/queues/start?queue=<name>`
+Starts all pending, paused, or errored downloads in the specified queue sorted by execution order priority.
+
+### `POST /api/queues/pause?queue=<name>`
+Pauses all active downloading tasks in the specified queue.
+
 ### `DELETE /api/queues?id=<id>`
 Deletes a custom queue.
 
@@ -450,28 +456,41 @@ Invokes the native operating system folder selection dialog (PowerShell Windows 
   - Responsive 3-column layout in Persian locale and 2-column layout in English locale.
 - **International Mode Cleanups:** Automatic conditional hiding of Iran-specific modules (LinkIrani button, tariff column, domestic traffic notices) via `.iran-only` and `html[lang="en"]` selector when operating in English locale.
 - **Universal Dark Translucent Scrollbars:** Engineered custom `::-webkit-scrollbar` and `scrollbar-width: thin` CSS specifications ensuring Windows OS never falls back to glaring white scrollbar tracks upon resizing.
+- **Unified Settings Studio (4-Tab Configuration Hub):**
+  - Consolidated scattered modals into a single, cohesive Settings dialog with four clear tabs:
+    1. **General (عمومی):** Default download directory (with native OS folder picker), UI mode (Simple / Pro), audio feedback toggle, and auto-extract ZIP toggle.
+    2. **Scheduler & Queues (زمان‌بندی و صف‌ها):** Dynamic queue tabs for Night Queue, Main Queue, and all custom user-defined queues. Allows configuring active hours, days of the week, post-completion actions (Shutdown, Sleep, Exit), and concurrency limits for any queue.
+    3. **Speed Limit (سقف سرعت):** Speed presets (Unlimited, 1 MB/s, 2 MB/s, 5 MB/s, 10 MB/s) and custom KB/s throttle with token-bucket bandwidth allocator.
+    4. **Proxy & Network (پروکسی و شبکه):** SOCKS5/HTTP proxy configuration with automatic bypass for domestic Iranian traffic.
+  - Decluttered the top toolbar ribbon by moving standalone Speed Limit and Scheduler buttons into the Settings Studio while keeping fast shortcuts in the overflow menu.
+- **Inline Sidebar Queue Controls & Queue Context Menu:**
+  - Added dedicated Play (▶), Pause (⏸), and Settings/Schedule (⏱) action buttons directly on each queue row in the sidebar tree. Custom queues also include a Delete (✖) button.
+  - Implemented `#queueContextMenu` on right-click for any sidebar queue with actions to start all downloads in the queue, pause the queue, configure the queue's schedule in Settings, or delete the queue.
+- **Full Dynamic Custom Queue Scheduling:**
+  - Dynamic tab rendering in the Scheduler tab allows custom queues (e.g. "فیلم‌ها", "دوره‌ها") to be edited and saved just like built-in queues, eliminating the limitation where custom queues could not be scheduled.
 
 ---
 
 ## 7. Automated Testing Strategy
 
-Comprehensive suite of 19 unit and integration tests covering:
+Comprehensive suite of 20 unit and integration tests covering:
 1. `TestBatchAddTasksAndAPI`: Validates bulk URL creation, queue assignment, and `POST /api/tasks/batch` REST endpoint.
 2. `TestChecksumVerification`: Validates streaming SHA-256 and MD5 hash generation and `GET /api/tasks/checksum` endpoint.
 3. `TestTrafficAnalytics`: Verifies thread-safe traffic recording, domestic/international separation, savings calculation, and cycle reset.
 4. `TestCustomQueuesAndReordering`: Verifies custom queue creation, task assignment, order priority changes, and deletion.
-5. `TestMultiThreadedDownload`: Multi-goroutine concurrent HTTP Range download with byte-by-byte integrity verification.
-6. `TestSpeedLimiter`: Token-bucket throttle enforcement and unthrottled throughput.
-7. `TestSOCKS5HandshakeMock`: RFC 1928 SOCKS5 handshake, version/auth negotiation, and domain address packet parsing.
-8. `TestProxyDomesticBypass`: Routing validation ensuring domestic `.ir` and Iranian subnets bypass proxy while international traffic routes through proxy.
-9. `TestServerEndpointsAndAssets`: Validates root HTML, dark color-scheme meta, favicon, manifest, and window minimize endpoints.
-10. `TestShareInfoAndFileDownload`: Outbound UDP LAN IP detection, HTTP file download serving, Range streaming headers, and speedtest endpoints.
-11. `TestSpeedtestEndpoints`: Latency ping endpoint calculation and chunked download stream throughput generator.
-12. `TestDetectTraffic`: Iranian domain detection (`soft98.ir` -> domestic نیم‌بها) vs international (`github.com` -> تمام‌بها).
-13. `TestFormatBytes`, `TestFormatSpeed`, `TestFormatDuration`, `TestDetectCategory`.
-14. `TestSettingsManagement`: Validates default download directory persistence, audio toggles, and mode defaults.
-15. `TestRefreshExpiredTaskURL`: Validates header probe, size validation, and in-place URL refreshment.
-16. `TestZipExtractionAndZipSlipProtection`: Validates pure Go zip unarchiving and path traversal security guards.
+5. `TestQueueStartAndPauseEndpoints`: Validates queue-level start and pause APIs (`POST /api/queues/start` and `POST /api/queues/pause`).
+6. `TestMultiThreadedDownload`: Multi-goroutine concurrent HTTP Range download with byte-by-byte integrity verification.
+7. `TestSpeedLimiter`: Token-bucket throttle enforcement and unthrottled throughput.
+8. `TestSOCKS5HandshakeMock`: RFC 1928 SOCKS5 handshake, version/auth negotiation, and domain address packet parsing.
+9. `TestProxyDomesticBypass`: Routing validation ensuring domestic `.ir` and Iranian subnets bypass proxy while international traffic routes through proxy.
+10. `TestServerEndpointsAndAssets`: Validates root HTML, dark color-scheme meta, favicon, manifest, and window minimize endpoints.
+11. `TestShareInfoAndFileDownload`: Outbound UDP LAN IP detection, HTTP file download serving, Range streaming headers, and speedtest endpoints.
+12. `TestSpeedtestEndpoints`: Latency ping endpoint calculation and chunked download stream throughput generator.
+13. `TestDetectTraffic`: Iranian domain detection (`soft98.ir` -> domestic نیم‌بها) vs international (`github.com` -> تمام‌بها).
+14. `TestFormatBytes`, `TestFormatSpeed`, `TestFormatDuration`, `TestDetectCategory`.
+15. `TestSettingsManagement`: Validates default download directory persistence, audio toggles, and mode defaults.
+16. `TestRefreshExpiredTaskURL`: Validates header probe, size validation, and in-place URL refreshment.
+17. `TestZipExtractionAndZipSlipProtection`: Validates pure Go zip unarchiving and path traversal security guards.
 
 Run tests:
 ```bash

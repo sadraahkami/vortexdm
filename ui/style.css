@@ -514,6 +514,66 @@ html[dir="rtl"] .workspace-layout.sidebar-collapsed .sidebar-toggle-btn svg {
   color: var(--primary);
 }
 
+/* Sidebar Queue Inline Control Buttons */
+.queue-node-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-inline-start: auto;
+  opacity: 0.35;
+  transition: opacity 0.15s ease;
+}
+
+.tree-node:hover .queue-node-actions,
+.tree-node.active .queue-node-actions {
+  opacity: 1;
+}
+
+.q-act-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 2px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-xs);
+  transition: all 0.15s ease;
+}
+
+.q-act-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-main);
+}
+
+.q-act-btn svg {
+  width: 11px;
+  height: 11px;
+}
+
+.q-start-btn:hover {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.2);
+}
+
+.q-pause-btn:hover {
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.2);
+}
+
+.q-sched-btn:hover {
+  color: #00f2fe;
+  background: rgba(0, 242, 254, 0.2);
+}
+
+.q-del-btn:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.2);
+}
+
 .tree-separator {
   height: 1px;
   background: var(--border-color);
@@ -848,6 +908,62 @@ body.mode-pro .grid-body {
   font-size: 0.95rem;
   font-weight: 700;
   color: #fff;
+}
+
+/* Settings Studio Tab Navigation */
+.settings-tab-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 1.25rem 0 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+  background: rgba(0, 0, 0, 0.2);
+  overflow-x: auto;
+}
+
+.settings-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 0.85rem;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.settings-tab-btn svg {
+  width: 15px;
+  height: 15px;
+  stroke: currentColor;
+}
+
+.settings-tab-btn:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: var(--radius-xs) var(--radius-xs) 0 0;
+}
+
+.settings-tab-btn.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  font-weight: 600;
+  background: rgba(0, 242, 254, 0.08);
+  border-radius: var(--radius-xs) var(--radius-xs) 0 0;
+}
+
+.settings-tab-pane {
+  display: none;
+}
+
+.settings-tab-pane.active {
+  display: block;
 }
 
 .modal-close-btn {

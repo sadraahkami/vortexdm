@@ -128,6 +128,8 @@ func (s *Server) SetupRoutes() http.Handler {
 	mux.HandleFunc("/api/analytics", s.handleAnalytics)
 	mux.HandleFunc("/api/analytics/reset", s.handleAnalyticsReset)
 	mux.HandleFunc("/api/queues", s.handleQueues)
+	mux.HandleFunc("/api/queues/start", s.handleStartQueue)
+	mux.HandleFunc("/api/queues/pause", s.handlePauseQueue)
 	mux.HandleFunc("/api/tasks/reorder", s.handleReorderTask)
 	mux.HandleFunc("/api/tasks/batch", s.handleBatchTasks)
 	mux.HandleFunc("/api/tasks/checksum", s.handleChecksum)
@@ -531,6 +533,34 @@ func (s *Server) handleQueues(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+}
+
+func (s *Server) handleStartQueue(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	queue := r.URL.Query().Get("queue")
+	if queue == "" {
+		queue = "main"
+	}
+	s.engine.StartQueue(queue)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{"status": "started", "queue": queue})
+}
+
+func (s *Server) handlePauseQueue(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	queue := r.URL.Query().Get("queue")
+	if queue == "" {
+		queue = "main"
+	}
+	s.engine.PauseQueue(queue)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{"status": "paused", "queue": queue})
 }
 
 func (s *Server) handleReorderTask(w http.ResponseWriter, r *http.Request) {
