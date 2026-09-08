@@ -191,7 +191,40 @@ const translations = {
     cm_preview: 'پیش‌نمایش مدیا',
     cm_share: 'ارسال به موبایل با اسکن کد',
     preview_unsupported: 'پیش‌نمایش برای این نوع فایل پشتیبانی نمی‌شود',
-    tip_more_tools: 'سایر ابزارها و امکانات'
+    tip_more_tools: 'سایر ابزارها و امکانات',
+    placeholder_filename: 'نام خودکار از سرور دریافت می‌شود',
+    placeholder_dest_dir: 'مسیر پیش‌فرض دانلودها...',
+    btn_browse: 'انتخاب پوشه',
+    tip_browse_dir: 'انتخاب پوشه از سیستم با فایل منیجر',
+    tip_parallel_conns: 'تقسیم فایل به چندین بخش مجزا و دانلود هم‌زمان آن‌ها با اتصالات موازی که منجر به حداکثر استفاده از پهنای باند و افزایش چشمگیر سرعت دانلود می‌شود (پیشنهادی: ۱۶ یا ۳۲ اتصال).',
+    conn_16: '۱۶ اتصال (توربو استاندارد)',
+    conn_32: '۳۲ اتصال (حداکثر پهنای باند)',
+    conn_8: '۸ اتصال همزمان',
+    conn_4: '۴ اتصال',
+    conn_1: '۱ اتصال (تک‌استریم)',
+    conn_batch_4: '۴ اتصال',
+    conn_batch_8: '۸ اتصال (پیشنهادی)',
+    conn_batch_16: '۱۶ اتصال (حداکثر سرعت)',
+    conn_batch_32: '۳۲ اتصال',
+    sched_tab_night: '🌙 صف شبانه',
+    sched_tab_main: '📋 صف اصلی',
+    day_0: 'یکشنبه',
+    day_1: 'دوشنبه',
+    day_2: 'سه‌شنبه',
+    day_3: 'چهارشنبه',
+    day_4: 'پنج‌شنبه',
+    day_5: 'جمعه',
+    day_6: 'شنبه',
+    concur_1: '۱ فایل در هر لحظه (پیشنهادی برای صف شبانه)',
+    concur_2: '۲ فایل همزمان',
+    concur_3: '۳ فایل همزمان',
+    concur_1_q: '۱ فایل (توالی منظم - پیشنهادی)',
+    queue_name_placeholder: 'مثلاً: فیلم‌ها، دوره‌ها، نرم‌افزار...',
+    settings_default_dir_placeholder: 'مسیر پوشه دانلود...',
+    traffic_notice_domestic: '🟢 ترافیک داخلی (نیم‌بها)',
+    traffic_notice_intl: '🌐 ترافیک بین‌الملل (تمام‌بها)',
+    traffic_desc_domestic: 'سرور در دیتاسنتر داخلی ایران واقع شده است',
+    traffic_desc_intl: 'سرور در خارج از کشور میزبانی می‌شود'
   },
   en: {
     tb_add: 'Add URL',
@@ -379,7 +412,41 @@ const translations = {
     st_completed: 'Speed benchmark completed successfully',
     cm_preview: 'Streaming Preview',
     cm_share: 'Share to Mobile via QR',
-    preview_unsupported: 'Preview is not supported for this file format'
+    preview_unsupported: 'Preview is not supported for this file format',
+    tip_more_tools: 'Other tools and features',
+    placeholder_filename: 'Auto-detected from server',
+    placeholder_dest_dir: 'Default download directory...',
+    btn_browse: 'Browse...',
+    tip_browse_dir: 'Select folder from system file manager',
+    tip_parallel_conns: 'Splits the file into multiple separate chunks and downloads them simultaneously via parallel connections, maximizing bandwidth utilization and download speed (Recommended: 16 or 32 connections).',
+    conn_16: '16 Connections (Standard Turbo)',
+    conn_32: '32 Connections (Max Bandwidth)',
+    conn_8: '8 Concurrent Connections',
+    conn_4: '4 Connections',
+    conn_1: '1 Connection (Single Stream)',
+    conn_batch_4: '4 Connections',
+    conn_batch_8: '8 Connections (Recommended)',
+    conn_batch_16: '16 Connections (Max Speed)',
+    conn_batch_32: '32 Connections',
+    sched_tab_night: '🌙 Night Queue',
+    sched_tab_main: '📋 Main Queue',
+    day_0: 'Sunday',
+    day_1: 'Monday',
+    day_2: 'Tuesday',
+    day_3: 'Wednesday',
+    day_4: 'Thursday',
+    day_5: 'Friday',
+    day_6: 'Saturday',
+    concur_1: '1 file at a time (Recommended for night queue)',
+    concur_2: '2 files simultaneously',
+    concur_3: '3 files simultaneously',
+    concur_1_q: '1 file (Ordered sequence - Recommended)',
+    queue_name_placeholder: 'e.g. Movies, Courses, Software...',
+    settings_default_dir_placeholder: 'Download folder path...',
+    traffic_notice_domestic: '🟢 Domestic Traffic (Half-Price)',
+    traffic_notice_intl: '🌐 International Traffic (Full-Price)',
+    traffic_desc_domestic: 'Hosted on Iranian domestic datacenter network',
+    traffic_desc_intl: 'Hosted on international datacenter network'
   }
 };
 
@@ -506,6 +573,9 @@ function setLanguage(lang) {
   }
 
   renderTasksGrid();
+  if (typeof renderQueuesUI === 'function') {
+    renderQueuesUI();
+  }
   if (currentAnalyticsData && analyticsModal && !analyticsModal.classList.contains('hidden')) {
     renderAnalyticsChart();
   }
@@ -1041,7 +1111,7 @@ function openAddModal() {
   modalUrlInput.value = '';
   modalFilenameInput.value = '';
   if (modalDirInput) {
-    modalDirInput.value = '';
+    modalDirInput.value = appSettings.default_download_dir || '';
     modalDirInput.placeholder = appSettings.default_download_dir || '';
   }
   trafficNotice.classList.add('hidden');
@@ -1057,20 +1127,40 @@ function openAddModal() {
   }
 }
 
+async function browseSystemFolder(targetInputElement) {
+  try {
+    const res = await fetch('/api/dialog/browse-folder');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.path && targetInputElement) {
+        targetInputElement.value = data.path;
+      }
+    }
+  } catch (e) {}
+}
+
+const btnBrowseModalDir = document.getElementById('btnBrowseModalDir');
+if (btnBrowseModalDir) {
+  btnBrowseModalDir.addEventListener('click', () => {
+    browseSystemFolder(modalDirInput);
+  });
+}
+
 async function checkUrlTraffic(url) {
   try {
     const res = await fetch(`/api/traffic/check?url=${encodeURIComponent(url)}`);
     if (res.ok) {
       const info = await res.json();
       trafficNotice.classList.remove('hidden');
+      const t = translations[currentLang];
       if (info.is_domestic) {
         trafficNoticeTag.className = 'traffic-tag domestic';
-        trafficNoticeTag.textContent = '🟢 ترافیک داخلی (نیم‌بها)';
-        trafficNoticeDesc.textContent = `سرور در دیتاسنتر داخلی ایران واقع شده است (${info.host})`;
+        trafficNoticeTag.textContent = t.traffic_notice_domestic;
+        trafficNoticeDesc.textContent = `${t.traffic_desc_domestic} (${info.host})`;
       } else {
         trafficNoticeTag.className = 'traffic-tag international';
-        trafficNoticeTag.textContent = '🌐 ترافیک بین‌الملل (تمام‌بها)';
-        trafficNoticeDesc.textContent = `سرور در خارج از کشور قرار دارد (${info.host})`;
+        trafficNoticeTag.textContent = t.traffic_notice_intl;
+        trafficNoticeDesc.textContent = `${t.traffic_desc_intl} (${info.host})`;
       }
       trafficNoticeLink.href = info.linkirani_url;
     }
@@ -2155,6 +2245,7 @@ const closeSettingsModal = document.getElementById('closeSettingsModal');
 const cancelSettingsModalBtn = document.getElementById('cancelSettingsModalBtn');
 const saveSettingsModalBtn = document.getElementById('saveSettingsModalBtn');
 const settingDefaultDirInput = document.getElementById('settingDefaultDirInput');
+const btnBrowseSettingDir = document.getElementById('btnBrowseSettingDir');
 const settingDefaultModeSelect = document.getElementById('settingDefaultModeSelect');
 const settingSoundToggle = document.getElementById('settingSoundToggle');
 const settingAutoExtractToggle = document.getElementById('settingAutoExtractToggle');
@@ -2164,6 +2255,12 @@ const settingProxyType = document.getElementById('settingProxyType');
 const settingProxyAddr = document.getElementById('settingProxyAddr');
 const settingProxyBypassDomestic = document.getElementById('settingProxyBypassDomestic');
 const settingsStatusMsg = document.getElementById('settingsStatusMsg');
+
+if (btnBrowseSettingDir) {
+  btnBrowseSettingDir.addEventListener('click', () => {
+    browseSystemFolder(settingDefaultDirInput);
+  });
+}
 
 if (settingProxyToggle && proxySettingsSection) {
   settingProxyToggle.addEventListener('change', () => {

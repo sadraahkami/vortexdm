@@ -282,6 +282,16 @@ Measures active network latency and returns ping roundtrip time in milliseconds:
 ### `GET /api/speedtest/download`
 Streams 15 MB of uncompressed synthetic zero-fill data over HTTP chunked transfer to benchmark downstream transfer rates in real-time.
 
+### `GET /api/dialog/browse-folder`
+Invokes the native operating system folder selection dialog (PowerShell Windows `FolderBrowserDialog` with top-most modal window) and returns the selected absolute filesystem path:
+- **Response:**
+  ```json
+  {
+    "success": true,
+    "path": "C:\\Users\\user\\Downloads"
+  }
+  ```
+
 ---
 
 ## 5. Advanced Engine Subsystems
@@ -402,9 +412,17 @@ Streams 15 MB of uncompressed synthetic zero-fill data over HTTP chunked transfe
 - **Harmonized High-Density Grid Headers & Rows:**
   - Pixel-perfect column matching between `.grid-header` and `.grid-row` across both Simple and PRO modes.
   - Dedicated headers for Queue (`col-queue`), Threads/Connections (`col-conn`), and Reorder (`col-reorder`) matching high-density 36px table rows with zero horizontal misalignment.
-- **Custom Download Destination Selector:**
+- **Custom Download Destination Selector & Native OS Folder Browser:**
+  - Integrated native operating system folder selection dialog via `/api/dialog/browse-folder` allowing users to click "Browse..." (`#btnBrowseModalDir` and `#btnBrowseSettingDir`) to select directories visually through Windows File Explorer.
+  - Universal Downloads path resolution (`GetDefaultOSDownloadsDir()`): dynamically resolves to the user's standard home Downloads directory (`C:\Users\<username>\Downloads`), cleanly replacing any hardcoded developer repository paths.
   - Global default download folder configuration via Settings modal.
   - Per-task custom folder input directly in Add Download dialog (`#modalDirInput`).
+- **Deep-Dark Custom Dropdown Selects (`color-scheme: dark`):**
+  - Styled `<select>` dropdowns and their option lists (`.form-select option`) with rich `#0b1120` midnight dark backgrounds, matching borders, and system dark theme flags, eliminating jarring stark white popups on Windows Chromium.
+- **Parallel Segment Download Explanation & Interactive Help Tooltip:**
+  - Added an interactive help trigger (`?` with `.help-tooltip-trigger`) next to "Parallel Connections (Q)" detailing how dividing files into concurrent HTTP Range streams saturates bandwidth to dramatically boost transfer throughput.
+- **Comprehensive 100% Bilingual Localization (FA & EN):**
+  - Complete parity across all modal inputs, button tooltips, placeholders (`data-i18n-placeholder`), `<option>` items (`data-i18n`), day pickers, and dynamic traffic detection badges.
 - **IDM-Grade Information Density:** Compact, sticky-header table grid (36px row height), allowing 20+ downloads visible simultaneously.
 - **Batch Download Modal:** Clean multi-line URL importer supporting target queue selection, thread count configuration, and immediate auto-start.
 - **File Checksum Verifier Modal:** Right-click context menu "Verify Checksum" displaying computed SHA-256 and MD5 hashes with real-time input comparison and visual match confirmation banner.

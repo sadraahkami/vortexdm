@@ -134,6 +134,7 @@ func (s *Server) SetupRoutes() http.Handler {
 	mux.HandleFunc("/api/tasks/refresh-url", s.handleRefreshURL)
 	mux.HandleFunc("/api/tasks/extract", s.handleExtractZip)
 	mux.HandleFunc("/api/settings", s.handleSettings)
+	mux.HandleFunc("/api/dialog/browse-folder", s.handleBrowseFolder)
 
 	// Wi-Fi Local Sharing & In-Flight Media Streaming
 	mux.HandleFunc("/api/share/info", s.handleShareInfo)
@@ -920,6 +921,31 @@ func (s *Server) handleSpeedtestDownload(w http.ResponseWriter, r *http.Request)
 			flusher.Flush()
 		}
 	}
+}
+
+// handleBrowseFolder launches the native OS folder selection dialog and returns the chosen directory path
+func (s *Server) handleBrowseFolder(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if runtime.GOOS == "windows" {
+		// Invoke Windows FolderBrowserDialog via PowerShell with modal top window
+		psScript := `[System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null; $f = New-Object System.Windows.Forms.FolderBrowserDialog; $f.Description = 'Select Download Directory - VortexDM'; $f.ShowNewFolderButton = $true; $top = New-Object System.Windows.Forms.Form; $top.TopMost = $true; if ($f.ShowDialog($top) -eq [System.Windows.Forms.DialogResult]::OK) { Write-Output $f.SelectedPath }`
+		cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", psScript)
+		out, err := cmd.Output()
+		if err == nil {
+			path := strings.TrimSpace(string(out))
+			if path != "" {
+				json.NewEncoder(w).Encode(map[string]interface{}{
+					"success": true,
+					"path":    path,
+				})
+				return
+			}
+		}
+	}
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": false,
+		"path":    "",
+	})
 }
 
 

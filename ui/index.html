@@ -318,28 +318,37 @@
         </div>
         <div class="form-row">
           <label data-i18n="lbl_filename">نام فایل ذخیره‌شده (اختیاری):</label>
-          <input type="text" id="modalFilenameInput" placeholder="نام خودکار از سرور دریافت می‌شود" class="form-input">
+          <input type="text" id="modalFilenameInput" placeholder="نام خودکار از سرور دریافت می‌شود" data-i18n-placeholder="placeholder_filename" class="form-input">
         </div>
         <div class="form-row">
           <label data-i18n="lbl_dest_dir">پوشه ذخیره‌سازی (اختیاری):</label>
-          <input type="text" id="modalDirInput" placeholder="مسیر پیش‌فرض دانلودها..." class="form-input ltr-input">
+          <div class="input-with-browse">
+            <input type="text" id="modalDirInput" placeholder="مسیر پیش‌فرض دانلودها..." data-i18n-placeholder="placeholder_dest_dir" class="form-input ltr-input">
+            <button type="button" class="btn btn-browse" id="btnBrowseModalDir" title="انتخاب پوشه از سیستم" data-i18n-title="tip_browse_dir">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              <span data-i18n="btn_browse">انتخاب پوشه</span>
+            </button>
+          </div>
         </div>
         <div class="form-cols">
           <div class="form-row">
             <label data-i18n="lbl_queue">صف دانلود:</label>
             <select id="modalQueueSelect" class="form-select">
-              <option value="main" selected>صف اصلی</option>
-              <option value="night">صف دانلود شبانه</option>
+              <option value="main" selected data-i18n="queue_main">صف اصلی</option>
+              <option value="night" data-i18n="queue_night">صف دانلود شبانه</option>
             </select>
           </div>
           <div class="form-row">
-            <label data-i18n="lbl_conns">تعداد قطعات همزمان (Q):</label>
+            <div class="label-with-help">
+              <label data-i18n="lbl_conns">تعداد قطعات همزمان (Q):</label>
+              <span class="help-tooltip-trigger" id="helpConnsTooltip" title="تقسیم فایل به چندین بخش مجزا و دانلود هم‌زمان آن‌ها با اتصالات موازی که منجر به حداکثر استفاده از پهنای باند و افزایش چشمگیر سرعت دانلود می‌شود (پیشنهادی: ۱۶ یا ۳۲ اتصال)." data-i18n-title="tip_parallel_conns">?</span>
+            </div>
             <select id="modalConnsSelect" class="form-select">
-              <option value="16" selected>16 کانکشن (توربو استاندارد)</option>
-              <option value="32">32 کانکشن (حداکثر پهنای باند)</option>
-              <option value="8">8 کانکشن همزمان</option>
-              <option value="4">4 کانکشن</option>
-              <option value="1">1 کانکشن (تک‌استریم)</option>
+              <option value="16" selected data-i18n="conn_16">16 کانکشن (توربو استاندارد)</option>
+              <option value="32" data-i18n="conn_32">32 کانکشن (حداکثر پهنای باند)</option>
+              <option value="8" data-i18n="conn_8">8 کانکشن همزمان</option>
+              <option value="4" data-i18n="conn_4">4 کانکشن</option>
+              <option value="1" data-i18n="conn_1">1 کانکشن (تک‌استریم)</option>
             </select>
           </div>
         </div>
@@ -367,8 +376,8 @@
         <div class="sched-layout">
           <!-- Queue tabs on left -->
           <div class="sched-tabs">
-            <button class="sched-tab active" data-queue="night">🌙 صف شبانه</button>
-            <button class="sched-tab" data-queue="main">📋 صف اصلی</button>
+            <button class="sched-tab active" data-queue="night" data-i18n="sched_tab_night">🌙 صف شبانه</button>
+            <button class="sched-tab" data-queue="main" data-i18n="sched_tab_main">📋 صف اصلی</button>
           </div>
 
           <!-- Queue settings panel -->
@@ -402,13 +411,13 @@
 
             <div class="sched-box-title" data-i18n="sched_days_title">روزهای اجرای برنامه در هفته:</div>
             <div class="days-checkboxes">
-              <label><input type="checkbox" class="day-cb" value="0" checked> یکشنبه</label>
-              <label><input type="checkbox" class="day-cb" value="1" checked> دوشنبه</label>
-              <label><input type="checkbox" class="day-cb" value="2" checked> سه‌شنبه</label>
-              <label><input type="checkbox" class="day-cb" value="3" checked> چهارشنبه</label>
-              <label><input type="checkbox" class="day-cb" value="4" checked> پنج‌شنبه</label>
-              <label><input type="checkbox" class="day-cb" value="5" checked> جمعه</label>
-              <label><input type="checkbox" class="day-cb" value="6" checked> شنبه</label>
+              <label><input type="checkbox" class="day-cb" value="0" checked> <span data-i18n="day_0">یکشنبه</span></label>
+              <label><input type="checkbox" class="day-cb" value="1" checked> <span data-i18n="day_1">دوشنبه</span></label>
+              <label><input type="checkbox" class="day-cb" value="2" checked> <span data-i18n="day_2">سه‌شنبه</span></label>
+              <label><input type="checkbox" class="day-cb" value="3" checked> <span data-i18n="day_3">چهارشنبه</span></label>
+              <label><input type="checkbox" class="day-cb" value="4" checked> <span data-i18n="day_4">پنج‌شنبه</span></label>
+              <label><input type="checkbox" class="day-cb" value="5" checked> <span data-i18n="day_5">جمعه</span></label>
+              <label><input type="checkbox" class="day-cb" value="6" checked> <span data-i18n="day_6">شنبه</span></label>
             </div>
 
             <div class="sched-box-title" data-i18n="sched_post_title">عملیات پس از اتمام تمام فایل‌های این صف:</div>
@@ -430,9 +439,9 @@
             <div class="conns-queue-row">
               <label data-i18n="sched_max_concur">حداکثر فایل‌های همزمان در صف:</label>
               <select id="schedMaxConcur" class="form-select small-select">
-                <option value="1" selected>1 فایل در هر لحظه (پیشنهادی برای صف شبانه)</option>
-                <option value="2">2 فایل همزمان</option>
-                <option value="3">3 فایل همزمان</option>
+                <option value="1" selected data-i18n="concur_1">1 فایل در هر لحظه (پیشنهادی برای صف شبانه)</option>
+                <option value="2" data-i18n="concur_2">2 فایل همزمان</option>
+                <option value="3" data-i18n="concur_3">3 فایل همزمان</option>
               </select>
             </div>
           </div>
@@ -601,14 +610,14 @@
       <div class="modal-body">
         <div class="form-row">
           <label data-i18n="queue_lbl_name">نام یا شناسه صف:</label>
-          <input type="text" id="customQueueNameInput" placeholder="مثلاً: فیلم‌ها، دوره‌ها، نرم‌افزار..." class="form-input">
+          <input type="text" id="customQueueNameInput" placeholder="مثلاً: فیلم‌ها، دوره‌ها، نرم‌افزار..." data-i18n-placeholder="queue_name_placeholder" class="form-input">
         </div>
         <div class="form-row">
           <label data-i18n="queue_lbl_concur">حداکثر دانلودهای همزمان در این صف:</label>
           <select id="customQueueConcurSelect" class="form-select">
-            <option value="1" selected>1 فایل (توالی منظم - پیشنهادی)</option>
-            <option value="2">2 فایل همزمان</option>
-            <option value="3">3 فایل همزمان</option>
+            <option value="1" selected data-i18n="concur_1_q">1 فایل (توالی منظم - پیشنهادی)</option>
+            <option value="2" data-i18n="concur_2">2 فایل همزمان</option>
+            <option value="3" data-i18n="concur_3">3 فایل همزمان</option>
           </select>
         </div>
       </div>
@@ -635,17 +644,17 @@
           <div class="form-row">
             <label data-i18n="batch_lbl_queue">صف مقصد:</label>
             <select id="batchQueueSelect" class="form-select">
-              <option value="main" selected data-i18n="q_main">صف اصلی</option>
-              <option value="night" data-i18n="q_night">دانلود شبانه</option>
+              <option value="main" selected data-i18n="queue_main">صف اصلی</option>
+              <option value="night" data-i18n="queue_night">دانلود شبانه</option>
             </select>
           </div>
           <div class="form-row">
             <label data-i18n="batch_lbl_threads">اتصالات همزمان هر فایل:</label>
             <select id="batchConnectionsSelect" class="form-select">
-              <option value="4">4 اتصال</option>
-              <option value="8" selected>8 اتصال (پیشنهادی)</option>
-              <option value="16">16 اتصال (حداکثر سرعت)</option>
-              <option value="32">32 اتصال</option>
+              <option value="4" data-i18n="conn_batch_4">4 اتصال</option>
+              <option value="8" selected data-i18n="conn_batch_8">8 اتصال (پیشنهادی)</option>
+              <option value="16" data-i18n="conn_batch_16">16 اتصال (حداکثر سرعت)</option>
+              <option value="32" data-i18n="conn_batch_32">32 اتصال</option>
             </select>
           </div>
         </div>
@@ -755,7 +764,13 @@
       <div class="modal-body">
         <div class="form-row">
           <label data-i18n="settings_default_dir">پوشه پیش‌فرض ذخیره فایل‌ها:</label>
-          <input type="text" id="settingDefaultDirInput" class="form-input ltr-input" placeholder="مسیر پوشه دانلود...">
+          <div class="input-with-browse">
+            <input type="text" id="settingDefaultDirInput" class="form-input ltr-input" placeholder="مسیر پوشه دانلود..." data-i18n-placeholder="settings_default_dir_placeholder">
+            <button type="button" class="btn btn-browse" id="btnBrowseSettingDir" title="انتخاب پوشه از سیستم" data-i18n-title="tip_browse_dir">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              <span data-i18n="btn_browse">انتخاب پوشه</span>
+            </button>
+          </div>
         </div>
         <div class="form-row">
           <label data-i18n="settings_default_mode">حالت پیش‌فرض رابط کاربری:</label>

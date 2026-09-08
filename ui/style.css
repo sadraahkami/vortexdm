@@ -863,8 +863,79 @@ body.mode-pro .grid-body {
   gap: 0.85rem;
 }
 
+.input-with-browse {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.input-with-browse .form-input {
+  flex: 1;
+}
+
+.btn-browse {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 0.52rem 0.85rem;
+  border-radius: var(--radius-xs);
+  font-size: 0.78rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.btn-browse:hover {
+  background: rgba(0, 242, 254, 0.15);
+  border-color: var(--primary);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(0, 242, 254, 0.25);
+}
+
+.btn-browse svg {
+  width: 15px;
+  height: 15px;
+  stroke: var(--primary);
+}
+
+.label-with-help {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.help-tooltip-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(0, 242, 254, 0.14);
+  color: var(--primary);
+  font-size: 0.68rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  cursor: help;
+  border: 1px solid rgba(0, 242, 254, 0.4);
+  transition: var(--transition);
+}
+
+.help-tooltip-trigger:hover {
+  background: var(--primary);
+  color: #030712;
+  box-shadow: 0 0 8px var(--primary);
+  transform: scale(1.1);
+}
+
 .form-input, .form-select {
-  background: rgba(0, 0, 0, 0.3);
+  background: #090e1a;
   border: 1px solid var(--border-color);
   padding: 0.55rem 0.75rem;
   border-radius: var(--radius-xs);
@@ -873,6 +944,7 @@ body.mode-pro .grid-body {
   font-family: inherit;
   outline: none;
   transition: var(--transition);
+  color-scheme: dark;
 }
 
 .form-input:focus, .form-select:focus {
@@ -880,9 +952,20 @@ body.mode-pro .grid-body {
   box-shadow: 0 0 10px var(--primary-glow);
 }
 
+.form-select {
+  cursor: pointer;
+}
+
 .form-select option {
-  background: #0e1424;
-  color: #fff;
+  background: #0b1120 !important;
+  color: #f1f5f9 !important;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+.form-select option:checked {
+  background: #1e293b !important;
+  color: var(--primary) !important;
 }
 
 .modal-footer {

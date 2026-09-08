@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 )
 
@@ -29,14 +30,23 @@ var (
 	once          sync.Once
 )
 
+// GetDefaultOSDownloadsDir returns the universal Downloads directory on the user's system
+func GetDefaultOSDownloadsDir() string {
+	if homeDir, err := os.UserHomeDir(); err == nil && homeDir != "" {
+		return filepath.Join(homeDir, "Downloads")
+	}
+	return filepath.Join(".", "downloads")
+}
+
 // Init initializes the settings manager from a base directory
 func Init(baseDir string) *Manager {
 	once.Do(func() {
 		cfgPath := filepath.Join(baseDir, "vortex_settings.json")
+		defaultDL := GetDefaultOSDownloadsDir()
 		m := &Manager{
 			filePath: cfgPath,
 			data: Settings{
-				DefaultDownloadDir:  filepath.Join(baseDir, "downloads"),
+				DefaultDownloadDir:  defaultDL,
 				SoundEnabled:        true,
 				AutoExtractZip:      false,
 				UIMode:              "simple",
@@ -67,8 +77,13 @@ func (m *Manager) load() {
 
 	var loaded Settings
 	if err := json.NewDecoder(f).Decode(&loaded); err == nil {
-		if loaded.DefaultDownloadDir != "" {
+		// If saved path is empty or was hardcoded to developer repository path, use universal OS Downloads
+		if loaded.DefaultDownloadDir != "" &&
+			!strings.Contains(loaded.DefaultDownloadDir, "AGENT\\github") &&
+			!strings.Contains(loaded.DefaultDownloadDir, "AGENT/github") {
 			m.data.DefaultDownloadDir = loaded.DefaultDownloadDir
+		} else {
+			m.data.DefaultDownloadDir = GetDefaultOSDownloadsDir()
 		}
 		m.data.SoundEnabled = loaded.SoundEnabled
 		m.data.AutoExtractZip = loaded.AutoExtractZip
