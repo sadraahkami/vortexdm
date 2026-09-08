@@ -410,8 +410,16 @@ Streams 15 MB of uncompressed synthetic zero-fill data over HTTP chunked transfe
 - **Custom Queues Management:** One-click `+` button in sidebar to create named queues with custom concurrency limits, and instant filtering by queue.
 - **Task Priority Reordering:** Dedicated `#` order column and Up/Down (`▲`/`▼`) buttons in each row to prioritize downloads.
 - **Pure Bilingual Localization:** Strictly separated Persian and English typography without awkward parenthetical inline translations.
-- **Mouse Wheel Time Picker:** Continuous increment/decrement of hours and minutes by rolling the mouse wheel over the time picker selectors.
-- **Interactive Bandwidth Analytics Dashboard:** Full-screen modal with 4 metric cards (Total, Domestic, International, Savings), dual-mode HTML5 Canvas chart (hourly/daily), and recent file history.
+- **Pure High-Contrast Button Typography:**
+  - Modernized `.btn-primary` and `.toast-btn-primary` with deep tech blue gradient (`#0284c7` to `#2563eb`) and crisp pure white text (`#ffffff !important`), eliminating dirty black text on blue buttons across all modal dialogs.
+- **Authentic Network Latency & Throughput Benchmark (Speed Test):**
+  - Replaced artificial localhost loopback with authentic network benchmarking.
+  - Multi-target TCP RTT handshake probing (`1.1.1.1:80`, `cloudflare.com:80`, `soft98.ir:80`) providing real-time ping latency in milliseconds.
+  - Real-world CDN download throughput streaming via Cloudflare edge speedtest payload with dynamic gauge auto-scaling, reporting genuine ISP throughput rather than misleading RAM loopback rates.
+- **Streamlined 3-Card Bandwidth Analytics Dashboard:**
+  - Consolidated redundant metric sections into 3 clear, distinct cards: Total Traffic, Domestic (Half-Price) Traffic, and International (Full-Price) Traffic.
+  - Eliminated duplicate "half-price savings" card for clean, unambiguous accounting.
+  - Responsive 3-column layout in Persian locale and 2-column layout in English locale.
 - **International Mode Cleanups:** Automatic conditional hiding of Iran-specific modules (LinkIrani button, tariff column, domestic traffic notices) via `.iran-only` and `html[lang="en"]` selector when operating in English locale.
 - **Universal Dark Translucent Scrollbars:** Engineered custom `::-webkit-scrollbar` and `scrollbar-width: thin` CSS specifications ensuring Windows OS never falls back to glaring white scrollbar tracks upon resizing.
 

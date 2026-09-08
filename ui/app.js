@@ -2750,22 +2750,37 @@ if (btnRunSpeedtest) {
     }
 
     try {
-      // Step 1: Ping
+      // Step 1: Real Latency Ping
       const pingRes = await fetch('/api/speedtest/ping');
       const pingData = await pingRes.json();
       if (stPingVal && pingData.ping_ms !== undefined) {
-        stPingVal.textContent = `${pingData.ping_ms.toFixed(1)} ms`;
+        stPingVal.textContent = `${Math.round(pingData.ping_ms)} ms`;
       }
 
-      // Step 2: Download Throughput
+      // Step 2: Real Download Throughput
       if (speedtestStatus) {
         speedtestStatus.textContent = t.st_testing_speed;
       }
 
-      const startTime = performance.now();
-      const speedRes = await fetch('/api/speedtest/download');
+      // Benchmark against real internet speedtest payload
+      let speedRes;
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
+        speedRes = await fetch('https://speed.cloudflare.com/__down?bytes=5000000', {
+          signal: controller.signal,
+          cache: 'no-store'
+        });
+        clearTimeout(timeoutId);
+        if (!speedRes.ok) throw new Error('CDN response not ok');
+      } catch (cdnErr) {
+        // Fallback to backend external proxy stream
+        speedRes = await fetch('/api/speedtest/download?real=true');
+      }
+
       const reader = speedRes.body.getReader();
       let bytesReceived = 0;
+      const startTime = performance.now();
       let lastUpdate = startTime;
       let maxSpeed = 0;
 
@@ -2777,11 +2792,11 @@ if (btnRunSpeedtest) {
         const now = performance.now();
         if (now - lastUpdate > 100) {
           const elapsedSec = (now - startTime) / 1000;
-          const currentSpeedMB = (bytesReceived / (1024 * 1024)) / elapsedSec;
+          const currentSpeedMB = (bytesReceived / (1024 * 1024)) / (elapsedSec || 1);
           if (currentSpeedMB > maxSpeed) maxSpeed = currentSpeedMB;
 
           if (stSpeedVal) stSpeedVal.textContent = `${currentSpeedMB.toFixed(2)} MB/s`;
-          drawSpeedGauge(currentSpeedMB, 40);
+          drawSpeedGauge(currentSpeedMB, Math.max(10, Math.ceil(currentSpeedMB * 1.5)));
           lastUpdate = now;
         }
       }
@@ -2789,7 +2804,7 @@ if (btnRunSpeedtest) {
       const totalElapsed = (performance.now() - startTime) / 1000;
       const finalSpeedMB = (bytesReceived / (1024 * 1024)) / (totalElapsed || 1);
       if (stSpeedVal) stSpeedVal.textContent = `${finalSpeedMB.toFixed(2)} MB/s`;
-      drawSpeedGauge(finalSpeedMB, 40);
+      drawSpeedGauge(finalSpeedMB, Math.max(10, Math.ceil(finalSpeedMB * 1.5)));
 
       if (speedtestStatus) {
         speedtestStatus.className = 'form-status-msg success';
@@ -2798,7 +2813,9 @@ if (btnRunSpeedtest) {
     } catch (e) {
       if (speedtestStatus) {
         speedtestStatus.className = 'form-status-msg error';
-        speedtestStatus.textContent = 'Speed test failed: connection error';
+        speedtestStatus.textContent = (currentLang === 'fa') 
+          ? 'خطا در اتصال به سرور آزمون سرعت اینترنت'
+          : 'Speed test failed: could not connect to benchmark server';
       }
     } finally {
       speedtestRunning = false;
