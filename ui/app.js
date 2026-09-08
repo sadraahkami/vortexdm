@@ -26,6 +26,7 @@ const translations = {
     tb_iran_tip: 'بررسی ترافیک داخلی / نیم‌بها در سامانه LinkIrani.ir',
     tb_minimize_tip: 'کوچک‌سازی پنجره',
     tip_toggle_sidebar: 'کوچک‌سازی/بازگشایی پنل',
+    tip_expand_sidebar: 'نمایش منوی دسته‌بندی‌ها',
     speed_lbl: 'سرعت کل:',
     tree_categories: 'دسته‌بندی‌ها',
     tree_queues: 'صف‌های دانلود',
@@ -210,6 +211,7 @@ const translations = {
     tb_iran_tip: 'Check Iranian domestic half-price traffic status',
     tb_minimize_tip: 'Minimize Window',
     tip_toggle_sidebar: 'Toggle Sidebar',
+    tip_expand_sidebar: 'Expand Categories Menu',
     speed_lbl: 'Speed:',
     tree_categories: 'Categories',
     tree_queues: 'Queues',
@@ -1274,12 +1276,28 @@ if (saveSchedBtn) {
   });
 }
 
-// Sidebar Toggle / Collapse Button
+// Sidebar Toggle & Expand Controllers
 const btnToggleSidebar = document.getElementById('btnToggleSidebar');
+const btnExpandSidebar = document.getElementById('btnExpandSidebar');
+const btnToggleSidebarStrip = document.getElementById('btnToggleSidebarStrip');
 const workspaceLayout = document.querySelector('.workspace-layout');
-if (btnToggleSidebar && workspaceLayout) {
-  btnToggleSidebar.addEventListener('click', () => {
-    workspaceLayout.classList.toggle('sidebar-collapsed');
+
+function setSidebarCollapsed(collapsed) {
+  if (!workspaceLayout) return;
+  workspaceLayout.classList.toggle('sidebar-collapsed', collapsed);
+  localStorage.setItem('vortex_sidebar_collapsed', collapsed ? 'true' : 'false');
+}
+
+if (btnToggleSidebar) {
+  btnToggleSidebar.addEventListener('click', () => setSidebarCollapsed(true));
+}
+if (btnExpandSidebar) {
+  btnExpandSidebar.addEventListener('click', () => setSidebarCollapsed(false));
+}
+if (btnToggleSidebarStrip) {
+  btnToggleSidebarStrip.addEventListener('click', () => {
+    const isCollapsed = workspaceLayout ? workspaceLayout.classList.contains('sidebar-collapsed') : false;
+    setSidebarCollapsed(!isCollapsed);
   });
 }
 
@@ -2794,6 +2812,7 @@ if (btnModeToggle) {
 
 // --- 25. App Bootstrapping ---
 window.addEventListener('DOMContentLoaded', () => {
+  setSidebarCollapsed(false);
   initTimeSelectors();
   loadQueues();
   loadSettings();

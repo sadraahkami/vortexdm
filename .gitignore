@@ -17,6 +17,8 @@ temp/
 *.vortex
 *.tmp
 *.log
+vortex_settings.json
+vortex_analytics.json
 
 # IDEs
 .idea/

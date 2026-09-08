@@ -391,7 +391,7 @@ Streams 15 MB of uncompressed synthetic zero-fill data over HTTP chunked transfe
   - Global default download folder configuration via Settings modal.
   - Per-task custom folder input directly in Add Download dialog (`#modalDirInput`).
 - **IDM-Grade Information Density:** Compact, sticky-header table grid (36px row height), allowing 20+ downloads visible simultaneously.
-- **Tree Navigation & Collapsible Sidebar:** Left sidebar organized into Categories, Statuses, and Queues with one-click collapse/expand (`.sidebar-collapsed`) for maximum data visibility.
+- **Tree Navigation & Collapsible Sidebar:** Left sidebar organized into Categories, Statuses, and Queues with multiple intuitive expand/collapse triggers: dedicated header toggle button, floating edge expand handle (`.sidebar-expand-tab`), and search strip toggle icon (`#btnToggleSidebarStrip`). Guarantees the sidebar is easily restored whenever collapsed.
 - **Batch Download Modal:** Clean multi-line URL importer supporting target queue selection, thread count configuration, and immediate auto-start.
 - **File Checksum Verifier Modal:** Right-click context menu "Verify Checksum" displaying computed SHA-256 and MD5 hashes with real-time input comparison and visual match confirmation banner.
 - **Clipboard Auto-Sniffing Toast:** Non-intrusive floating glassmorphic banner popping up when downloadable URLs (`.zip`, `.iso`, `.exe`, `.mp4`, etc.) are copied, offering single-click quick download.
