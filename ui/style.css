@@ -1977,9 +1977,97 @@ body.mode-switching .grid-row {
 }
 
 /* ==========================================================================
-   Responsive Toolbar Media Queries for PRO Mode
+   Hybrid Responsive Toolbar & Overflow Menu (Idea 3)
    ========================================================================== */
-@media (max-width: 1550px) {
+
+/* Overflow Trigger Button (Hidden by default on wide desktop) */
+#tbOverflowBtn {
+  display: none;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  color: var(--primary);
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+#tbOverflowBtn:hover {
+  background: rgba(0, 242, 254, 0.15);
+  border-color: var(--primary);
+  box-shadow: 0 0 10px rgba(0, 242, 254, 0.4);
+}
+
+#tbOverflowBtn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Glassmorphic Overflow Popover Menu */
+.toolbar-overflow-popover {
+  position: fixed;
+  background: rgba(11, 16, 28, 0.96);
+  backdrop-filter: blur(18px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.75), 0 0 1px rgba(0, 242, 254, 0.35);
+  z-index: 1000;
+  min-width: 185px;
+  animation: fadeInPop 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeInPop {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.overflow-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.45rem 0.75rem;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-xs);
+  color: var(--text-main);
+  font-size: 0.78rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: var(--transition);
+  text-align: start;
+  width: 100%;
+}
+
+.overflow-item:hover {
+  background: rgba(0, 242, 254, 0.12);
+  color: var(--primary);
+}
+
+.overflow-item svg {
+  width: 15px;
+  height: 15px;
+  stroke: currentColor;
+  flex-shrink: 0;
+}
+
+.overflow-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 0.25rem 0;
+}
+
+/* --- Tier 1: Large Screen (<= 1500px) -> Compact universal buttons --- */
+@media (max-width: 1500px) {
   .tb-btn-compact span {
     display: none;
   }
@@ -1990,33 +2078,58 @@ body.mode-switching .grid-row {
   }
 }
 
-@media (max-width: 1280px) {
-  #tbAnalytics span,
-  #tbSpeedtest span {
+/* --- Tier 2: Medium Screen (<= 1150px) -> All ribbon buttons become icon-only --- */
+@media (max-width: 1150px) {
+  .tb-btn span {
     display: none;
   }
-  #tbAnalytics,
-  #tbSpeedtest {
+  .tb-btn {
     padding: 0.28rem 0.45rem;
     min-width: 28px;
     justify-content: center;
   }
-}
-
-@media (max-width: 1100px) {
+  #modeText {
+    display: none;
+  }
+  .speed-unit-lbl {
+    display: none;
+  }
   #speedSparkline {
     display: none;
   }
-  #tbSpeedLimit span {
-    display: none;
-  }
-  #tbSpeedLimit {
-    padding: 0.28rem 0.45rem;
-    min-width: 28px;
-    justify-content: center;
-  }
   .global-speed-display {
     padding: 0.18rem 0.35rem;
+  }
+}
+
+/* --- Tier 3: Narrow Screen (<= 850px) -> Overflow Trigger appears, extra tools moved to menu --- */
+@media (max-width: 850px) {
+  #tbOverflowBtn {
+    display: flex;
+  }
+  #tbBatch,
+  #tbScheduler,
+  #tbSpeedLimit,
+  #tbLinkIrani,
+  #tbAnalytics,
+  #tbSpeedtest,
+  #tbSettings,
+  .toolbar-divider.pro-only {
+    display: none !important;
+  }
+  .brand-title {
+    font-size: 0.82rem;
+  }
+  .brand-ver {
+    display: none;
+  }
+  .brand-group {
+    gap: 0.35rem;
+    padding-inline-end: 0.2rem;
+  }
+  .app-toolbar {
+    padding: 0 0.45rem;
+    gap: 0.25rem;
   }
 }
 

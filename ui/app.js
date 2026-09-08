@@ -190,7 +190,8 @@ const translations = {
     st_completed: 'آزمون اتصال با موفقیت انجام شد',
     cm_preview: 'پیش‌نمایش مدیا',
     cm_share: 'ارسال به موبایل با اسکن کد',
-    preview_unsupported: 'پیش‌نمایش برای این نوع فایل پشتیبانی نمی‌شود'
+    preview_unsupported: 'پیش‌نمایش برای این نوع فایل پشتیبانی نمی‌شود',
+    tip_more_tools: 'سایر ابزارها و امکانات'
   },
   en: {
     tb_add: 'Add URL',
@@ -214,6 +215,7 @@ const translations = {
     tb_minimize_tip: 'Minimize Window',
     tip_toggle_sidebar: 'Toggle Sidebar',
     tip_expand_sidebar: 'Expand Categories Menu',
+    tip_more_tools: 'More Tools & Features',
     speed_lbl: 'Speed:',
     tree_categories: 'Categories',
     tree_queues: 'Queues',
@@ -2830,6 +2832,58 @@ if (btnModeToggle) {
   btnModeToggle.addEventListener('click', () => {
     const nextMode = (currentUIMode === 'simple') ? 'pro' : 'simple';
     setUIMode(nextMode, true);
+  });
+}
+
+// --- 24.1. Toolbar Overflow Popover Menu Handler (Idea 3) ---
+const tbOverflowBtn = document.getElementById('tbOverflowBtn');
+const toolbarOverflowMenu = document.getElementById('toolbarOverflowMenu');
+
+if (tbOverflowBtn && toolbarOverflowMenu) {
+  tbOverflowBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isHidden = toolbarOverflowMenu.classList.contains('hidden');
+    if (isHidden) {
+      const rect = tbOverflowBtn.getBoundingClientRect();
+      toolbarOverflowMenu.style.top = `${rect.bottom + 6}px`;
+      if (document.documentElement.dir === 'rtl') {
+        toolbarOverflowMenu.style.right = `${window.innerWidth - rect.right}px`;
+        toolbarOverflowMenu.style.left = 'auto';
+      } else {
+        toolbarOverflowMenu.style.left = `${rect.left}px`;
+        toolbarOverflowMenu.style.right = 'auto';
+      }
+      toolbarOverflowMenu.classList.remove('hidden');
+    } else {
+      toolbarOverflowMenu.classList.add('hidden');
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (toolbarOverflowMenu && !toolbarOverflowMenu.contains(e.target) && e.target !== tbOverflowBtn) {
+      toolbarOverflowMenu.classList.add('hidden');
+    }
+  });
+
+  const overflowActionMap = {
+    ovBatch: 'tbBatch',
+    ovScheduler: 'tbScheduler',
+    ovSpeedLimit: 'tbSpeedLimit',
+    ovLinkIrani: 'tbLinkIrani',
+    ovAnalytics: 'tbAnalytics',
+    ovSpeedtest: 'tbSpeedtest',
+    ovSettings: 'tbSettings'
+  };
+
+  Object.entries(overflowActionMap).forEach(([ovId, tbId]) => {
+    const ovEl = document.getElementById(ovId);
+    const tbEl = document.getElementById(tbId);
+    if (ovEl && tbEl) {
+      ovEl.addEventListener('click', () => {
+        toolbarOverflowMenu.classList.add('hidden');
+        tbEl.click();
+      });
+    }
   });
 }
 

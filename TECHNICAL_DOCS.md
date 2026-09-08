@@ -387,9 +387,11 @@ Streams 15 MB of uncompressed synthetic zero-fill data over HTTP chunked transfe
   - **Simple Mode:** Ultra-clean, distraction-free minimalist interface designed for everyday users. Automatically expands the file name column, hiding technical queuing, connection count, priority reordering, batch importer, and scheduler controls.
   - **PRO Mode:** Full IDM-grade power studio displaying advanced metrics, priority controls, parallel thread count, schedule automation, traffic analytics, and LinkIrani domestic inspector.
   - **Animated Mode Switching:** Smooth 1-click transition (`#btnModeToggle`) with subtle layout animations.
-- **Responsive PRO Ribbon Toolbar:**
-  - Compact button architecture with `.tb-btn-compact` applied to universal secondary controls (Resume, Pause, Pause All, Delete, Clear, Settings).
-  - Multi-tier responsive CSS media queries (`@media (max-width: 1550px)`, `@media (max-width: 1280px)`, `@media (max-width: 1100px)`) that dynamically collapse text to icon-only buttons with hover tooltips, guaranteeing all 13 buttons fit cleanly without clipping, overflow, or horizontal scrolling on screens down to 1024px.
+- **Responsive PRO Ribbon Toolbar (3-Tier Adaptive Architecture & Overflow Menu):**
+  - **Tier 1 (Wide Viewport >1150px):** Primary actions display full text and icons, while universal secondary actions use compact iconography with localized tooltips.
+  - **Tier 2 (Medium Viewport 850px–1150px):** All toolbar buttons cleanly collapse to icon-only mode (`.tb-btn span { display: none; }`). The PRO mode badge contracts, and sparklines adapt smoothly, keeping all controls accessible without collision or wrapping.
+  - **Tier 3 (Compact / Mobile Viewport <850px):** Dedicated glassmorphic overflow button (`#tbOverflowBtn` •••) appears at the end of the action group. Secondary and utility buttons (`Batch`, `Scheduler`, `Speed Limit`, `LinkIrani`, `Analytics`, `Speedtest`, `Settings`) are automatically hidden from the ribbon and grouped inside a floating glassmorphic popover menu (`#toolbarOverflowMenu`), leaving only core download actions in the ribbon.
+  - **Dynamic Positioning & RTL/LTR Awareness:** The overflow popover automatically calculates its position relative to the overflow button, adapting seamlessly to both Persian RTL and English LTR layouts with outside-click dismissal.
   - Proportional 55px real-time throughput sparkline.
 - **Unified Single-Toggle 34px Rail Sidebar:**
   - Removed duplicate buttons and awkward floating overlay tabs (`#btnToggleSidebarStrip` and `#btnExpandSidebar`).
