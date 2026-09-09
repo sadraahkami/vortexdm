@@ -126,3 +126,65 @@ func TestMultiThreadedDownload(t *testing.T) {
 		t.Errorf("file was not deleted after DeleteTask")
 	}
 }
+
+func TestDuplicateTaskPreventionAndCustomDelete(t *testing.T) {
+	testData := []byte("SAMPLE_DATA_FOR_DEDUPLICATION_TEST")
+	server := createRangeServer(testData)
+	defer server.Close()
+
+	tempDir, err := os.MkdirTemp("", "vortex_dedup_test_*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	engine := downloader.NewEngine(tempDir, 4)
+	defer engine.Close()
+
+	// 1. Create initial task
+	task1, err := engine.CreateTask(server.URL, "file1.dat", tempDir, 2)
+	if err != nil {
+		t.Fatalf("CreateTask 1 failed: %v", err)
+	}
+
+	// 2. Attempt to create duplicate task with same URL while task1 is queued/active
+	_, errDup := engine.CreateTask(server.URL, "file1_dup.dat", tempDir, 2)
+	if errDup == nil {
+		t.Fatalf("expected error when adding duplicate URL, but got nil")
+	}
+
+	// 3. Test DeleteTask with deleteFiles=false (preserves physical file)
+	dummyPath := filepath.Join(tempDir, "file1.dat")
+	if err := os.WriteFile(dummyPath, []byte("content"), 0644); err != nil {
+		t.Fatalf("failed to write dummy file: %v", err)
+	}
+
+	if err := engine.DeleteTask(task1.ID, false); err != nil {
+		t.Fatalf("DeleteTask failed: %v", err)
+	}
+
+	// Task should be removed from engine
+	if engine.GetTask(task1.ID) != nil {
+		t.Errorf("task was not removed from engine")
+	}
+
+	// Physical file should still exist
+	if _, err := os.Stat(dummyPath); os.IsNotExist(err) {
+		t.Errorf("physical file should NOT have been deleted when deleteFiles=false")
+	}
+
+	// 4. Now create task again (since old one was deleted) and delete with deleteFiles=true
+	task2, err := engine.CreateTask(server.URL, "file1.dat", tempDir, 2)
+	if err != nil {
+		t.Fatalf("CreateTask 2 failed: %v", err)
+	}
+
+	if err := engine.DeleteTask(task2.ID, true); err != nil {
+		t.Fatalf("DeleteTask 2 failed: %v", err)
+	}
+
+	if _, err := os.Stat(dummyPath); !os.IsNotExist(err) {
+		t.Errorf("physical file SHOULD have been deleted when deleteFiles=true")
+	}
+}
+

@@ -206,8 +206,8 @@ Pauses all currently downloading tasks and flushes their `.vortex` state files.
 ### `POST /api/tasks/clear-completed`
 Clears all completed tasks from memory and cleans up obsolete state files.
 
-### `POST /api/tasks/delete?id=<id>`
-Cancels and removes the task and its local files.
+### `POST /api/tasks/delete?id=<id>&delete_file=<bool>`
+Cancels and removes the task and its `.vortex` state file. The optional query parameter `delete_file=true|false` (default: `true`) determines whether the downloaded physical file on storage disk is deleted or preserved.
 
 ### `POST /api/tasks/open?id=<id>`
 Selects and reveals the file in the operating system's native file explorer (`explorer /select,` on Windows, `open -R` on macOS, `xdg-open` on Linux).
@@ -469,29 +469,38 @@ Invokes the native operating system folder selection dialog (PowerShell Windows 
   - Implemented `#queueContextMenu` on right-click for any sidebar queue with actions to start all downloads in the queue, pause the queue, configure the queue's schedule in Settings, or delete the queue.
 - **Full Dynamic Custom Queue Scheduling:**
   - Dynamic tab rendering in the Scheduler tab allows custom queues (e.g. "فیلم‌ها", "دوره‌ها") to be edited and saved just like built-in queues, eliminating the limitation where custom queues could not be scheduled.
+- **Deduplication & Multi-Click Submission Guard:**
+  - **Asynchronous Debouncing (`handleStartDownload`):** Clicking "Start Download" immediately sets `isAddingTask = true`, disables `#submitAddBtn`, injects an animated spinning loader (`.btn-spinner`), and displays "در حال بررسی و اتصال..." to prevent accidental double submissions while the remote HTTP HEAD/GET probe is in-flight.
+  - **Engine Concurrency & Duplicate Check (`CreateTask`):** Thread-safe inspection inside the Go engine rejects duplicate simultaneous download requests for the same URL or destination file while an existing task is actively downloading or queued, preventing disk write collisions and redundant network transfer.
+  - **Keyboard Shortcut Support:** Pressing `Enter` in the URL or Filename inputs triggers debounced task submission seamlessly.
+- **Custom Glassmorphic Confirmation Modal & Toast Notification System:**
+  - **100% Elimination of Native Browser Popups:** Replaced all crude, browser-default `confirm()` and `alert()` popups with high-tech custom dark UI elements matching the cyberpunk/dark theme.
+  - **Reusable Confirmation Modal (`#confirmModal` & `showConfirmDialog`):** Promise-based dialog supporting Warning and Danger modes, animated glowing SVG icons, keyboard shortcuts (`Enter` to confirm, `Escape` to cancel), and an IDM-style checkbox to selectively delete downloaded files from physical storage or only remove them from the list.
+  - **Non-Blocking Floating Toasts (`#appToastContainer` & `showToast`):** Non-intrusive, auto-dismissing glassmorphic toast alerts (Success, Error, Warning, Info) with slide-up animations for instant, elegant user feedback.
 
 ---
 
 ## 7. Automated Testing Strategy
 
-Comprehensive suite of 20 unit and integration tests covering:
+Comprehensive suite of 21 unit and integration tests covering:
 1. `TestBatchAddTasksAndAPI`: Validates bulk URL creation, queue assignment, and `POST /api/tasks/batch` REST endpoint.
 2. `TestChecksumVerification`: Validates streaming SHA-256 and MD5 hash generation and `GET /api/tasks/checksum` endpoint.
 3. `TestTrafficAnalytics`: Verifies thread-safe traffic recording, domestic/international separation, savings calculation, and cycle reset.
-4. `TestCustomQueuesAndReordering`: Verifies custom queue creation, task assignment, order priority changes, and deletion.
-5. `TestQueueStartAndPauseEndpoints`: Validates queue-level start and pause APIs (`POST /api/queues/start` and `POST /api/queues/pause`).
-6. `TestMultiThreadedDownload`: Multi-goroutine concurrent HTTP Range download with byte-by-byte integrity verification.
-7. `TestSpeedLimiter`: Token-bucket throttle enforcement and unthrottled throughput.
-8. `TestSOCKS5HandshakeMock`: RFC 1928 SOCKS5 handshake, version/auth negotiation, and domain address packet parsing.
-9. `TestProxyDomesticBypass`: Routing validation ensuring domestic `.ir` and Iranian subnets bypass proxy while international traffic routes through proxy.
-10. `TestServerEndpointsAndAssets`: Validates root HTML, dark color-scheme meta, favicon, manifest, and window minimize endpoints.
-11. `TestShareInfoAndFileDownload`: Outbound UDP LAN IP detection, HTTP file download serving, Range streaming headers, and speedtest endpoints.
-12. `TestSpeedtestEndpoints`: Latency ping endpoint calculation and chunked download stream throughput generator.
-13. `TestDetectTraffic`: Iranian domain detection (`soft98.ir` -> domestic نیم‌بها) vs international (`github.com` -> تمام‌بها).
-14. `TestFormatBytes`, `TestFormatSpeed`, `TestFormatDuration`, `TestDetectCategory`.
-15. `TestSettingsManagement`: Validates default download directory persistence, audio toggles, and mode defaults.
-16. `TestRefreshExpiredTaskURL`: Validates header probe, size validation, and in-place URL refreshment.
-17. `TestZipExtractionAndZipSlipProtection`: Validates pure Go zip unarchiving and path traversal security guards.
+4. `TestDuplicateTaskPreventionAndCustomDelete`: Validates rejection of duplicate active/queued tasks and disk preservation vs deletion toggles.
+5. `TestCustomQueuesAndReordering`: Verifies custom queue creation, task assignment, order priority changes, and deletion.
+6. `TestQueueStartAndPauseEndpoints`: Validates queue-level start and pause APIs (`POST /api/queues/start` and `POST /api/queues/pause`).
+7. `TestMultiThreadedDownload`: Multi-goroutine concurrent HTTP Range download with byte-by-byte integrity verification.
+8. `TestSpeedLimiter`: Token-bucket throttle enforcement and unthrottled throughput.
+9. `TestSOCKS5HandshakeMock`: RFC 1928 SOCKS5 handshake, version/auth negotiation, and domain address packet parsing.
+10. `TestProxyDomesticBypass`: Routing validation ensuring domestic `.ir` and Iranian subnets bypass proxy while international traffic routes through proxy.
+11. `TestServerEndpointsAndAssets`: Validates root HTML, dark color-scheme meta, favicon, manifest, and window minimize endpoints.
+12. `TestShareInfoAndFileDownload`: Outbound UDP LAN IP detection, HTTP file download serving, Range streaming headers, and speedtest endpoints.
+13. `TestSpeedtestEndpoints`: Latency ping endpoint calculation and chunked download stream throughput generator.
+14. `TestDetectTraffic`: Iranian domain detection (`soft98.ir` -> domestic نیم‌بها) vs international (`github.com` -> تمام‌بها).
+15. `TestFormatBytes`, `TestFormatSpeed`, `TestFormatDuration`, `TestDetectCategory`.
+16. `TestSettingsManagement`: Validates default download directory persistence, audio toggles, and mode defaults.
+17. `TestRefreshExpiredTaskURL`: Validates header probe, size validation, and in-place URL refreshment.
+18. `TestZipExtractionAndZipSlipProtection`: Validates pure Go zip unarchiving and path traversal security guards.
 
 Run tests:
 ```bash

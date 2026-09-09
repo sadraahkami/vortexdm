@@ -315,6 +315,14 @@ func (e *Engine) CreateTask(rawURL string, customFilename string, customDir stri
 	}
 
 	e.mu.Lock()
+	for _, existing := range e.tasks {
+		if (existing.URL == rawURL || existing.FinalPath == finalPath) &&
+			(existing.Status == StatusDownloading || existing.Status == StatusQueued) {
+			e.mu.Unlock()
+			return nil, fmt.Errorf("این فایل در حال حاضر در صف یا در حال دانلود است")
+		}
+	}
+
 	task.Order = len(e.tasks) + 1
 	e.tasks[taskID] = task
 	e.mu.Unlock()

@@ -1156,6 +1156,210 @@ body.mode-pro .grid-body {
   color: #fff;
 }
 
+.btn-danger {
+  background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+  color: #ffffff !important;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 2px 10px rgba(239, 68, 68, 0.35);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.btn-danger:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+  color: #ffffff !important;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.55);
+  transform: translateY(-1px);
+}
+
+/* Button Loading Spinner */
+.btn-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: btnSpinAnim 0.75s linear infinite;
+  vertical-align: middle;
+  margin-inline-end: 6px;
+}
+
+@keyframes btnSpinAnim {
+  to { transform: rotate(360deg); }
+}
+
+/* Custom Confirmation Modal */
+.modal-confirm-card {
+  max-width: 450px !important;
+  border: 1px solid rgba(239, 68, 68, 0.38) !important;
+  box-shadow: 0 24px 65px rgba(0, 0, 0, 0.85), 0 0 35px rgba(239, 68, 68, 0.18) !important;
+  animation: modalScaleIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.confirm-modal-body {
+  padding: 1.5rem 1.4rem 1.1rem 1.4rem;
+  display: flex;
+  gap: 1.15rem;
+  align-items: flex-start;
+}
+
+.confirm-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.32);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.22);
+}
+
+.confirm-icon-wrap.warn {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.32);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.22);
+}
+
+.confirm-svg {
+  width: 24px;
+  height: 24px;
+}
+
+.confirm-danger {
+  color: #ef4444;
+}
+
+.confirm-warn {
+  color: #f59e0b;
+}
+
+.confirm-content {
+  flex: 1;
+}
+
+.confirm-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 0.35rem;
+}
+
+.confirm-message {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 0.75rem;
+}
+
+.confirm-option-row {
+  margin-top: 0.6rem;
+  padding: 0.55rem 0.75rem;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm);
+}
+
+.confirm-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  cursor: pointer;
+  user-select: none;
+}
+
+.confirm-checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #ef4444;
+  cursor: pointer;
+}
+
+.confirm-footer {
+  padding: 0.85rem 1.4rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+}
+
+/* App-Wide Modern Floating Toasts */
+.app-toast-container {
+  position: fixed;
+  bottom: 2rem;
+  left: 2rem;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  pointer-events: none;
+}
+
+[dir="rtl"] .app-toast-container {
+  left: 2rem;
+  right: auto;
+}
+
+.app-toast-item {
+  pointer-events: auto;
+  background: #0d1527;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1.15rem;
+  min-width: 280px;
+  max-width: 440px;
+  color: #fff;
+  font-size: 0.88rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.75);
+  animation: toastSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.22s, transform 0.22s;
+}
+
+.app-toast-item.toast-error {
+  border-color: rgba(239, 68, 68, 0.45);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.75), 0 0 18px rgba(239, 68, 68, 0.22);
+}
+
+.app-toast-item.toast-success {
+  border-color: rgba(16, 185, 129, 0.45);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.75), 0 0 18px rgba(16, 185, 129, 0.22);
+}
+
+.app-toast-item.toast-info {
+  border-color: rgba(0, 242, 254, 0.45);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.75), 0 0 18px rgba(0, 242, 254, 0.22);
+}
+
+.app-toast-item.toast-warn {
+  border-color: rgba(245, 158, 11, 0.45);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.75), 0 0 18px rgba(245, 158, 11, 0.22);
+}
+
+.app-toast-item.fade-out {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+@keyframes toastSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
 /* Scheduler Modal Layout (Exact IDM Style) */
 .sched-layout {
   display: grid;

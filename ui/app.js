@@ -237,7 +237,12 @@ const translations = {
     settings_tab_scheduler: 'زمان‌بندی و صف‌ها',
     settings_tab_speed: 'سقف سرعت',
     settings_tab_proxy: 'پروکسی و شبکه',
-    settings_studio_badge: 'مرکز پیکربندی یکپارچه'
+    settings_studio_badge: 'مرکز پیکربندی یکپارچه',
+    confirm_title: 'حذف دانلود',
+    confirm_delete_files: 'حذف فایل‌های دانلودشده از روی دیسک (آزاد کردن حافظه)',
+    btn_delete: 'حذف',
+    task_already_active: 'این فایل در حال حاضر در لیست دانلودهای فعال قرار دارد.',
+    connecting: 'در حال بررسی و ایجاد...'
   },
   en: {
     tb_add: 'Add URL',
@@ -472,7 +477,12 @@ const translations = {
     settings_tab_scheduler: 'Scheduler & Queues',
     settings_tab_speed: 'Speed Limit',
     settings_tab_proxy: 'Proxy & Network',
-    settings_studio_badge: 'Unified Configuration Hub'
+    settings_studio_badge: 'Unified Configuration Hub',
+    confirm_title: 'Delete Download',
+    confirm_delete_files: 'Delete downloaded file(s) from disk (free up storage)',
+    btn_delete: 'Delete',
+    task_already_active: 'This download is already active or in queue.',
+    connecting: 'Connecting & starting...'
   }
 };
 
@@ -554,6 +564,139 @@ function playStartChime() {
   } catch (e) {}
 }
 
+// --- Modern Non-Blocking Toast Notification System ---
+function showToast(message, type = 'info', duration = 3500) {
+  let container = document.getElementById('appToastContainer');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'appToastContainer';
+    container.className = 'app-toast-container';
+    document.body.appendChild(container);
+  }
+
+  const toast = document.createElement('div');
+  toast.className = `app-toast-item toast-${type}`;
+
+  let iconSvg = '';
+  if (type === 'error') {
+    iconSvg = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+  } else if (type === 'success') {
+    iconSvg = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#10b981" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+  } else if (type === 'warn') {
+    iconSvg = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`;
+  } else {
+    iconSvg = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#00f2fe" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
+  }
+
+  toast.innerHTML = `${iconSvg}<span>${message}</span>`;
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.classList.add('fade-out');
+    setTimeout(() => {
+      if (toast.parentNode) toast.parentNode.removeChild(toast);
+    }, 250);
+  }, duration);
+}
+
+// --- Modern Glassmorphic Confirmation Modal ---
+function showConfirmDialog({
+  title = '',
+  message = '',
+  okText = '',
+  cancelText = '',
+  type = 'danger',
+  showFileOption = false,
+  fileOptionText = ''
+}) {
+  return new Promise((resolve) => {
+    const modal = document.getElementById('confirmModal');
+    if (!modal) {
+      resolve({ confirmed: window.confirm(message), deleteFiles: false });
+      return;
+    }
+
+    const titleEl = document.getElementById('confirmModalTitle');
+    const msgEl = document.getElementById('confirmModalMsg');
+    const okBtn = document.getElementById('confirmOkBtn');
+    const cancelBtn = document.getElementById('confirmCancelBtn');
+    const fileOptDiv = document.getElementById('confirmFileOption');
+    const fileCheck = document.getElementById('confirmDeleteFilesCheck');
+    const fileLabel = document.getElementById('confirmDeleteFilesLabel');
+    const iconDanger = document.getElementById('confirmIconDanger');
+    const iconWarn = document.getElementById('confirmIconWarn');
+    const iconWrap = document.getElementById('confirmIconWrap');
+
+    const isFa = currentLang === 'fa';
+    if (titleEl) titleEl.textContent = title || (isFa ? 'تأیید عملیات' : 'Confirm Action');
+    if (msgEl) msgEl.textContent = message || '';
+    if (okBtn) okBtn.textContent = okText || (isFa ? 'تأیید' : 'Confirm');
+    if (cancelBtn) cancelBtn.textContent = cancelText || (isFa ? 'انصراف' : 'Cancel');
+
+    if (iconWrap && iconDanger && iconWarn) {
+      if (type === 'warn') {
+        iconDanger.classList.add('hidden');
+        iconWarn.classList.remove('hidden');
+        iconWrap.classList.add('warn');
+        if (okBtn) okBtn.className = 'btn btn-primary';
+      } else {
+        iconDanger.classList.remove('hidden');
+        iconWarn.classList.add('hidden');
+        iconWrap.classList.remove('warn');
+        if (okBtn) okBtn.className = 'btn btn-danger';
+      }
+    }
+
+    if (fileOptDiv && fileCheck && fileLabel) {
+      if (showFileOption) {
+        fileOptDiv.classList.remove('hidden');
+        fileCheck.checked = false;
+        fileLabel.textContent = fileOptionText || (isFa ? 'حذف فایل‌های دانلودشده از روی دیسک (آزاد کردن حافظه)' : 'Delete downloaded file(s) from disk (free up storage)');
+      } else {
+        fileOptDiv.classList.add('hidden');
+      }
+    }
+
+    modal.classList.remove('hidden');
+    if (okBtn) okBtn.focus();
+
+    let handled = false;
+    const cleanup = () => {
+      if (handled) return;
+      handled = true;
+      modal.classList.add('hidden');
+      if (okBtn) okBtn.removeEventListener('click', onOk);
+      if (cancelBtn) cancelBtn.removeEventListener('click', onCancel);
+      window.removeEventListener('keydown', onKey);
+    };
+
+    const onOk = () => {
+      const deleteFiles = (showFileOption && fileCheck) ? fileCheck.checked : false;
+      cleanup();
+      resolve({ confirmed: true, deleteFiles });
+    };
+
+    const onCancel = () => {
+      cleanup();
+      resolve({ confirmed: false, deleteFiles: false });
+    };
+
+    const onKey = (e) => {
+      if (modal.classList.contains('hidden')) return;
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onCancel();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        onOk();
+      }
+    };
+
+    if (okBtn) okBtn.addEventListener('click', onOk);
+    if (cancelBtn) cancelBtn.addEventListener('click', onCancel);
+    window.addEventListener('keydown', onKey);
+  });
+}
 
 // --- 2. SVGs for File Categories ---
 const categoryIcons = {
@@ -1028,13 +1171,28 @@ if (tbPauseAll) {
 if (tbDelete) {
   tbDelete.addEventListener('click', async () => {
     if (selectedTaskIds.size === 0) return;
-    const t = translations[currentLang];
-    if (confirm(t.confirm_delete)) {
+    const isFa = currentLang === 'fa';
+    const count = selectedTaskIds.size;
+    const title = isFa ? `حذف ${count} مورد انتخاب‌شده` : `Delete ${count} Selected Item(s)`;
+    const msg = isFa
+      ? `آیا از حذف این ${count} مورد از لیست دانلودها اطمینان دارید؟`
+      : `Are you sure you want to delete ${count} selected download(s)?`;
+
+    const res = await showConfirmDialog({
+      title,
+      message: msg,
+      okText: isFa ? 'حذف موارد' : 'Delete Items',
+      cancelText: isFa ? 'انصراف' : 'Cancel',
+      showFileOption: true
+    });
+
+    if (res.confirmed) {
       for (const id of selectedTaskIds) {
-        await fetch(`/api/tasks/delete?id=${id}`, { method: 'POST' });
+        await fetch(`/api/tasks/delete?id=${id}&delete_file=${res.deleteFiles}`, { method: 'POST' });
       }
       selectedTaskIds.clear();
       fetchTasksREST();
+      showToast(isFa ? `${count} دانلود با موفقیت حذف شد` : `${count} download(s) deleted`, 'info');
     }
   });
 }
@@ -1155,7 +1313,14 @@ if (queueContextMenu) {
     } else if (action === 'delete') {
       const qcfg = customQueues[qid] || {};
       const qName = qcfg.name || qid;
-      if (confirm(`آیا از حذف صف «${qName}» اطمینان دارید؟`)) {
+      const isFa = currentLang === 'fa';
+      const res = await showConfirmDialog({
+        title: isFa ? 'حذف صف دانلود' : 'Delete Queue',
+        message: isFa ? `آیا از حذف صف «${qName}» اطمینان دارید؟ دانلودهای داخل این صف حذف نخواهند شد.` : `Are you sure you want to delete queue "${qName}"? Downloads inside will not be deleted.`,
+        okText: isFa ? 'حذف صف' : 'Delete Queue',
+        cancelText: isFa ? 'انصراف' : 'Cancel'
+      });
+      if (res.confirmed) {
         await fetch(`/api/queues?id=${encodeURIComponent(qid)}`, { method: 'DELETE' });
         if (activeFilter === `queue-${qid}`) {
           activeFilter = 'all';
@@ -1164,6 +1329,7 @@ if (queueContextMenu) {
         }
         await loadQueues();
         renderTasksGrid();
+        showToast(isFa ? `صف «${qName}» حذف شد` : `Queue "${qName}" deleted`, 'info');
       }
     }
   });
@@ -1241,11 +1407,20 @@ if (contextMenu) {
     } else if (action === 'linkirani' && task) {
       window.open(task.linkirani_url || `https://linkirani.ir/?url=${encodeURIComponent(task.url)}`, '_blank');
     } else if (action === 'delete') {
-      const t = translations[currentLang];
-      if (confirm(t.confirm_delete)) {
-        await fetch(`/api/tasks/delete?id=${contextTaskId}`, { method: 'POST' });
+      const isFa = currentLang === 'fa';
+      const fname = task ? task.filename : contextTaskId;
+      const res = await showConfirmDialog({
+        title: isFa ? 'حذف دانلود' : 'Delete Download',
+        message: isFa ? `آیا از حذف «${fname}» از لیست اطمینان دارید؟` : `Are you sure you want to delete "${fname}"?`,
+        okText: isFa ? 'حذف' : 'Delete',
+        cancelText: isFa ? 'انصراف' : 'Cancel',
+        showFileOption: true
+      });
+      if (res.confirmed) {
+        await fetch(`/api/tasks/delete?id=${contextTaskId}&delete_file=${res.deleteFiles}`, { method: 'POST' });
         selectedTaskIds.delete(contextTaskId);
         fetchTasksREST();
+        showToast(isFa ? 'دانلود با موفقیت حذف شد' : 'Download deleted', 'info');
       }
     }
   });
@@ -1338,39 +1513,81 @@ if (tbAddUrl) tbAddUrl.addEventListener('click', openAddModal);
 if (closeAddModal) closeAddModal.addEventListener('click', () => taskModal.classList.add('hidden'));
 if (cancelAddBtn) cancelAddBtn.addEventListener('click', () => taskModal.classList.add('hidden'));
 
-if (submitAddBtn) {
-  submitAddBtn.addEventListener('click', async () => {
-    const url = modalUrlInput.value.trim();
-    if (!url) {
-      modalUrlInput.focus();
-      return;
-    }
+let isAddingTask = false;
 
-    const filename = modalFilenameInput.value.trim();
-    const destination_dir = modalDirInput ? modalDirInput.value.trim() : '';
-    const connections = parseInt(modalConnsSelect.value, 10) || 16;
-    const queue = modalQueueSelect.value || 'main';
+async function handleStartDownload() {
+  if (isAddingTask) return;
 
-    try {
-      const res = await fetch('/api/tasks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url, filename, destination_dir, connections, queue })
-      });
+  const url = modalUrlInput.value.trim();
+  if (!url) {
+    modalUrlInput.focus();
+    return;
+  }
 
-      if (res.ok) {
-        playStartChime();
-        taskModal.classList.add('hidden');
-        fetchTasksREST();
-      } else {
+  const filename = modalFilenameInput.value.trim();
+  const destination_dir = modalDirInput ? modalDirInput.value.trim() : '';
+  const connections = parseInt(modalConnsSelect.value, 10) || 16;
+  const queue = modalQueueSelect.value || 'main';
+
+  isAddingTask = true;
+  if (submitAddBtn) submitAddBtn.disabled = true;
+  const isFa = currentLang === 'fa';
+  const originalHtml = submitAddBtn ? submitAddBtn.innerHTML : '';
+  if (submitAddBtn) {
+    submitAddBtn.innerHTML = `<span class="btn-spinner"></span> <span>${isFa ? 'در حال بررسی و اتصال...' : 'Connecting...'}</span>`;
+  }
+
+  try {
+    const res = await fetch('/api/tasks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, filename, destination_dir, connections, queue })
+    });
+
+    if (res.ok) {
+      playStartChime();
+      taskModal.classList.add('hidden');
+      modalUrlInput.value = '';
+      modalFilenameInput.value = '';
+      fetchTasksREST();
+      showToast(isFa ? 'دانلود با موفقیت آغاز شد' : 'Download started successfully', 'success');
+    } else {
+      let errMsg = isFa ? 'خطا در ایجاد دانلود' : 'Failed to add download task';
+      try {
         const err = await res.json();
-        alert(err.error || 'Failed to add task');
-      }
-    } catch (e) {
-      alert('Connection error');
+        if (err && err.error) errMsg = err.error;
+      } catch (_) {}
+      showToast(errMsg, 'error');
     }
-  });
+  } catch (e) {
+    showToast(isFa ? 'خطا در برقراری ارتباط با سرور' : 'Connection error', 'error');
+  } finally {
+    isAddingTask = false;
+    if (submitAddBtn) {
+      submitAddBtn.disabled = false;
+      submitAddBtn.innerHTML = originalHtml;
+    }
+  }
 }
+
+if (submitAddBtn) {
+  submitAddBtn.addEventListener('click', handleStartDownload);
+}
+
+// Start download on Enter key in URL or Filename inputs
+modalUrlInput?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    handleStartDownload();
+  }
+});
+
+modalFilenameInput?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    handleStartDownload();
+  }
+});
 
 // --- 12. Scheduler & Queues Dynamic Management ---
 const schedEnable = document.getElementById('schedEnable');
@@ -1662,7 +1879,7 @@ if (btnRunIranCheck) {
       }
     } catch (e) {
       btnRunIranCheck.textContent = translations[currentLang].btn_check;
-      alert('Error querying traffic status');
+      showToast(currentLang === 'fa' ? 'خطا در استعلام وضعیت ترافیک' : 'Error querying traffic status', 'error');
     }
   });
 }
@@ -1743,7 +1960,7 @@ if (submitCreateQueueBtn) {
       queueModal.classList.add('hidden');
       await loadQueues();
     } catch (e) {
-      alert('Error creating queue');
+      showToast(currentLang === 'fa' ? 'خطا در ایجاد صف دانلود' : 'Error creating queue', 'error');
     }
   });
 }
@@ -1900,7 +2117,15 @@ function renderQueuesUI() {
 
     node.querySelector('.q-del-btn')?.addEventListener('click', async (e) => {
       e.stopPropagation();
-      if (confirm(`آیا از حذف صف «${qcfg.name || qid}» اطمینان دارید؟`)) {
+      const isFa = currentLang === 'fa';
+      const qName = qcfg.name || qid;
+      const res = await showConfirmDialog({
+        title: isFa ? 'حذف صف دانلود' : 'Delete Queue',
+        message: isFa ? `آیا از حذف صف «${qName}» اطمینان دارید؟` : `Are you sure you want to delete queue "${qName}"?`,
+        okText: isFa ? 'حذف صف' : 'Delete Queue',
+        cancelText: isFa ? 'انصراف' : 'Cancel'
+      });
+      if (res.confirmed) {
         await fetch(`/api/queues?id=${encodeURIComponent(qid)}`, { method: 'DELETE' });
         if (activeFilter === `queue-${qid}`) {
           activeFilter = 'all';
@@ -1909,6 +2134,7 @@ function renderQueuesUI() {
         }
         await loadQueues();
         renderTasksGrid();
+        showToast(isFa ? `صف «${qName}» حذف شد` : `Queue "${qName}" deleted`, 'info');
       }
     });
 
@@ -1944,9 +2170,18 @@ if (closeAnalyticsModal) {
 
 if (btnResetCycle) {
   btnResetCycle.addEventListener('click', async () => {
-    if (confirm('آیا از صفر کردن آمار مصرف و شروع دوره جدید اطمینان دارید؟')) {
+    const isFa = currentLang === 'fa';
+    const res = await showConfirmDialog({
+      title: isFa ? 'شروع دوره جدید مصرف' : 'Reset Traffic Cycle',
+      message: isFa ? 'آیا از صفر کردن آمار مصرف اینترنت و شروع دوره جدید اطمینان دارید؟' : 'Are you sure you want to reset bandwidth traffic usage statistics and start a new billing cycle?',
+      okText: isFa ? 'صفر کردن آمار' : 'Reset Cycle',
+      cancelText: isFa ? 'انصراف' : 'Cancel',
+      type: 'warn'
+    });
+    if (res.confirmed) {
       await fetch('/api/analytics/reset', { method: 'POST' });
       fetchAnalytics();
+      showToast(isFa ? 'آمار مصرف اینترنت صفر شد' : 'Traffic statistics reset', 'info');
     }
   });
 }
@@ -2392,12 +2627,12 @@ async function handleExtractZip(task) {
     const res = await fetch(`/api/tasks/extract?id=${encodeURIComponent(task.id)}`, { method: 'POST' });
     const data = await res.json();
     if (res.ok && data.success) {
-      alert(`${t.extract_success}\n📁 ${data.extracted_to}`);
+      showToast(`${t.extract_success}: ${data.extracted_to}`, 'success');
     } else {
-      alert(`${t.extract_err}: ${data.error || 'Failed'}`);
+      showToast(`${t.extract_err}: ${data.error || 'Failed'}`, 'error');
     }
   } catch (e) {
-    alert(t.extract_err);
+    showToast(t.extract_err, 'error');
   }
 }
 
@@ -3001,7 +3236,7 @@ function openPreviewModal(task) {
   const isAudio = audioExts.includes(ext);
 
   if (!isVideo && !isAudio) {
-    alert(translations[currentLang].preview_unsupported || 'Unsupported format');
+    showToast(translations[currentLang].preview_unsupported || 'Unsupported format', 'warn');
     return;
   }
 

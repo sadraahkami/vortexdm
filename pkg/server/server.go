@@ -308,7 +308,12 @@ func (s *Server) handleDeleteTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.engine.DeleteTask(taskID, true)
+	deleteFiles := true
+	if df := r.URL.Query().Get("delete_file"); df == "false" || df == "0" {
+		deleteFiles = false
+	}
+
+	s.engine.DeleteTask(taskID, deleteFiles)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte(`{"status":"deleted"}`))
 }
