@@ -86,6 +86,11 @@ func main() {
 	actualPort := listener.Addr().(*net.TCPAddr).Port
 	appURL := fmt.Sprintf("http://127.0.0.1:%d", actualPort)
 
+	// Configure system tray to relaunch window if closed by user
+	tray.SetReopenCallback(func() {
+		launchDesktopWindow(appURL)
+	})
+
 	log.Printf("=========================================================")
 	log.Printf("   ⚡ VortexDM v1.0.0 is running successfully!")
 	log.Printf("   👉 Web Dashboard: %s", appURL)

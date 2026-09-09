@@ -14,7 +14,19 @@ func HideToTray() bool {
 	return false
 }
 
-func RestoreAppWindow() {}
+var reopenCallback func()
+
+func SetReopenCallback(cb func()) {
+	reopenCallback = cb
+}
+
+func RestoreAppWindow() bool {
+	if reopenCallback != nil {
+		go reopenCallback()
+		return true
+	}
+	return false
+}
 
 func UpdateTooltip(text string) {}
 

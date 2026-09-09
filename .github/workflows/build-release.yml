@@ -34,7 +34,7 @@ jobs:
           GOOS: 'windows'
           GOARCH: 'amd64'
         run: |
-          go build -ldflags="-s -w" -o dist/VortexDM.exe .
+          go build -ldflags="-s -w -H windowsgui" -o dist/VortexDM.exe .
 
       - name: Build Linux Binary
         env:

@@ -130,11 +130,20 @@ type TrayManager struct {
 	onExit     func()
 }
 
-var globalTray *TrayManager
+var (
+	globalTray     *TrayManager
+	reopenCallback func()
+)
+
+// SetReopenCallback registers a fallback callback to relaunch/restore the application
+// window if it was closed and the user activates the system tray icon.
+func SetReopenCallback(cb func()) {
+	reopenCallback = cb
+}
 
 func NewTray(onPauseAll, onResumeAll, onExit func()) *TrayManager {
 	tm := &TrayManager{
-		onOpen:      RestoreAppWindow,
+		onOpen:      func() { RestoreAppWindow() },
 		onPauseAll:  onPauseAll,
 		onResumeAll: onResumeAll,
 		onExit:      onExit,
@@ -323,8 +332,10 @@ func HideToTray() bool {
 	return found
 }
 
-// RestoreAppWindow restores the VortexDM window from the system tray to screen
-func RestoreAppWindow() {
+// RestoreAppWindow restores the VortexDM window from the system tray to screen.
+// If the window is not found (e.g. was closed), it triggers reopenCallback if registered.
+func RestoreAppWindow() bool {
+	found := false
 	cb := syscall.NewCallback(func(hwnd syscall.Handle, lparam uintptr) uintptr {
 		var buf [256]uint16
 		r, _, _ := procGetWindowTextW.Call(uintptr(hwnd), uintptr(unsafe.Pointer(&buf[0])), 256)
@@ -334,12 +345,17 @@ func RestoreAppWindow() {
 				procShowWindow.Call(uintptr(hwnd), uintptr(SW_SHOW))
 				procShowWindow.Call(uintptr(hwnd), uintptr(SW_RESTORE))
 				procSetForegroundWindow.Call(uintptr(hwnd))
+				found = true
 				return 0
 			}
 		}
 		return 1
 	})
 	procEnumWindows.Call(cb, 0)
+	if !found && reopenCallback != nil {
+		go reopenCallback()
+	}
+	return found
 }
 
 // UpdateTooltip dynamically changes the hover text shown on the system tray icon

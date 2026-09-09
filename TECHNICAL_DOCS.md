@@ -321,6 +321,7 @@ Invokes the native operating system folder selection dialog (PowerShell Windows 
 - Prevents connection starvation, allowing smooth concurrent web browsing and gaming while downloading.
 
 ### 5.4 Windows Native App Integration & Resources
+- **Zero-Console Windows GUI Subsystem (`-H windowsgui`):** Standard Go builds for Windows default to the console subsystem (`IMAGE_SUBSYSTEM_WINDOWS_CUI`, Subsystem 3), which causes Windows Explorer to allocate a black `cmd.exe` / `conhost.exe` terminal window behind the app upon execution. VortexDM is built with `-ldflags="-s -w -H windowsgui"`, configuring the PE header to `IMAGE_SUBSYSTEM_WINDOWS_GUI` (Subsystem 2). This guarantees 100% silent, native execution without any background command prompt or terminal window.
 - **Embedded PE Resources (`go-winres`):** Generates `rsrc_windows_amd64.syso` containing custom 256x256 high-resolution icons, application version metadata (Product Name: VortexDM v1.0.0), and Windows DPI-aware application manifest.
 - **Standalone Web App Manifest (`ui/manifest.json`):** Serves multi-size application icons (16, 24, 32, 48, 64, 128, 192, 256, 512 px) ensuring Microsoft Edge and Chromium standalone app modes render crisp taskbar and window header icons without default web globe fallbacks.
 - **Native Window Minimization (`pkg/server/window_windows.go`):** Direct Windows `user32.dll` enumeration and `ShowWindow` minimize calls wired to top ribbon controls.
@@ -331,7 +332,7 @@ Invokes the native operating system folder selection dialog (PowerShell Windows 
 - `Shell_NotifyIconW` creates the tray icon in the system clock notification overflow area (`^`).
 - **Native Balloon Notifications (`ShowBalloon`):** Dispatches Win32 `NIF_INFO` toast notifications with native Windows chime upon completion of any download task.
 - **Dynamic Throughput Tooltip (`UpdateTooltip`):** Periodically updates tray hover tooltip with aggregate download speed and active task count (e.g. `VortexDM: 12.45 MB/s (3 active)`).
-- Left-click / double-click restores the window (`ShowWindow(SW_SHOW)`, `ShowWindow(SW_RESTORE)`, `SetForegroundWindow`).
+- **Smart Window Restore & Reopen Lifecycle (`RestoreAppWindow` & `SetReopenCallback`):** Left-click or double-click on the tray icon enumerates existing windows to restore and focus them (`SW_SHOW`, `SW_RESTORE`, `SetForegroundWindow`). If the user closed the window entirely, it invokes `reopenCallback` to automatically re-launch Microsoft Edge in standalone app mode without needing to restart the process.
 - Right-click displays native Win32 popup menu (`CreatePopupMenu`, `TrackPopupMenuEx`) with Open, Pause All, Resume All, and Exit.
 - `HideToTray()` calls `ShowWindow(hwnd, SW_HIDE)` to completely remove the app from the taskbar while keeping it active in the background.
 

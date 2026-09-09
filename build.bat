@@ -5,7 +5,7 @@ echo ===================================================
 echo     Compiling VortexDM to Standalone Binary
 echo ===================================================
 echo.
-go build -ldflags="-s -w" -o "%~dp0VortexDM.exe" .
+go build -ldflags="-s -w -H windowsgui" -o "%~dp0VortexDM.exe" .
 if errorlevel 1 (
     echo [Error] Build failed. Please check Go code.
     exit /b 1
