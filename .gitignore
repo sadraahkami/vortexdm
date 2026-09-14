@@ -23,3 +23,5 @@ vortex_analytics.json
 # IDEs
 .idea/
 .vscode/
+# Internal technical notes
+TECHNICAL_DOCS.md
